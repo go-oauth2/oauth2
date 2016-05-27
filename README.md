@@ -2,6 +2,7 @@ Golang OAuth 2.0协议实现
 ========================
 
 [![GoDoc](https://godoc.org/gopkg.in/oauth2.v1?status.svg)](https://godoc.org/gopkg.in/oauth2.v1)
+[![Go Report Card](https://goreportcard.com/badge/gopkg.in/oauth2.v1)](https://goreportcard.com/report/gopkg.in/oauth2.v1)
 
 > 基于Golang实现的OAuth 2.0协议相关操作，包括：令牌(或授权码)的生成、存储、验证操作以及更新令牌、废除令牌； 具有简单、灵活的特点； 其中所涉及的相关http请求操作在这里不做处理； 支持授权码模式、简化模式、密码模式、客户端模式； 默认使用MongoDB存储相关信息
 
