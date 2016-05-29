@@ -90,38 +90,14 @@ func (am *ACManager) GenerateToken(code, redirectURI, clientID, clientSecret str
 		err = ErrCSInvalid
 		return
 	}
-	createAt := time.Now().Unix()
-	basicInfo := NewTokenBasicInfo(cli, acInfo.UserID, createAt)
-	atValue, err := am.oAuthManager.TokenGenerate.AccessToken(basicInfo)
-	if err != nil {
-		return
-	}
-	tokenValue := Token{
-		ClientID:    acInfo.ClientID,
-		UserID:      acInfo.UserID,
-		AccessToken: atValue,
-		ATCreateAt:  createAt,
-		ATExpiresIn: time.Duration(am.config.ATExpiresIn) * time.Second,
-		Scope:       acInfo.Scope,
-		CreateAt:    createAt,
-		Status:      Actived,
-	}
-	if isGenerateRefresh {
-		rtValue, rtErr := am.oAuthManager.TokenGenerate.RefreshToken(basicInfo)
-		if rtErr != nil {
-			err = rtErr
-			return
-		}
-		tokenValue.RefreshToken = rtValue
-		tokenValue.RTCreateAt = createAt
-		tokenValue.RTExpiresIn = time.Duration(am.config.RTExpiresIn) * time.Second
-	}
-	id, err := am.oAuthManager.TokenStore.Create(tokenValue)
-	if err != nil {
-		return
-	}
-	tokenValue.ID = id
-	token = &tokenValue
+
+	token, err = am.oAuthManager.GenerateToken(cli,
+		acInfo.UserID,
+		acInfo.Scope,
+		am.config.ATExpiresIn,
+		am.config.RTExpiresIn,
+		isGenerateRefresh)
+
 	return
 }
 

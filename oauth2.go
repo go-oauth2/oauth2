@@ -1,6 +1,10 @@
 package oauth2
 
-import "time"
+import (
+	"github.com/LyricTian/go.uuid"
+
+	"time"
+)
 
 // CreateDefaultOAuthManager 创建默认的OAuth授权管理实例
 // mongoConfig MongoDB配置参数
@@ -70,6 +74,52 @@ func (om *OAuthManager) GetCCManager() *CCManager {
 	return NewCCManager(om, om.Config.CCConfig)
 }
 
+// GenerateToken 生成令牌
+// cli 客户端信息
+// userID 用户标识
+// scopes 应用授权标识
+// isGenerateRefresh 是否生成更新令牌
+func (om *OAuthManager) GenerateToken(cli Client, userID, scopes string, atExpireIn, rtExpireIn int64, isGenerateRefresh bool) (token *Token, err error) {
+	createAt := time.Now().Unix()
+	atID := uuid.NewV4().String()
+	atBI := NewTokenBasicInfo(cli, atID, userID, createAt)
+	atValue, err := om.TokenGenerate.AccessToken(atBI)
+	if err != nil {
+		return
+	}
+	tokenValue := Token{
+		ClientID:    cli.ID(),
+		UserID:      userID,
+		AccessToken: atValue,
+		ATID:        atID,
+		ATCreateAt:  createAt,
+		ATExpiresIn: time.Duration(atExpireIn) * time.Second,
+		Scope:       scopes,
+		CreateAt:    createAt,
+		Status:      Actived,
+	}
+	if isGenerateRefresh {
+		rtID := uuid.NewV4().String()
+		rtBI := NewTokenBasicInfo(cli, rtID, userID, createAt)
+		rtValue, rtErr := om.TokenGenerate.RefreshToken(rtBI)
+		if rtErr != nil {
+			err = rtErr
+			return
+		}
+		tokenValue.RefreshToken = rtValue
+		tokenValue.RTID = rtID
+		tokenValue.RTCreateAt = createAt
+		tokenValue.RTExpiresIn = time.Duration(rtExpireIn) * time.Second
+	}
+	id, err := om.TokenStore.Create(&tokenValue)
+	if err != nil {
+		return
+	}
+	tokenValue.ID = id
+	token = &tokenValue
+	return
+}
+
 // GetClient 根据客户端标识获取客户端信息
 // clientID 客户端标识
 func (om *OAuthManager) GetClient(clientID string) (cli Client, err error) {
@@ -117,6 +167,9 @@ func (om *OAuthManager) CheckAccessToken(accessToken string) (token *Token, err 
 	} else if v := om.checkAccessTokenExpire(tokenValue); v != nil {
 		err = v
 		return
+	} else if v := om.checkAccessTokenValidity(accessToken, tokenValue); v != nil {
+		err = v
+		return
 	}
 	token = tokenValue
 	return
@@ -137,6 +190,9 @@ func (om *OAuthManager) RevokeAccessToken(accessToken string) (err error) {
 		return
 	} else if token.Status != Actived {
 		err = ErrATInvalid
+		return
+	} else if v := om.checkAccessTokenValidity(accessToken, token); v != nil {
+		err = v
 		return
 	}
 	info := map[string]interface{}{
@@ -166,19 +222,25 @@ func (om *OAuthManager) RefreshAccessToken(refreshToken, scopes string) (token *
 	} else if v := om.checkRefreshTokenExpire(tokenValue); v != nil {
 		err = v
 		return
+	} else if v := om.checkRefreshTokenValidity(refreshToken, tokenValue); v != nil {
+		err = v
+		return
 	}
 	cli, err := om.GetClient(tokenValue.ClientID)
 	if err != nil {
 		return
 	}
 	tokenValue.ATCreateAt = time.Now().Unix()
-	atValue, err := om.TokenGenerate.AccessToken(NewTokenBasicInfo(cli, tokenValue.UserID, tokenValue.ATCreateAt))
+	tokenValue.ATID = uuid.NewV4().String()
+	atBI := NewTokenBasicInfo(cli, tokenValue.ATID, tokenValue.UserID, tokenValue.ATCreateAt)
+	atValue, err := om.TokenGenerate.AccessToken(atBI)
 	if err != nil {
 		return
 	}
 	tokenValue.AccessToken = atValue
 	tokenInfo := map[string]interface{}{
 		"AccessToken": tokenValue.AccessToken,
+		"ATID":        tokenValue.ATID,
 		"ATCreateAt":  tokenValue.ATCreateAt,
 	}
 	if scopes != "" {
@@ -235,4 +297,38 @@ func (om *OAuthManager) checkRefreshTokenExpire(token *Token) error {
 		err = ErrRTExpire
 	}
 	return err
+}
+
+// checkAccessTokenValidity 检查访问令牌的有效性
+func (om *OAuthManager) checkAccessTokenValidity(tv string, token *Token) (err error) {
+	cli, err := om.GetClient(token.ClientID)
+	if err != nil {
+		return
+	}
+	bi := NewTokenBasicInfo(cli, token.ATID, token.UserID, token.ATCreateAt)
+	v, err := om.TokenGenerate.AccessToken(bi)
+	if err != nil {
+		return
+	}
+	if tv != v {
+		err = ErrATInvalid
+	}
+	return
+}
+
+// checkRefreshTokenValidity 检查刷新令牌的有效性
+func (om *OAuthManager) checkRefreshTokenValidity(rv string, token *Token) (err error) {
+	cli, err := om.GetClient(token.ClientID)
+	if err != nil {
+		return
+	}
+	bi := NewTokenBasicInfo(cli, token.RTID, token.UserID, token.RTCreateAt)
+	v, err := om.TokenGenerate.RefreshToken(bi)
+	if err != nil {
+		return
+	}
+	if rv != v {
+		err = ErrRTInvalid
+	}
+	return
 }

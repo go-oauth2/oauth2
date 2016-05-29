@@ -22,6 +22,10 @@ func NewTokenMongoStore(mongoConfig *MongoConfig, cName string) (TokenStore, err
 	if cName == "" {
 		cName = DefaultTokenCollectionName
 	}
+	err = mHandler.C(cName).EnsureIndexKey("ID", "AccessToken", "RefreshToken")
+	if err != nil {
+		return nil, err
+	}
 	return &TokenMongoStore{
 		cName:    cName,
 		mHandler: mHandler,
@@ -35,7 +39,7 @@ type TokenMongoStore struct {
 }
 
 // Create Add item
-func (tm *TokenMongoStore) Create(item Token) (id int64, err error) {
+func (tm *TokenMongoStore) Create(item *Token) (id int64, err error) {
 	tm.mHandler.CHandle(tm.cName, func(c *mgo.Collection) {
 		tid, err := tm.mHandler.IncrID(tm.cName)
 		if err != nil {

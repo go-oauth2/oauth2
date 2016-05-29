@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/LyricTian/go.uuid"
+
 	"gopkg.in/oauth2.v1"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -15,8 +17,9 @@ func TestTokenGenerate(t *testing.T) {
 		ClientSecret: "654321",
 		ClientDomain: "http://www.lyric.name",
 	}
-	basicInfo := oauth2.TokenBasicInfo{
+	basicInfo := &oauth2.TokenBasicInfo{
 		Client:   cli,
+		TokenID:  uuid.NewV4().String(),
 		UserID:   "999999",
 		CreateAt: time.Now().Unix(),
 	}
