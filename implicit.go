@@ -1,7 +1,5 @@
 package oauth2
 
-import "time"
-
 // NewImplicitManager 创建默认的简化模式管理实例
 // oaManager OAuth授权管理
 // config 配置参数(nil则使用默认值)
@@ -35,27 +33,6 @@ func (im *ImplicitManager) GenerateToken(clientID, userID, redirectURI, scopes s
 	if err != nil {
 		return
 	}
-	createAt := time.Now().Unix()
-	basicInfo := NewTokenBasicInfo(cli, userID, createAt)
-	atValue, err := im.oAuthManager.TokenGenerate.AccessToken(basicInfo)
-	if err != nil {
-		return
-	}
-	tokenValue := Token{
-		ClientID:    clientID,
-		UserID:      userID,
-		AccessToken: atValue,
-		ATCreateAt:  createAt,
-		ATExpiresIn: time.Duration(im.config.ATExpiresIn) * time.Second,
-		Scope:       scopes,
-		CreateAt:    createAt,
-		Status:      Actived,
-	}
-	id, err := im.oAuthManager.TokenStore.Create(tokenValue)
-	if err != nil {
-		return
-	}
-	tokenValue.ID = id
-	token = &tokenValue
+	token, err = im.oAuthManager.GenerateToken(cli, userID, scopes, im.config.ATExpiresIn, 0, false)
 	return
 }

@@ -26,7 +26,7 @@ func TestTokenMongoStore(t *testing.T) {
 			CreateAt:     createAt,
 			Status:       oauth2.Actived,
 		}
-		id, err := tokenStore.Create(tokenValue)
+		id, err := tokenStore.Create(&tokenValue)
 		So(err, ShouldBeNil)
 		So(id, ShouldBeGreaterThanOrEqualTo, 1)
 		tokenValue.ID = id

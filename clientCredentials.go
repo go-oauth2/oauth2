@@ -1,7 +1,5 @@
 package oauth2
 
-import "time"
-
 // NewCCManager 创建默认的客户端模式管理实例
 // oaManager OAuth授权管理
 // config 配置参数(nil则使用默认值)
@@ -37,26 +35,6 @@ func (cm *CCManager) GenerateToken(clientID, clientSecret, scopes string) (token
 		err = ErrCSInvalid
 		return
 	}
-	createAt := time.Now().Unix()
-	basicInfo := NewTokenBasicInfo(cli, "", createAt)
-	atValue, err := cm.oAuthManager.TokenGenerate.AccessToken(basicInfo)
-	if err != nil {
-		return
-	}
-	tokenValue := Token{
-		ClientID:    clientID,
-		AccessToken: atValue,
-		ATCreateAt:  createAt,
-		ATExpiresIn: time.Duration(cm.config.ATExpiresIn) * time.Second,
-		Scope:       scopes,
-		CreateAt:    createAt,
-		Status:      Actived,
-	}
-	id, err := cm.oAuthManager.TokenStore.Create(tokenValue)
-	if err != nil {
-		return
-	}
-	tokenValue.ID = id
-	token = &tokenValue
+	token, err = cm.oAuthManager.GenerateToken(cli, "", scopes, cm.config.ATExpiresIn, 0, false)
 	return
 }
