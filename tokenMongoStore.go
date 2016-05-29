@@ -22,7 +22,7 @@ func NewTokenMongoStore(mongoConfig *MongoConfig, cName string) (TokenStore, err
 	if cName == "" {
 		cName = DefaultTokenCollectionName
 	}
-	err = mHandler.C(cName).EnsureIndexKey("ID", "AccessToken", "RefreshToken")
+	err = mHandler.C(cName).EnsureIndexKey("AccessToken", "RefreshToken")
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (tm *TokenMongoStore) Create(item *Token) (id int64, err error) {
 // Update Modify item
 func (tm *TokenMongoStore) Update(id int64, info map[string]interface{}) (err error) {
 	tm.mHandler.CHandle(tm.cName, func(c *mgo.Collection) {
-		err = c.Update(bson.M{"ID": id}, bson.M{"$set": info})
+		err = c.UpdateId(id, bson.M{"$set": info})
 		if err != nil {
 			return
 		}
@@ -69,7 +69,7 @@ func (tm *TokenMongoStore) Update(id int64, info map[string]interface{}) (err er
 func (tm *TokenMongoStore) findOne(query interface{}) (token *Token, err error) {
 	tm.mHandler.CHandle(tm.cName, func(c *mgo.Collection) {
 		var result []Token
-		err = c.Find(query).Sort("-ID").Limit(1).All(&result)
+		err = c.Find(query).Sort("-_id").Limit(1).All(&result)
 		if err != nil {
 			return
 		}
