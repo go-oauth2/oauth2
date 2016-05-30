@@ -6,7 +6,7 @@ import (
 
 // Token 令牌信息
 type Token struct {
-	ID           int64         `bson:"ID"`           // 唯一标识(自增ID)
+	ID           int64         `bson:"_id"`          // 唯一标识(自增ID)
 	ClientID     string        `bson:"ClientID"`     // 客户端标识
 	UserID       string        `bson:"UserID"`       // 用户标识
 	AccessToken  string        `bson:"AccessToken"`  // 访问令牌
