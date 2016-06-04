@@ -7,12 +7,17 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestACMemoryStore(t *testing.T) {
-	Convey("AC memory store test", t, func() {
-		store := NewACMemoryStore(1)
+func TestACRedisStore(t *testing.T) {
+	Convey("Authorization code redis store test", t, func() {
+		store, err := NewACRedisStore(&RedisConfig{
+			Addr: "192.168.33.70:6379",
+			DB:   1,
+		}, "")
+		So(err, ShouldBeNil)
 		item := ACInfo{
 			ClientID:  "123456",
 			UserID:    "999999",
+			Code:      "",
 			CreateAt:  time.Now().Unix(),
 			ExpiresIn: time.Millisecond * 500,
 		}

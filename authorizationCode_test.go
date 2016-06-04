@@ -1,20 +1,22 @@
-package oauth2_test
+package oauth2
 
 import (
 	"testing"
-
-	"gopkg.in/oauth2.v1"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestACManager(t *testing.T) {
-	ClientHandle(func(info oauth2.Client) {
-		userID := "999999"
-		oManager, err := oauth2.CreateDefaultOAuthManager(oauth2.NewMongoConfig(MongoURL, DBName), "", "", nil)
+	ClientHandle(func(info Client) {
+		oManager, err := NewDefaultOAuthManager(nil, NewMongoConfig(MongoURL, DBName), "", "")
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
+		oManager.SetACGenerate(NewDefaultACGenerate())
+		oManager.SetACStore(NewACMemoryStore(0))
+
+		userID := "999999"
+
 		Convey("Authorization Code Manager Test", t, func() {
 			manager := oManager.GetACManager()
 

@@ -16,10 +16,9 @@ func NewMongoConfig(url, dbName string) *MongoConfig {
 
 // ACConfig 授权码模式配置参数(Authorization Code Config)
 type ACConfig struct {
-	RandomCodeLen int   // 随机码的长度(用于生成授权码的随机码)
-	ACExpiresIn   int64 // 授权码有效期(单位秒)
-	ATExpiresIn   int64 // 访问令牌有效期(单位秒)
-	RTExpiresIn   int64 // 更新令牌有效期(单位秒)
+	ACExpiresIn int64 // 授权码有效期(单位秒)
+	ATExpiresIn int64 // 访问令牌有效期(单位秒)
+	RTExpiresIn int64 // 更新令牌有效期(单位秒)
 }
 
 // ImplicitConfig 简化模式配置参数

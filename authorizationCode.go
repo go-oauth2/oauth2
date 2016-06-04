@@ -3,7 +3,7 @@ package oauth2
 import (
 	"time"
 
-	"gopkg.in/LyricTian/lib.v2"
+	"github.com/LyricTian/go.uuid"
 )
 
 // NewACManager 创建授权码模式管理实例
@@ -12,9 +12,6 @@ import (
 func NewACManager(oaManager *OAuthManager, config *ACConfig) *ACManager {
 	if config == nil {
 		config = new(ACConfig)
-	}
-	if config.RandomCodeLen == 0 {
-		config.RandomCodeLen = DefaultRandomCodeLen
 	}
 	if config.ACExpiresIn == 0 {
 		config.ACExpiresIn = DefaultACExpiresIn
@@ -53,7 +50,7 @@ func (am *ACManager) GenerateCode(clientID, userID, redirectURI, scopes string) 
 		UserID:      userID,
 		RedirectURI: redirectURI,
 		Scope:       scopes,
-		Code:        lib.NewRandom(am.config.RandomCodeLen).NumberAndLetter(),
+		Code:        uuid.NewV4().String(),
 		CreateAt:    time.Now().Unix(),
 		ExpiresIn:   time.Duration(am.config.ACExpiresIn) * time.Second,
 	}

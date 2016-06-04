@@ -1,17 +1,15 @@
-package oauth2_test
+package oauth2
 
 import (
 	"testing"
-
-	"gopkg.in/oauth2.v1"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestClientMongoStore(t *testing.T) {
-	ClientHandle(func(info oauth2.Client) {
+	ClientHandle(func(info Client) {
 		Convey("Client mongodb store test", t, func() {
-			clientStore, err := oauth2.NewClientMongoStore(oauth2.NewMongoConfig(MongoURL, DBName), "")
+			clientStore, err := NewClientMongoStore(NewMongoConfig(MongoURL, DBName), "")
 			So(err, ShouldBeNil)
 			client, err := clientStore.GetByID(info.ID())
 			So(err, ShouldBeNil)

@@ -1,22 +1,25 @@
-package oauth2_test
+package oauth2
 
 import (
 	"gopkg.in/LyricTian/lib.v2"
 	"gopkg.in/LyricTian/lib.v2/mongo"
 	"gopkg.in/mgo.v2/bson"
-	"gopkg.in/oauth2.v1"
 )
 
 const (
 	// MongoURL MongoDB连接字符串
-	MongoURL = "mongodb://admin:123456@45.78.35.157:37017"
+	MongoURL = "mongodb://admin:123456@192.168.33.70:27017"
 	// DBName 数据库名称
 	DBName = "test"
 )
 
+var (
+	oManager *OAuthManager
+)
+
 // ClientHandle 执行客户端处理
-func ClientHandle(handle func(cli oauth2.Client)) {
-	info := oauth2.DefaultClient{
+func ClientHandle(handle func(cli Client)) {
+	info := DefaultClient{
 		ClientID:     bson.NewObjectId().Hex(),
 		ClientDomain: "http://www.example.com",
 	}
@@ -26,13 +29,13 @@ func ClientHandle(handle func(cli oauth2.Client)) {
 		panic(err)
 	}
 	defer func() {
-		err = mHandler.C(oauth2.DefaultClientCollectionName).RemoveId(info.ClientID)
+		err = mHandler.C(DefaultClientCollectionName).RemoveId(info.ClientID)
 		if err != nil {
 			panic(err)
 		}
 		mHandler.Session().Close()
 	}()
-	err = mHandler.C(oauth2.DefaultClientCollectionName).Insert(info)
+	err = mHandler.C(DefaultClientCollectionName).Insert(info)
 	if err != nil {
 		panic(err)
 	}

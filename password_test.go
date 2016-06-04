@@ -1,20 +1,19 @@
-package oauth2_test
+package oauth2
 
 import (
 	"testing"
-
-	"gopkg.in/oauth2.v1"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestPasswordManager(t *testing.T) {
-	ClientHandle(func(info oauth2.Client) {
+	ClientHandle(func(info Client) {
 		userID := "999999"
-		oManager, err := oauth2.CreateDefaultOAuthManager(oauth2.NewMongoConfig(MongoURL, DBName), "", "", nil)
+		oManager, err := NewDefaultOAuthManager(nil, NewMongoConfig(MongoURL, DBName), "", "")
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
+
 		Convey("Password Manager Test", t, func() {
 			manager := oManager.GetPasswordManager()
 

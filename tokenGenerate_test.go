@@ -1,4 +1,4 @@
-package oauth2_test
+package oauth2
 
 import (
 	"testing"
@@ -6,25 +6,23 @@ import (
 
 	"github.com/LyricTian/go.uuid"
 
-	"gopkg.in/oauth2.v1"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestTokenGenerate(t *testing.T) {
-	cli := oauth2.DefaultClient{
+	cli := DefaultClient{
 		ClientID:     "123456",
 		ClientSecret: "654321",
 		ClientDomain: "http://www.lyric.name",
 	}
-	basicInfo := &oauth2.TokenBasicInfo{
+	basicInfo := &TokenBasicInfo{
 		Client:   cli,
 		TokenID:  uuid.NewV4().String(),
 		UserID:   "999999",
 		CreateAt: time.Now().Unix(),
 	}
 	Convey("Token generate test", t, func() {
-		tokenGenerate := oauth2.NewDefaultTokenGenerate()
+		tokenGenerate := NewDefaultTokenGenerate()
 		Convey("Generate access token", func() {
 			token, err := tokenGenerate.AccessToken(basicInfo)
 			So(err, ShouldBeNil)

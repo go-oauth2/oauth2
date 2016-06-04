@@ -6,32 +6,37 @@ import (
 	"time"
 )
 
-// CreateDefaultOAuthManager 创建默认的OAuth授权管理实例
-// mongoConfig MongoDB配置参数
-// tokenCollectionName 存储令牌的集合名称(默认为AuthToken)
-// clientCollectionName 存储客户端的集合名称(默认为ClientInfo)
-// oauthConfig 配置参数
-func CreateDefaultOAuthManager(mongoConfig *MongoConfig, tokenCollectionName, clientCollectionName string, oauthConfig *OAuthConfig) (*OAuthManager, error) {
-	if oauthConfig == nil {
-		oauthConfig = new(OAuthConfig)
+// NewOAuthManager 创建OAuth授权管理实例
+// cfg 配置参数
+func NewOAuthManager(cfg *OAuthConfig) *OAuthManager {
+	if cfg == nil {
+		cfg = new(OAuthConfig)
 	}
-	oaManager := &OAuthManager{
-		Config:        oauthConfig,
-		ACGenerate:    NewDefaultACGenerate(),
-		ACStore:       NewACMemoryStore(0),
-		TokenGenerate: NewDefaultTokenGenerate(),
+	return &OAuthManager{
+		Config: cfg,
 	}
-	tokenStore, err := NewTokenMongoStore(mongoConfig, tokenCollectionName)
+}
+
+// NewDefaultOAuthManager 创建默认的OAuth授权管理实例
+// cfg 配置参数
+// mcfg MongoDB配置参数
+// ccName 存储客户端的集合名称(默认为ClientInfo)
+// tcName 存储令牌的集合名称(默认为AuthToken)
+func NewDefaultOAuthManager(cfg *OAuthConfig, mcfg *MongoConfig, ccName, tcName string) (*OAuthManager, error) {
+	oManager := NewOAuthManager(cfg)
+	clientStore, err := NewClientMongoStore(mcfg, ccName)
 	if err != nil {
 		return nil, err
 	}
-	oaManager.TokenStore = tokenStore
-	clientStore, err := NewClientMongoStore(mongoConfig, clientCollectionName)
+	oManager.SetClientStore(clientStore)
+	tokenStore, err := NewTokenMongoStore(mcfg, tcName)
 	if err != nil {
 		return nil, err
 	}
-	oaManager.ClientStore = clientStore
-	return oaManager, nil
+	oManager.SetTokenStore(tokenStore)
+	oManager.SetTokenGenerate(NewDefaultTokenGenerate())
+
+	return oManager, nil
 }
 
 // OAuthManager OAuth授权管理
@@ -44,6 +49,11 @@ type OAuthManager struct {
 	ClientStore   ClientStore   // 客户端存储
 }
 
+// SetConfig 设置授权码生成接口
+func (om *OAuthManager) SetConfig(cfg *OAuthConfig) {
+	om.Config = cfg
+}
+
 // SetACGenerate 设置授权码生成接口
 func (om *OAuthManager) SetACGenerate(generate ACGenerate) {
 	om.ACGenerate = generate
@@ -52,6 +62,21 @@ func (om *OAuthManager) SetACGenerate(generate ACGenerate) {
 // SetACStore 设置授权码存储接口
 func (om *OAuthManager) SetACStore(store ACStore) {
 	om.ACStore = store
+}
+
+// SetTokenGenerate 设置令牌生成接口
+func (om *OAuthManager) SetTokenGenerate(generate TokenGenerate) {
+	om.TokenGenerate = generate
+}
+
+// SetTokenStore 设置令牌存储接口
+func (om *OAuthManager) SetTokenStore(store TokenStore) {
+	om.TokenStore = store
+}
+
+// SetClientStore 设置客户端存储接口
+func (om *OAuthManager) SetClientStore(store ClientStore) {
+	om.ClientStore = store
 }
 
 // GetACManager 获取授权码模式管理实例
