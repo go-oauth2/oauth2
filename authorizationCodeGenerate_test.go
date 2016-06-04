@@ -1,19 +1,18 @@
-package oauth2_test
+package oauth2
 
 import (
 	"testing"
 	"time"
 
 	"gopkg.in/LyricTian/lib.v2"
-	"gopkg.in/oauth2.v1"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestACGenerate(t *testing.T) {
 	Convey("Authorization code generate test", t, func() {
-		acGenerate := oauth2.NewDefaultACGenerate()
-		info := &oauth2.ACInfo{
+		acGenerate := NewDefaultACGenerate()
+		info := &ACInfo{
 			ID:       1,
 			ClientID: "123456",
 			UserID:   "999999",

@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/LyricTian/go.uuid"
+
 	"gopkg.in/LyricTian/lib.v2"
 )
 
@@ -30,31 +32,28 @@ func NewDefaultACGenerate() ACGenerate {
 // ACGenerateDefault 默认的授权码生成方式
 type ACGenerateDefault struct{}
 
-func (ag *ACGenerateDefault) genToken(info *ACInfo) (string, error) {
-	var buf bytes.Buffer
-	_, _ = buf.WriteString(info.ClientID)
-	_ = buf.WriteByte('_')
+func (ag *ACGenerateDefault) genCode(info *ACInfo) (string, error) {
+	ns, _ := uuid.FromString(info.Code)
+	buf := bytes.NewBuffer(uuid.NewV3(ns, info.ClientID).Bytes())
 	_, _ = buf.WriteString(info.UserID)
-	_ = buf.WriteByte('\n')
 	_, _ = buf.WriteString(strconv.FormatInt(info.CreateAt, 10))
-	_ = buf.WriteByte('\n')
-	_, _ = buf.WriteString(info.Code)
+
 	md5Val, err := lib.NewEncryption(buf.Bytes()).MD5()
 	if err != nil {
 		return "", err
 	}
-	buf.Reset()
 	md5Val = md5Val[:15]
+
 	return md5Val, nil
 }
 
 // Code Authorization code
 func (ag *ACGenerateDefault) Code(info *ACInfo) (string, error) {
-	tokenVal, err := ag.genToken(info)
+	codeVal, err := ag.genCode(info)
 	if err != nil {
 		return "", err
 	}
-	val := base64.URLEncoding.EncodeToString([]byte(tokenVal + "." + strconv.FormatInt(info.ID, 10)))
+	val := base64.URLEncoding.EncodeToString([]byte(codeVal + "." + strconv.FormatInt(info.ID, 10)))
 	return strings.TrimRight(val, "="), nil
 }
 
@@ -64,20 +63,20 @@ func (ag *ACGenerateDefault) parse(code string) (id int64, token string, err err
 		codeLen = 4 - codeLen
 	}
 	code = code + strings.Repeat("=", codeLen)
-	codeVal, err := base64.URLEncoding.DecodeString(code)
+	codeBV, err := base64.URLEncoding.DecodeString(code)
 	if err != nil {
 		return
 	}
-	tokenVal := strings.SplitN(string(codeVal), ".", 2)
-	if len(tokenVal) != 2 {
+	codeVal := strings.SplitN(string(codeBV), ".", 2)
+	if len(codeVal) != 2 {
 		err = errors.New("Token is invalid")
 		return
 	}
-	id, err = strconv.ParseInt(tokenVal[1], 10, 64)
+	id, err = strconv.ParseInt(codeVal[1], 10, 64)
 	if err != nil {
 		return
 	}
-	token = tokenVal[0]
+	token = codeVal[0]
 	return
 }
 
@@ -93,9 +92,9 @@ func (ag *ACGenerateDefault) Verify(code string, info *ACInfo) (valid bool, err 
 	if err != nil {
 		return
 	}
-	tokenVal, err := ag.genToken(info)
+	codeVal, err := ag.genCode(info)
 	if err != nil {
 		return
 	}
-	return token == tokenVal, nil
+	return token == codeVal, nil
 }
