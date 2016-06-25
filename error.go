@@ -1,37 +1,20 @@
 package oauth2
 
-import (
-	"errors"
-)
+import "errors"
 
 var (
-	// ErrClientNotFound Client not found
-	ErrClientNotFound = errors.New("The client is not found.")
+	// ErrNotFound Not Found
+	ErrNotFound = errors.New("not found")
 
-	// ErrACNotFound Authorization code not found
-	ErrACNotFound = errors.New("The authorization code is not found.")
+	// ErrInvalid Invalid
+	ErrInvalid = errors.New("invalid")
 
-	// ErrACInvalid Authorization code invalid
-	ErrACInvalid = errors.New("The authorization code is invalid.")
+	// ErrExpired Expired
+	ErrExpired = errors.New("expired")
 
-	// ErrCSInvalid Client secret invalid
-	ErrCSInvalid = errors.New("The client secret is invalid.")
+	// ErrForbidden Forbidden
+	ErrForbidden = errors.New("forbidden")
 
-	// ErrATNotFound Refresh token not found
-	ErrATNotFound = errors.New("The access token is not found.")
-
-	// ErrATInvalid Access token invalid
-	ErrATInvalid = errors.New("The access token is invalid.")
-
-	// ErrATExpire Access token expire
-	ErrATExpire = errors.New("The access token is expire.")
-
-	// ErrRTNotFound Refresh token not found
-	ErrRTNotFound = errors.New("The refresh token is not found.")
-
-	// ErrRTInvalid Refresh token invalid
-	ErrRTInvalid = errors.New("The refresh token is invalid.")
-
-	// ErrRTExpire Refresh token expire
-	ErrRTExpire = errors.New("The refresh token is expire.")
+	// ErrNilValue Nil Value
+	ErrNilValue = errors.New("nil value")
 )

@@ -1,30 +1,29 @@
 package oauth2
 
-const (
-	// DefaultRandomCodeLen 默认随机码的长度
-	DefaultRandomCodeLen = 6
-	// DefaultACExpiresIn 默认授权码模式的授权码有效期(10分钟)
-	DefaultACExpiresIn = 60 * 10
-	// DefaultATExpiresIn 默认授权码模式的访问令牌有效期(7天)
-	DefaultATExpiresIn = 60 * 60 * 24 * 7
-	// DefaultRTExpiresIn 默认授权码模式的更新令牌有效期(30天)
-	DefaultRTExpiresIn = 60 * 60 * 24 * 30
-	// DefaultIATExpiresIn 默认简化模式的访问令牌有效期(1小时)
-	DefaultIATExpiresIn = 60 * 60
-	// DefaultCCATExpiresIn 默认客户端模式的访问令牌有效期(1天)
-	DefaultCCATExpiresIn = 60 * 60 * 24
-)
-
-// STATUS 提供一些状态标识
-type STATUS byte
+// GrantType 定义授权模式
+type GrantType byte
 
 const (
-	// Deleted 删除状态
-	Deleted STATUS = iota
-	// Actived 激活状态
-	Actived
-	// Blocked 冻结状态
-	Blocked
-	// Expired 过期状态
-	Expired
+	// AuthorizationCode 授权码模式
+	AuthorizationCode GrantType = 1 << (iota + 1)
+	// Implicit 简化模式
+	Implicit
+	// PasswordCredentials 密码模式
+	PasswordCredentials
+	// ClientCredentials 客户端模式
+	ClientCredentials
 )
+
+func (gt GrantType) String() string {
+	switch gt {
+	case 1 << 1:
+		return "authorization_code"
+	case 1 << 2:
+		return "implicit"
+	case 1 << 3:
+		return "password"
+	case 1 << 4:
+		return "clientcredentials"
+	}
+	return "unknown"
+}
