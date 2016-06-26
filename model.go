@@ -16,8 +16,8 @@ type (
 		GetRetainData() interface{}
 	}
 
-	// Authorize 授权信息模型接口
-	Authorize interface {
+	// TokenInfo 令牌信息模型接口
+	TokenInfo interface {
 		// 客户端标识
 		GetClientID() string
 		// 设置客户端标识
@@ -34,65 +34,31 @@ type (
 		GetScope() string
 		// 设置权限范围
 		SetScope(string)
-		// 创建时间
-		GetCreateAt() time.Time
-		// 设置创建时间
-		SetCreateAt(time.Time)
-		// 有效期
-		GetExpiresIn() time.Duration
-		// 设置有效期
-		SetExpiresIn(time.Duration)
-		// 授权令牌
-		GetToken() string
-		// 设置授权令牌
-		SetToken(string)
-		// 用于标识授权令牌的唯一标识码
-		GetIdentifier() string
-		// 设置用于标识授权令牌的唯一标识码
-		SetIdentifier(string)
-	}
 
-	// TokenInfo 令牌信息模型接口
-	TokenInfo interface {
-		// 客户端标识
-		GetClientID() string
-		// 设置客户端标识
-		SetClientID(string)
-		// 用户标识
-		GetUserID() string
-		// 设置用户标识
-		SetUserID(string)
-		// 访问令牌
-		GetAccess() TokenBasic
-		// 设置访问令牌
-		SetAccess(TokenBasic)
-		// 更新令牌
-		GetRefresh() TokenBasic
-		// 设置更新令牌
-		SetRefresh(TokenBasic)
-		// 权限范围
-		GetScope() string
-		// 设置权限范围
-		SetScope(string)
-	}
-
-	// TokenBasic 令牌基础模型接口
-	TokenBasic interface {
-		// 创建时间
-		GetCreateAt() time.Time
-		// 设置创建时间
-		SetCreateAt(time.Time)
-		// 有效期
-		GetExpiresIn() time.Duration
-		// 设置有效期
-		SetExpiresIn(time.Duration)
 		// 令牌
 		GetToken() string
 		// 设置令牌
 		SetToken(string)
-		// 用于标识令牌的唯一标识码
-		GetIdentifier() string
-		// 设置用于标识令牌的唯一标识码
-		SetIdentifier(string)
+		// 令牌创建时间
+		GetTokenCreateAt() time.Time
+		// 设置令牌创建时间
+		SetTokenCreateAt(time.Time)
+		// 令牌有效期
+		GetTokenExpiresIn() time.Duration
+		// 设置令牌有效期
+		SetTokenExpiresIn(time.Duration)
+
+		// 刷新令牌
+		GetRefresh() string
+		// 设置刷新令牌
+		SetRefresh(string)
+		// 刷新令牌创建时间
+		GetRefreshCreateAt() time.Time
+		// 设置刷新令牌创建时间
+		SetRefreshCreateAt(time.Time)
+		// 刷新令牌有效期
+		GetRefreshExpiresIn() time.Duration
+		// 设置刷新令牌有效期
+		SetRefreshExpiresIn(time.Duration)
 	}
 )
