@@ -9,13 +9,28 @@ import (
 
 // Config 授权配置参数
 type Config struct {
-	TokenExpiresIn   time.Duration // 令牌有效期
-	RefreshExpiresIn time.Duration // 刷新令牌有效期
+	TokenExp   time.Duration // 令牌有效期
+	RefreshExp time.Duration // g令牌有效期
 }
 
 // NewManager 创建Manager的实例
 func NewManager() *Manager {
-	return nil
+	m := &Manager{
+		injector: inject.New(),
+	}
+	// 设定参数默认值
+
+	// 设定授权码的有效期为10分钟
+	m.SetRTConfig(oauth2.Code, &Config{TokenExp: time.Minute * 10})
+	// 设定简化模式授权令牌的有效期为1小时
+	m.SetRTConfig(oauth2.Token, &Config{TokenExp: time.Hour * 1})
+
+	// 设定授权码模式令牌的有效期为2小时,g令牌的有效期为3天
+	m.SetGTConfig(oauth2.PasswordCredentials, &Config{TokenExp: time.Hour * 2, RefreshExp: time.Hour * 24 * 3})
+
+	// 设定客户端模式令牌的有效期为1小时
+	m.SetGTConfig(oauth2.ClientCredentials, &Config{TokenExp: time.Hour * 2})
+	return m
 }
 
 // Manager OAuth2授权管理
@@ -149,7 +164,7 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 		ti.SetRedirectURI(tgr.RedirectURI)
 		ti.SetScope(tgr.Scope)
 		ti.SetTokenCreateAt(td.CreateAt)
-		ti.SetTokenExpiresIn(m.rtcfg[rt].TokenExpiresIn)
+		ti.SetTokenExpiresIn(m.rtcfg[rt].TokenExp)
 		ti.SetToken(tv)
 		err = stor.Create(ti)
 		if err != nil {
@@ -188,7 +203,7 @@ func (m *Manager) checkAuthToken(tgr *oauth2.TokenGenerateRequest) (err error) {
 // gt 授权模式
 // tgr 生成令牌的参数
 func (m *Manager) GenerateToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (token, refresh string, err error) {
-	if gt == oauth2.AuthorizationCode {
+	if gt == oauth2.AuthorizationCodeCredentials {
 		err = m.checkAuthToken(tgr)
 		if err != nil {
 			return
@@ -217,11 +232,11 @@ func (m *Manager) GenerateToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRe
 		ti.SetRedirectURI(tgr.RedirectURI)
 		ti.SetScope(tgr.Scope)
 		ti.SetTokenCreateAt(td.CreateAt)
-		ti.SetTokenExpiresIn(m.gtcfg[gt].TokenExpiresIn)
+		ti.SetTokenExpiresIn(m.gtcfg[gt].TokenExp)
 		ti.SetToken(tv)
 		if rv != "" {
 			ti.SetRefreshCreateAt(td.CreateAt)
-			ti.SetRefreshExpiresIn(m.gtcfg[gt].RefreshExpiresIn)
+			ti.SetRefreshExpiresIn(m.gtcfg[gt].RefreshExp)
 			ti.SetRefresh(rv)
 		}
 		err = stor.Create(ti)
@@ -236,7 +251,7 @@ func (m *Manager) GenerateToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRe
 	return
 }
 
-// RefreshToken 刷新令牌
+// RefreshToken 更新访问令牌
 func (m *Manager) RefreshToken(refresh, scope string) (token string, err error) {
 	ti, err := m.CheckRefreshToken(refresh)
 	if err != nil {
@@ -305,7 +320,7 @@ func (m *Manager) CheckToken(token string) (info oauth2.TokenInfo, err error) {
 		} else if ti == nil {
 			err = ErrTokenInvalid
 			return
-		} else if ti.GetRefresh() != "" && ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(ct) { // 检查刷新令牌是否过期
+		} else if ti.GetRefresh() != "" && ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(ct) { // 检查g令牌是否过期
 			if verr := stor.ExpiredByRefresh(ti.GetRefresh()); verr != nil {
 				err = verr
 				return
@@ -327,7 +342,7 @@ func (m *Manager) CheckToken(token string) (info oauth2.TokenInfo, err error) {
 	return
 }
 
-// CheckRefreshToken 访问令牌检查
+// CheckRefreshToken 更新令牌检查
 func (m *Manager) CheckRefreshToken(refresh string) (info oauth2.TokenInfo, err error) {
 	if refresh == "" {
 		err = ErrRefreshInvalid

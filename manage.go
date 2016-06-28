@@ -8,7 +8,7 @@ type TokenGenerateRequest struct {
 	RedirectURI       string // 重定向URI
 	Scope             string // 授权范围
 	Code              string // 授权码(授权码模式使用)
-	IsGenerateRefresh bool   // 是否生成刷新令牌
+	IsGenerateRefresh bool   // 是否生成更新令牌
 }
 
 // Manager OAuth2授权管理接口
@@ -18,13 +18,13 @@ type Manager interface {
 	// tgr 生成令牌的请求参数
 	GenerateAuthToken(rt ResponseType, tgr *TokenGenerateRequest) (token string, err error)
 
-	// GenerateToken 生成访问令牌、刷新令牌
+	// GenerateToken 生成访问令牌、更新令牌
 	// rt 授权模式
 	// tgr 生成令牌的请求参数
 	GenerateToken(rt GrantType, tgr *TokenGenerateRequest) (token, refresh string, err error)
 
-	// RefreshToken 使用刷新令牌更新访问令牌
-	// refresh 刷新令牌
+	// RefreshToken 使用更新令牌更新访问令牌
+	// refresh 更新令牌
 	// scope 作用域
 	RefreshToken(refresh, scope string) (token string, err error)
 
@@ -35,6 +35,6 @@ type Manager interface {
 	// CheckToken 令牌检查，如果存在则返回令牌信息
 	CheckToken(token string) (ti TokenInfo, err error)
 
-	// CheckRefreshToken 访问令牌检查，如果存在则返回令牌信息
+	// CheckRefreshToken 更新令牌检查，如果存在则返回令牌信息
 	CheckRefreshToken(refresh string) (ti TokenInfo, err error)
 }

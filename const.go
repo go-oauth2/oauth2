@@ -24,8 +24,8 @@ func (rt ResponseType) String() string {
 type GrantType byte
 
 const (
-	// AuthorizationCode 授权码模式
-	AuthorizationCode GrantType = 1 << (iota + 1)
+	// AuthorizationCodeCredentials 授权码模式
+	AuthorizationCodeCredentials GrantType = 1 << (iota + 1)
 	// PasswordCredentials 密码模式
 	PasswordCredentials
 	// ClientCredentials 客户端模式

@@ -13,12 +13,12 @@ type (
 	// AuthorizeTokenGenerate 授权令牌生成接口
 	AuthorizeTokenGenerate interface {
 		// 授权令牌
-		Token(data *TokenGenerateBasic) (string, error)
+		Token(data *TokenGenerateBasic) (token string, err error)
 	}
 
 	// TokenGenerate 令牌生成接口
 	TokenGenerate interface {
 		// 生成令牌
-		Token(data *TokenGenerateBasic, isGenRefresh bool) (string, string, error)
+		Token(data *TokenGenerateBasic, isGenRefresh bool) (token string, refresh string, err error)
 	}
 )

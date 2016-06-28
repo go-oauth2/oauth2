@@ -6,7 +6,7 @@ import "time"
 type (
 	// ClientInfo 客户端信息模型接口
 	ClientInfo interface {
-		// 客户端唯一标识
+		// 客户端ID
 		GetID() string
 		// 客户端秘钥
 		GetSecret() string
@@ -18,13 +18,13 @@ type (
 
 	// TokenInfo 令牌信息模型接口
 	TokenInfo interface {
-		// 客户端标识
+		// 客户端ID
 		GetClientID() string
-		// 设置客户端标识
+		// 设置客户端ID
 		SetClientID(string)
-		// 用户标识
+		// 用户ID
 		GetUserID() string
-		// 设置用户标识
+		// 设置用户ID
 		SetUserID(string)
 		// 重定向URI
 		GetRedirectURI() string
@@ -48,17 +48,17 @@ type (
 		// 设置令牌有效期
 		SetTokenExpiresIn(time.Duration)
 
-		// 刷新令牌
+		// 更新令牌
 		GetRefresh() string
-		// 设置刷新令牌
+		// 设置更新令牌
 		SetRefresh(string)
-		// 刷新令牌创建时间
+		// 更新令牌创建时间
 		GetRefreshCreateAt() time.Time
-		// 设置刷新令牌创建时间
+		// 设置更新令牌创建时间
 		SetRefreshCreateAt(time.Time)
-		// 刷新令牌有效期
+		// 更新令牌有效期
 		GetRefreshExpiresIn() time.Duration
-		// 设置刷新令牌有效期
+		// 设置更新令牌有效期
 		SetRefreshExpiresIn(time.Duration)
 	}
 )
