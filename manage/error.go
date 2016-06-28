@@ -15,9 +15,15 @@ var (
 	// ErrAuthTokenInvalid Authorize token invalid
 	ErrAuthTokenInvalid = errors.New("authorize token invalid")
 
-	// ErrExpired Expired
-	ErrExpired = errors.New("expired")
+	// ErrRefreshInvalid Refresh token invalid
+	ErrRefreshInvalid = errors.New("refresh token invalid")
 
-	// ErrForbidden Forbidden
-	ErrForbidden = errors.New("forbidden")
+	// ErrRefreshExpired Refresh token expired
+	ErrRefreshExpired = errors.New("refresh token expired")
+
+	// ErrTokenInvalid Token invalid
+	ErrTokenInvalid = errors.New("token invalid")
+
+	// ErrTokenExpired Token expired
+	ErrTokenExpired = errors.New("token expired")
 )

@@ -1,6 +1,6 @@
-package manage
+package oauth2
 
-// ResponseType 授权类型
+// ResponseType 定义授权类型
 type ResponseType byte
 
 const (
