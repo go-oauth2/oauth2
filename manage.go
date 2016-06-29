@@ -18,23 +18,29 @@ type Manager interface {
 	// tgr 生成令牌的请求参数
 	GenerateAuthToken(rt ResponseType, tgr *TokenGenerateRequest) (token string, err error)
 
-	// GenerateToken 生成访问令牌、更新令牌
+	// GenerateAccessToken 生成访问令牌、更新令牌
 	// rt 授权模式
 	// tgr 生成令牌的请求参数
-	GenerateToken(rt GrantType, tgr *TokenGenerateRequest) (token, refresh string, err error)
+	GenerateAccessToken(rt GrantType, tgr *TokenGenerateRequest) (access, refresh string, err error)
 
-	// RefreshToken 使用更新令牌更新访问令牌
+	// RefreshAccessToken 更新访问令牌
 	// refresh 更新令牌
 	// scope 作用域
-	RefreshToken(refresh, scope string) (token string, err error)
+	RefreshAccessToken(refresh, scope string) (access string, err error)
 
-	// RevokeToken 使用访问令牌废除令牌信息
-	// token 访问令牌
-	RevokeToken(token string) (err error)
+	// RemoveAccessToken 删除访问令牌
+	// access 访问令牌
+	RemoveAccessToken(access string) (err error)
 
-	// CheckToken 令牌检查，如果存在则返回令牌信息
-	CheckToken(token string) (ti TokenInfo, err error)
+	// RemoveRefreshToken 删除更新令牌
+	// refresh 更新令牌
+	RemoveRefreshToken(refresh string) (err error)
 
-	// CheckRefreshToken 更新令牌检查，如果存在则返回令牌信息
-	CheckRefreshToken(refresh string) (ti TokenInfo, err error)
+	// LoadAccessToken 加载访问令牌信息
+	// access 访问令牌
+	LoadAccessToken(access string) (ti TokenInfo, err error)
+
+	// LoadRefreshToken 加载更新令牌信息
+	// refresh 更新令牌
+	LoadRefreshToken(refresh string) (ti TokenInfo, err error)
 }

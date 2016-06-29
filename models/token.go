@@ -4,17 +4,17 @@ import "time"
 
 // Token 令牌信息
 type Token struct {
-	ID               int64         `bson:"_id"`              // 唯一标识
-	ClientID         string        `bson:"ClientID"`         // 客户端标识
-	UserID           string        `bson:"UserID"`           // 用户标识
-	RedirectURI      string        `bson:"RedirectURI"`      // 重定向URI
-	Scope            string        `bson:"Scope"`            // 权限范围
-	Token            string        `bson:"Token"`            // 令牌
-	TokenCreateAt    time.Time     `bson:"TokenCreateAt"`    // 令牌创建时间
-	TokenExpiresIn   time.Duration `bson:"TokenExpiresIn"`   // 令牌有效期
-	Refresh          string        `bson:"Refresh"`          // 更新令牌
-	RefreshCreateAt  time.Time     `bson:"RefreshCreateAt"`  // 更新令牌创建时间
-	RefreshExpiresIn time.Duration `bson:"RefreshExpiresIn"` // 更新令牌有效期
+	ClientID         string        // 客户端标识
+	UserID           string        // 用户标识
+	RedirectURI      string        // 重定向URI
+	Scope            string        // 权限范围
+	AuthType         string        // 令牌授权类型
+	Access           string        // 访问令牌
+	AccessCreateAt   time.Time     // 访问令牌创建时间
+	AccessExpiresIn  time.Duration // 访问令牌有效期
+	Refresh          string        // 更新令牌
+	RefreshCreateAt  time.Time     // 更新令牌创建时间
+	RefreshExpiresIn time.Duration // 更新令牌有效期
 }
 
 // GetClientID 客户端ID
@@ -57,34 +57,44 @@ func (t *Token) SetScope(scope string) {
 	t.Scope = scope
 }
 
-// GetToken 令牌
-func (t *Token) GetToken() string {
-	return t.Token
+// GetAuthType 授权类型
+func (t *Token) GetAuthType() string {
+	return t.AuthType
 }
 
-// SetToken 设置令牌
-func (t *Token) SetToken(token string) {
-	t.Token = token
+// SetAuthType 设置授权类型
+func (t *Token) SetAuthType(authType string) {
+	t.AuthType = authType
 }
 
-// GetTokenCreateAt 令牌创建时间
-func (t *Token) GetTokenCreateAt() time.Time {
-	return t.TokenCreateAt
+// GetAccess 访问令牌
+func (t *Token) GetAccess() string {
+	return t.Access
 }
 
-// SetTokenCreateAt 设置令牌创建时间
-func (t *Token) SetTokenCreateAt(createAt time.Time) {
-	t.TokenCreateAt = createAt
+// SetAccess 设置访问令牌
+func (t *Token) SetAccess(access string) {
+	t.Access = access
 }
 
-// GetTokenExpiresIn 令牌有效期
-func (t *Token) GetTokenExpiresIn() time.Duration {
-	return t.TokenExpiresIn
+// GetAccessCreateAt 访问令牌创建时间
+func (t *Token) GetAccessCreateAt() time.Time {
+	return t.AccessCreateAt
 }
 
-// SetTokenExpiresIn 设置令牌有效期
-func (t *Token) SetTokenExpiresIn(exp time.Duration) {
-	t.TokenExpiresIn = exp
+// SetAccessCreateAt 设置访问令牌创建时间
+func (t *Token) SetAccessCreateAt(createAt time.Time) {
+	t.AccessCreateAt = createAt
+}
+
+// GetAccessExpiresIn 访问令牌有效期
+func (t *Token) GetAccessExpiresIn() time.Duration {
+	return t.AccessExpiresIn
+}
+
+// SetAccessExpiresIn 设置访问令牌有效期
+func (t *Token) SetAccessExpiresIn(exp time.Duration) {
+	t.AccessExpiresIn = exp
 }
 
 // GetRefresh 更新令牌

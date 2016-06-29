@@ -13,25 +13,22 @@ type (
 		// Create 创建并存储新的令牌信息
 		Create(info TokenInfo) error
 
-		// UpdateByRefresh 根据刷新令牌更新令牌信息
+		// UpdateByRefresh 使用更新令牌更新令牌信息
 		UpdateByRefresh(refresh string, info TokenInfo) error
 
-		// DeleteByToken 根据令牌删除令牌信息
-		DeleteByToken(val string) error
+		// RemoveByAccess 使用访问令牌删除令牌信息
+		RemoveByAccess(access string) error
 
-		// 根据令牌取出令牌信息数据(获取并删除)
-		TakeByToken(val string) (TokenInfo, error)
+		// RemoveByRefresh 使用更新令牌删除令牌信息
+		RemoveByRefresh(refresh string) error
 
-		// 根据令牌获取令牌信息数据
-		GetByToken(val string) (TokenInfo, error)
+		// 使用访问令牌取出令牌信息数据(获取并删除)
+		TakeByAccess(access string) (TokenInfo, error)
 
-		// 根据刷新令牌获取令牌信息数据
+		// 使用访问令牌获取令牌信息数据
+		GetByAccess(access string) (TokenInfo, error)
+
+		// 根据更新令牌获取令牌信息数据
 		GetByRefresh(refresh string) (TokenInfo, error)
-
-		// 将该令牌对应的令牌信息作过期处理
-		ExpiredByToken(val string) error
-
-		// 将该刷新令牌对应的令牌信息作过期处理
-		ExpiredByRefresh(refresh string) error
 	}
 )

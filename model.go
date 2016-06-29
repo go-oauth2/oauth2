@@ -12,7 +12,7 @@ type (
 		GetSecret() string
 		// 客户端域名URL
 		GetDomain() string
-		// 自定义数据
+		// 预留数据
 		GetRetainData() interface{}
 	}
 
@@ -34,19 +34,23 @@ type (
 		GetScope() string
 		// 设置权限范围
 		SetScope(string)
+		// 令牌授权类型
+		GetAuthType() string
+		// 设置令牌授权类型
+		SetAuthType(string)
 
-		// 令牌
-		GetToken() string
-		// 设置令牌
-		SetToken(string)
-		// 令牌创建时间
-		GetTokenCreateAt() time.Time
-		// 设置令牌创建时间
-		SetTokenCreateAt(time.Time)
-		// 令牌有效期
-		GetTokenExpiresIn() time.Duration
-		// 设置令牌有效期
-		SetTokenExpiresIn(time.Duration)
+		// 访问令牌
+		GetAccess() string
+		// 设置访问令牌
+		SetAccess(string)
+		// 访问令牌创建时间
+		GetAccessCreateAt() time.Time
+		// 设置访问令牌创建时间
+		SetAccessCreateAt(time.Time)
+		// 访问令牌有效期
+		GetAccessExpiresIn() time.Duration
+		// 设置访问令牌有效期
+		SetAccessExpiresIn(time.Duration)
 
 		// 更新令牌
 		GetRefresh() string

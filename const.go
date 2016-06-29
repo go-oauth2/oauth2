@@ -30,6 +30,8 @@ const (
 	PasswordCredentials
 	// ClientCredentials 客户端模式
 	ClientCredentials
+	// RefreshCredentials 更新令牌模式
+	RefreshCredentials
 )
 
 func (gt GrantType) String() string {
@@ -40,6 +42,8 @@ func (gt GrantType) String() string {
 		return "password"
 	case 1 << 3:
 		return "clientcredentials"
+	case 1 << 4:
+		return "refreshtoken"
 	}
 	return "unknown"
 }
