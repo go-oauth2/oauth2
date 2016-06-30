@@ -27,7 +27,6 @@ func NewManager() *Manager {
 
 	// 设定授权码模式令牌的有效期为2小时,g令牌的有效期为3天
 	m.SetGTConfig(oauth2.PasswordCredentials, &Config{TokenExp: time.Hour * 2, RefreshExp: time.Hour * 24 * 3})
-
 	// 设定客户端模式令牌的有效期为1小时
 	m.SetGTConfig(oauth2.ClientCredentials, &Config{TokenExp: time.Hour * 2})
 	return m
@@ -264,8 +263,12 @@ func (m *Manager) RefreshAccessToken(refresh, scope string) (token string, err e
 		if scope != "" {
 			ti.SetScope(scope)
 		}
-		err = stor.UpdateByRefresh(refresh, ti)
-		if err != nil {
+		if verr := stor.Create(ti); verr != nil {
+			err = verr
+			return
+		}
+		if verr := stor.RemoveByRefresh(refresh); verr != nil {
+			err = verr
 			return
 		}
 		token = tv

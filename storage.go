@@ -13,9 +13,6 @@ type (
 		// Create 创建并存储新的令牌信息
 		Create(info TokenInfo) error
 
-		// UpdateByRefresh 使用更新令牌更新令牌信息
-		UpdateByRefresh(refresh string, info TokenInfo) error
-
 		// RemoveByAccess 使用访问令牌删除令牌信息
 		RemoveByAccess(access string) error
 

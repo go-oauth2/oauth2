@@ -1,5 +1,5 @@
-Golang OAuth 2.0协议实现
-========================
+Golang OAuth2 Server
+=====================
 
 [![GoDoc](https://godoc.org/gopkg.in/oauth2.v2?status.svg)](https://godoc.org/gopkg.in/oauth2.v2)
 [![Go Report Card](https://goreportcard.com/badge/gopkg.in/oauth2.v2)](https://goreportcard.com/report/gopkg.in/oauth2.v2)
@@ -9,15 +9,6 @@ Golang OAuth 2.0协议实现
 
 ```bash
 $ go get -v gopkg.in/oauth2.v2
-```
-
-执行测试
--------
-
-```bash
-$ go test -v
-# 或
-$ goconvey -port=9090
 ```
 
 License
