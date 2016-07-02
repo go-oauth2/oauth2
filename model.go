@@ -12,8 +12,8 @@ type (
 		GetSecret() string
 		// 客户端域名URL
 		GetDomain() string
-		// 预留数据
-		GetRetainData() interface{}
+		// Other data
+		GetOtherData() interface{}
 	}
 
 	// TokenInfo 令牌信息模型接口
@@ -39,17 +39,17 @@ type (
 		// 设置令牌授权类型
 		SetAuthType(string)
 
-		// 访问令牌
+		// 访问令牌(或授权令牌)
 		GetAccess() string
-		// 设置访问令牌
+		// 设置访问令牌(或授权令牌)
 		SetAccess(string)
-		// 访问令牌创建时间
+		// 访问令牌(或授权令牌)创建时间
 		GetAccessCreateAt() time.Time
-		// 设置访问令牌创建时间
+		// 设置访问令牌(或授权令牌)创建时间
 		SetAccessCreateAt(time.Time)
-		// 访问令牌有效期
+		// 访问令牌(或授权令牌)有效期
 		GetAccessExpiresIn() time.Duration
-		// 设置访问令牌有效期
+		// 设置访问令牌(或授权令牌)有效期
 		SetAccessExpiresIn(time.Duration)
 
 		// 更新令牌

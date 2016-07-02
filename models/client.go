@@ -22,7 +22,7 @@ func (c *Client) GetDomain() string {
 	return c.Domain
 }
 
-// GetRetainData 预留数据
-func (c *Client) GetRetainData() interface{} {
+// GetOtherData Other data
+func (c *Client) GetOtherData() interface{} {
 	return nil
 }

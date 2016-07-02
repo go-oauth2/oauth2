@@ -19,14 +19,15 @@ func NewManager() *Manager {
 		injector: inject.New(),
 	}
 	// 设定参数默认值
-
 	// 设定授权码的有效期为10分钟
 	m.SetRTConfig(oauth2.Code, &Config{TokenExp: time.Minute * 10})
 	// 设定简化模式授权令牌的有效期为1小时
 	m.SetRTConfig(oauth2.Token, &Config{TokenExp: time.Hour * 1})
 
-	// 设定授权码模式令牌的有效期为2小时,g令牌的有效期为3天
-	m.SetGTConfig(oauth2.PasswordCredentials, &Config{TokenExp: time.Hour * 2, RefreshExp: time.Hour * 24 * 3})
+	// 设定授权码模式令牌的有效期为2小时,更新令牌的有效期为3天
+	m.SetGTConfig(oauth2.AuthorizationCodeCredentials, &Config{TokenExp: time.Hour * 2, RefreshExp: time.Hour * 24 * 3})
+	// 设定密码模式令牌的有效期为2小时,更新令牌的有效期为7天
+	m.SetGTConfig(oauth2.PasswordCredentials, &Config{TokenExp: time.Hour * 2, RefreshExp: time.Hour * 24 * 7})
 	// 设定客户端模式令牌的有效期为1小时
 	m.SetGTConfig(oauth2.ClientCredentials, &Config{TokenExp: time.Hour * 2})
 	return m
@@ -93,7 +94,7 @@ func (m *Manager) MapClientStorage(stor oauth2.ClientStorage) {
 	m.injector.Map(stor)
 }
 
-// MustClientStorage 注入客户端信息存储接口
+// MustClientStorage 强制注入客户端信息存储接口
 func (m *Manager) MustClientStorage(stor oauth2.ClientStorage, err error) {
 	if err != nil {
 		panic(err)
@@ -112,7 +113,7 @@ func (m *Manager) MapTokenStorage(stor oauth2.TokenStorage) {
 	m.injector.Map(stor)
 }
 
-// MustTokenStorage 注入令牌信息存储接口
+// MustTokenStorage 强制注入令牌信息存储接口
 func (m *Manager) MustTokenStorage(stor oauth2.TokenStorage, err error) {
 	if err != nil {
 		panic(err)
@@ -257,7 +258,6 @@ func (m *Manager) RefreshAccessToken(refresh, scope string) (token string, err e
 			err = terr
 			return
 		}
-		ti.SetAuthType(oauth2.RefreshCredentials.String())
 		ti.SetAccess(tv)
 		ti.SetAccessCreateAt(td.CreateAt)
 		if scope != "" {
