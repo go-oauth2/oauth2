@@ -12,8 +12,8 @@ type (
 		GetSecret() string
 		// 客户端域名URL
 		GetDomain() string
-		// Other data
-		GetOtherData() interface{}
+		// 用户数据
+		GetUserData() interface{}
 	}
 
 	// TokenInfo 令牌信息模型接口

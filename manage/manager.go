@@ -87,7 +87,7 @@ func (m *Manager) MapTokenGenerate(gen oauth2.AccessGenerate) {
 }
 
 // MapClientStorage 注入客户端信息存储接口
-func (m *Manager) MapClientStorage(stor oauth2.ClientStorage) {
+func (m *Manager) MapClientStorage(stor oauth2.ClientStore) {
 	if stor == nil {
 		panic(ErrNilValue)
 	}
@@ -95,7 +95,7 @@ func (m *Manager) MapClientStorage(stor oauth2.ClientStorage) {
 }
 
 // MustClientStorage 强制注入客户端信息存储接口
-func (m *Manager) MustClientStorage(stor oauth2.ClientStorage, err error) {
+func (m *Manager) MustClientStorage(stor oauth2.ClientStore, err error) {
 	if err != nil {
 		panic(err)
 	}
@@ -106,7 +106,7 @@ func (m *Manager) MustClientStorage(stor oauth2.ClientStorage, err error) {
 }
 
 // MapTokenStorage 注入令牌信息存储接口
-func (m *Manager) MapTokenStorage(stor oauth2.TokenStorage) {
+func (m *Manager) MapTokenStorage(stor oauth2.TokenStore) {
 	if stor == nil {
 		panic(ErrNilValue)
 	}
@@ -114,7 +114,7 @@ func (m *Manager) MapTokenStorage(stor oauth2.TokenStorage) {
 }
 
 // MustTokenStorage 强制注入令牌信息存储接口
-func (m *Manager) MustTokenStorage(stor oauth2.TokenStorage, err error) {
+func (m *Manager) MustTokenStorage(stor oauth2.TokenStore, err error) {
 	if err != nil {
 		panic(err)
 	}
@@ -126,7 +126,7 @@ func (m *Manager) MustTokenStorage(stor oauth2.TokenStorage, err error) {
 
 // GetClient 获取客户端信息
 func (m *Manager) GetClient(clientID string) (cli oauth2.ClientInfo, err error) {
-	err = m.injector.Apply(func(stor oauth2.ClientStorage) {
+	err = m.injector.Apply(func(stor oauth2.ClientStore) {
 		cli, err = stor.GetByID(clientID)
 		if err != nil {
 			return
@@ -148,7 +148,7 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 		err = verr
 		return
 	}
-	_, ierr := m.injector.Invoke(func(ti oauth2.TokenInfo, gen oauth2.AuthorizeGenerate, stor oauth2.TokenStorage) {
+	_, ierr := m.injector.Invoke(func(ti oauth2.TokenInfo, gen oauth2.AuthorizeGenerate, stor oauth2.TokenStore) {
 		td := &oauth2.GenerateBasic{
 			Client:   cli,
 			UserID:   tgr.UserID,
@@ -191,7 +191,12 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 		} else if ti.GetRedirectURI() != tgr.RedirectURI || ti.GetClientID() != tgr.ClientID {
 			err = ErrAuthTokenInvalid
 			return
+		} else if verr := m.RemoveAccessToken(tgr.Code); verr != nil { // 删除授权码
+			err = verr
+			return
 		}
+		tgr.UserID = ti.GetUserID()
+		tgr.Scope = ti.GetScope()
 	}
 	cli, err := m.GetClient(tgr.ClientID)
 	if err != nil {
@@ -200,7 +205,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 		err = ErrClientInvalid
 		return
 	}
-	_, ierr := m.injector.Invoke(func(ti oauth2.TokenInfo, gen oauth2.AccessGenerate, stor oauth2.TokenStorage) {
+	_, ierr := m.injector.Invoke(func(ti oauth2.TokenInfo, gen oauth2.AccessGenerate, stor oauth2.TokenStore) {
 		td := &oauth2.GenerateBasic{
 			Client:   cli,
 			UserID:   tgr.UserID,
@@ -242,7 +247,7 @@ func (m *Manager) RefreshAccessToken(refresh, scope string) (token string, err e
 	if err != nil {
 		return
 	}
-	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStorage, gen oauth2.AccessGenerate) {
+	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore, gen oauth2.AccessGenerate) {
 		cli, cerr := m.GetClient(ti.GetClientID())
 		if cerr != nil {
 			err = cerr
@@ -285,7 +290,7 @@ func (m *Manager) RemoveAccessToken(access string) (err error) {
 		err = ErrAccessInvalid
 		return
 	}
-	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStorage) {
+	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore) {
 		err = stor.RemoveByAccess(access)
 	})
 	if ierr != nil && err == nil {
@@ -300,7 +305,7 @@ func (m *Manager) RemoveRefreshToken(refresh string) (err error) {
 		err = ErrAccessInvalid
 		return
 	}
-	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStorage) {
+	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore) {
 		err = stor.RemoveByRefresh(refresh)
 	})
 	if ierr != nil && err == nil {
@@ -315,7 +320,7 @@ func (m *Manager) LoadAccessToken(access string) (info oauth2.TokenInfo, err err
 		err = ErrAccessInvalid
 		return
 	}
-	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStorage) {
+	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore) {
 		ct := time.Now()
 		ti, terr := stor.GetByAccess(access)
 		if terr != nil {
@@ -355,7 +360,7 @@ func (m *Manager) LoadRefreshToken(refresh string) (info oauth2.TokenInfo, err e
 		err = ErrRefreshInvalid
 		return
 	}
-	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStorage) {
+	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore) {
 		ti, terr := stor.GetByRefresh(refresh)
 		if terr != nil {
 			err = terr
