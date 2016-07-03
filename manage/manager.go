@@ -247,6 +247,7 @@ func (m *Manager) RefreshAccessToken(refresh, scope string) (token string, err e
 	if err != nil {
 		return
 	}
+	access := ti.GetAccess()
 	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore, gen oauth2.AccessGenerate) {
 		cli, cerr := m.GetClient(ti.GetClientID())
 		if cerr != nil {
@@ -272,7 +273,7 @@ func (m *Manager) RefreshAccessToken(refresh, scope string) (token string, err e
 			err = verr
 			return
 		}
-		if verr := stor.RemoveByRefresh(refresh); verr != nil {
+		if verr := stor.RemoveByAccess(access); verr != nil {
 			err = verr
 			return
 		}
@@ -330,19 +331,8 @@ func (m *Manager) LoadAccessToken(access string) (info oauth2.TokenInfo, err err
 			err = ErrAccessInvalid
 			return
 		} else if ti.GetRefresh() != "" && ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(ct) { // 检查更新令牌是否过期
-			// 删除过期的访问令牌
-			if verr := stor.RemoveByRefresh(ti.GetRefresh()); verr != nil {
-				err = verr
-				return
-			}
 			err = ErrRefreshExpired
 		} else if ti.GetAccessCreateAt().Add(ti.GetAccessExpiresIn()).Before(ct) { // 检查访问令牌是否过期
-			if ti.GetRefresh() == "" { // 删除过期的访问令牌
-				if verr := stor.RemoveByAccess(access); verr != nil {
-					err = verr
-					return
-				}
-			}
 			err = ErrAccessExpired
 			return
 		}
@@ -369,11 +359,6 @@ func (m *Manager) LoadRefreshToken(refresh string) (info oauth2.TokenInfo, err e
 			err = ErrRefreshInvalid
 			return
 		} else if ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(time.Now()) {
-			// 删除过期的更新令牌
-			if verr := stor.RemoveByRefresh(refresh); verr != nil {
-				err = verr
-				return
-			}
 			err = ErrRefreshExpired
 			return
 		}

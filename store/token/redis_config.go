@@ -2,7 +2,7 @@ package token
 
 import "time"
 
-// RedisConfig Redis配置参数
+// RedisConfig Redis Configuration
 type RedisConfig struct {
 	// The network type, either tcp or unix.
 	// Default is tcp.
