@@ -2,6 +2,11 @@ package models
 
 import "time"
 
+// NewToken 创建令牌模型实例
+func NewToken() *Token {
+	return &Token{}
+}
+
 // Token 令牌信息
 type Token struct {
 	ClientID         string        `bson:"ClientID"`         // 客户端标识

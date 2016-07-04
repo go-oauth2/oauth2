@@ -78,8 +78,8 @@ func (m *Manager) MapAuthorizeGenerate(gen oauth2.AuthorizeGenerate) {
 	m.injector.Map(gen)
 }
 
-// MapTokenGenerate 注入访问令牌生成接口
-func (m *Manager) MapTokenGenerate(gen oauth2.AccessGenerate) {
+// MapAccessGenerate 注入访问令牌生成接口
+func (m *Manager) MapAccessGenerate(gen oauth2.AccessGenerate) {
 	if gen == nil {
 		panic(ErrNilValue)
 	}

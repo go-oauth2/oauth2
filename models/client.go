@@ -1,5 +1,10 @@
 package models
 
+// NewClient 创建客户端模型实例
+func NewClient() *Client {
+	return &Client{}
+}
+
 // Client 客户端信息
 type Client struct {
 	ID     string // 客户端ID
