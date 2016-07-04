@@ -18,34 +18,12 @@ func TestMongoStore(t *testing.T) {
 		store, err := NewMongoStore(cfg)
 		So(err, ShouldBeNil)
 
-		Convey("Test mongo store access", func() {
+		Convey("Test access token store", func() {
 			testAccessStore(store)
 		})
 
-		Convey("Test mongo store refresh", func() {
+		Convey("Test refresh token store", func() {
 			testRefreshStore(store)
 		})
-	})
-}
-
-func TestMongoStoreAccessExpired(t *testing.T) {
-	Convey("Test mongo store access token expired", t, func() {
-		cfg := &MongoConfig{
-			URL: mongoURL,
-		}
-		store, err := NewMongoStore(cfg)
-		So(err, ShouldBeNil)
-		testAccessExpired(store)
-	})
-}
-
-func TestMongoStoreRefreshExpired(t *testing.T) {
-	Convey("Test mongo store refresh token expired", t, func() {
-		cfg := &MongoConfig{
-			URL: mongoURL,
-		}
-		store, err := NewMongoStore(cfg)
-		So(err, ShouldBeNil)
-		testRefreshExpired(store)
 	})
 }

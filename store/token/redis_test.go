@@ -14,34 +14,12 @@ func TestRedisStore(t *testing.T) {
 		store, err := NewRedisStore(cfg)
 		So(err, ShouldBeNil)
 
-		Convey("Test redis store access", func() {
+		Convey("Test access token store", func() {
 			testAccessStore(store)
 		})
 
-		Convey("Test redis store refresh", func() {
+		Convey("Test refresh token store", func() {
 			testRefreshStore(store)
 		})
-	})
-}
-
-func TestRedisStoreAccessExpired(t *testing.T) {
-	Convey("Test redis store access token expired", t, func() {
-		cfg := &RedisConfig{
-			Addr: "192.168.33.70:6379",
-		}
-		store, err := NewRedisStore(cfg)
-		So(err, ShouldBeNil)
-		testAccessExpired(store)
-	})
-}
-
-func TestRedisStoreRefreshExpired(t *testing.T) {
-	Convey("Test redis store refresh token expired", t, func() {
-		cfg := &RedisConfig{
-			Addr: "192.168.33.70:6379",
-		}
-		store, err := NewRedisStore(cfg)
-		So(err, ShouldBeNil)
-		testRefreshExpired(store)
 	})
 }

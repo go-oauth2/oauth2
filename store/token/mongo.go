@@ -35,7 +35,7 @@ func NewMongoStore(cfg *MongoConfig) (store oauth2.TokenStore, err error) {
 	// 创建自动过期索引
 	err = handler.C(cfg.C).EnsureIndex(mgo.Index{
 		Key:         []string{"ExpiredAt"},
-		ExpireAfter: time.Second,
+		ExpireAfter: time.Second * 1,
 	})
 	if err != nil {
 		return
@@ -122,7 +122,7 @@ func (ms *MongoStore) RemoveByRefresh(refresh string) (err error) {
 func (ms *MongoStore) get(find interface{}) (info oauth2.TokenInfo, err error) {
 	ms.handler.CHandle(ms.cfg.C, func(c *mgo.Collection) {
 		var tm models.Token
-		aerr := c.Find(find).Select(bson.M{"_id": 0}).One(&tm)
+		aerr := c.Find(find).Select(bson.M{"_id": 0}).Sort("-_id").One(&tm)
 		if aerr != nil {
 			if aerr == mgo.ErrNotFound {
 				return
