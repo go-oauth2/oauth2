@@ -70,8 +70,16 @@ func (rs *RedisStore) Create(info oauth2.TokenInfo) (err error) {
 
 // remove
 func (rs *RedisStore) remove(key string) (err error) {
-	del := rs.cli.Del(key)
-	if verr := del.Err(); verr != nil {
+	info, err := rs.get(key)
+	if err != nil || info == nil {
+		return
+	}
+	pipe := rs.cli.Pipeline()
+	pipe.Del(info.GetAccess())
+	if v := info.GetRefresh(); v != "" {
+		pipe.Del(v)
+	}
+	if _, verr := pipe.Exec(); verr != nil {
 		err = verr
 	}
 	return

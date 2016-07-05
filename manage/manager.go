@@ -17,6 +17,8 @@ type Config struct {
 func NewManager() *Manager {
 	m := &Manager{
 		injector: inject.New(),
+		rtcfg:    make(map[oauth2.ResponseType]*Config),
+		gtcfg:    make(map[oauth2.GrantType]*Config),
 	}
 	// 设定参数默认值
 	// 设定授权码的有效期为10分钟
@@ -126,7 +128,7 @@ func (m *Manager) MustTokenStorage(stor oauth2.TokenStore, err error) {
 
 // GetClient 获取客户端信息
 func (m *Manager) GetClient(clientID string) (cli oauth2.ClientInfo, err error) {
-	err = m.injector.Apply(func(stor oauth2.ClientStore) {
+	_, ierr := m.injector.Invoke(func(stor oauth2.ClientStore) {
 		cli, err = stor.GetByID(clientID)
 		if err != nil {
 			return
@@ -134,6 +136,9 @@ func (m *Manager) GetClient(clientID string) (cli oauth2.ClientInfo, err error) 
 			err = ErrClientNotFound
 		}
 	})
+	if err == nil && ierr != nil {
+		err = ierr
+	}
 	return
 }
 
@@ -182,7 +187,7 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 // GenerateAccessToken 生成访问令牌、更新令牌
 // gt 授权模式
 // tgr 生成令牌的参数
-func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (token, refresh string, err error) {
+func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (access, refresh string, err error) {
 	if gt == oauth2.AuthorizationCodeCredentials { // 授权码模式
 		ti, terr := m.LoadAccessToken(tgr.Code)
 		if terr != nil {
@@ -211,7 +216,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 			UserID:   tgr.UserID,
 			CreateAt: time.Now(),
 		}
-		tv, rv, terr := gen.Token(td, tgr.IsGenerateRefresh)
+		av, rv, terr := gen.Token(td, tgr.IsGenerateRefresh)
 		if terr != nil {
 			err = terr
 			return
@@ -223,7 +228,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 		ti.SetAuthType(gt.String())
 		ti.SetAccessCreateAt(td.CreateAt)
 		ti.SetAccessExpiresIn(m.gtcfg[gt].TokenExp)
-		ti.SetAccess(tv)
+		ti.SetAccess(av)
 		if rv != "" {
 			ti.SetRefreshCreateAt(td.CreateAt)
 			ti.SetRefreshExpiresIn(m.gtcfg[gt].RefreshExp)
@@ -233,7 +238,8 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 		if err != nil {
 			return
 		}
-		token = tv
+		access = av
+		refresh = rv
 	})
 	if ierr != nil && err == nil {
 		err = ierr
@@ -269,11 +275,11 @@ func (m *Manager) RefreshAccessToken(refresh, scope string) (token string, err e
 		if scope != "" {
 			ti.SetScope(scope)
 		}
-		if verr := stor.Create(ti); verr != nil {
+		if verr := stor.RemoveByAccess(access); verr != nil {
 			err = verr
 			return
 		}
-		if verr := stor.RemoveByAccess(access); verr != nil {
+		if verr := stor.Create(ti); verr != nil {
 			err = verr
 			return
 		}
