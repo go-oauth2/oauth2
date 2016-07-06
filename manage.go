@@ -13,6 +13,10 @@ type TokenGenerateRequest struct {
 
 // Manager OAuth2授权管理接口
 type Manager interface {
+	// GetClient 获取客户端信息
+	// clientID 客户端标识
+	GetClient(clientID string) (cli ClientInfo, err error)
+
 	// GenerateAuthToken 生成授权令牌
 	// rt 授权类型
 	// tgr 生成令牌的请求参数

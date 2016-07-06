@@ -127,6 +127,7 @@ func (m *Manager) MustTokenStorage(stor oauth2.TokenStore, err error) {
 }
 
 // GetClient 获取客户端信息
+// clientID 客户端标识
 func (m *Manager) GetClient(clientID string) (cli oauth2.ClientInfo, err error) {
 	_, ierr := m.injector.Invoke(func(stor oauth2.ClientStore) {
 		cli, err = stor.GetByID(clientID)

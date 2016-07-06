@@ -27,7 +27,7 @@ func (c *Client) GetDomain() string {
 	return c.Domain
 }
 
-// GetUserData 用户数据
-func (c *Client) GetUserData() interface{} {
+// GetExtraData 扩展数据
+func (c *Client) GetExtraData() interface{} {
 	return nil
 }

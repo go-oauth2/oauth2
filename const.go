@@ -1,49 +1,33 @@
 package oauth2
 
 // ResponseType 定义授权类型
-type ResponseType byte
+type ResponseType string
 
 const (
 	// Code 授权码类型
-	Code ResponseType = 1 << (iota + 1)
+	Code ResponseType = "code"
 	// Token 令牌类型
-	Token
+	Token ResponseType = "token"
 )
 
 func (rt ResponseType) String() string {
-	switch rt {
-	case 1 << 1:
-		return "code"
-	case 1 << 2:
-		return "token"
-	}
-	return "unknown"
+	return string(rt)
 }
 
 // GrantType 定义授权模式
-type GrantType byte
+type GrantType string
 
 const (
 	// AuthorizationCodeCredentials 授权码模式
-	AuthorizationCodeCredentials GrantType = 1 << (iota + 1)
+	AuthorizationCodeCredentials GrantType = "authorization_code"
 	// PasswordCredentials 密码模式
-	PasswordCredentials
+	PasswordCredentials GrantType = "password"
 	// ClientCredentials 客户端模式
-	ClientCredentials
+	ClientCredentials GrantType = "clientcredentials"
 	// RefreshCredentials 更新令牌模式
-	RefreshCredentials
+	RefreshCredentials GrantType = "refreshtoken"
 )
 
 func (gt GrantType) String() string {
-	switch gt {
-	case 1 << 1:
-		return "authorization_code"
-	case 1 << 2:
-		return "password"
-	case 1 << 3:
-		return "clientcredentials"
-	case 1 << 4:
-		return "refreshtoken"
-	}
-	return "unknown"
+	return string(gt)
 }
