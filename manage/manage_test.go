@@ -82,7 +82,9 @@ func testManager(manager oauth2.Manager) {
 	So(err, ShouldBeNil)
 	So(rinfo.GetClientID(), ShouldEqual, atParams.ClientID)
 
-	rti, err := manager.RefreshAccessToken(refreshToken, "owner")
+	atParams.Refresh = refreshToken
+	atParams.Scope = "owner"
+	rti, err := manager.RefreshAccessToken(atParams)
 	So(err, ShouldBeNil)
 
 	refreshAT := rti.GetAccess()
