@@ -51,18 +51,23 @@ func testManager(manager oauth2.Manager) {
 		RedirectURI: "http://localhost/oauth2",
 		Scope:       "all",
 	}
-	code, err := manager.GenerateAuthToken(oauth2.Code, reqParams)
+	cti, err := manager.GenerateAuthToken(oauth2.Code, reqParams)
 	So(err, ShouldBeNil)
+
+	code := cti.GetAccess()
 	So(code, ShouldNotBeEmpty)
 
 	atParams := &oauth2.TokenGenerateRequest{
-		ClientID:          "1",
-		RedirectURI:       "http://localhost/oauth2",
+		ClientID:          reqParams.ClientID,
+		ClientSecret:      "11",
+		RedirectURI:       reqParams.RedirectURI,
 		Code:              code,
 		IsGenerateRefresh: true,
 	}
-	accessToken, refreshToken, err := manager.GenerateAccessToken(oauth2.AuthorizationCodeCredentials, atParams)
+	ati, err := manager.GenerateAccessToken(oauth2.AuthorizationCodeCredentials, atParams)
 	So(err, ShouldBeNil)
+
+	accessToken, refreshToken := ati.GetAccess(), ati.GetRefresh()
 	So(accessToken, ShouldNotBeEmpty)
 	So(refreshToken, ShouldNotBeEmpty)
 
@@ -77,8 +82,10 @@ func testManager(manager oauth2.Manager) {
 	So(err, ShouldBeNil)
 	So(rinfo.GetClientID(), ShouldEqual, atParams.ClientID)
 
-	refreshAT, err := manager.RefreshAccessToken(refreshToken, "owner")
+	rti, err := manager.RefreshAccessToken(refreshToken, "owner")
 	So(err, ShouldBeNil)
+
+	refreshAT := rti.GetAccess()
 	So(refreshAT, ShouldNotBeEmpty)
 
 	_, err = manager.LoadAccessToken(accessToken)

@@ -22,6 +22,6 @@ func TestAuthorize(t *testing.T) {
 		gen := NewAuthorizeGenerate()
 		code, err := gen.Token(data)
 		So(err, ShouldBeNil)
-		Println("\nCode:", code)
+		So(code, ShouldNotBeEmpty)
 	})
 }

@@ -22,7 +22,7 @@ func TestAccess(t *testing.T) {
 		gen := NewAccessGenerate()
 		access, refresh, err := gen.Token(data, true)
 		So(err, ShouldBeNil)
-		Println("\nAccess:", access)
-		Println("Refresh:", refresh)
+		So(access, ShouldNotBeEmpty)
+		So(refresh, ShouldNotBeEmpty)
 	})
 }

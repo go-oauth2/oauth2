@@ -12,8 +12,8 @@ var (
 	// ErrClientInvalid Client invalid
 	ErrClientInvalid = errors.New("client invalid")
 
-	// ErrAuthTokenInvalid Authorize token invalid
-	ErrAuthTokenInvalid = errors.New("authorize token invalid")
+	// ErrAuthCodeInvalid Authorize token invalid
+	ErrAuthCodeInvalid = errors.New("authorize code invalid")
 
 	// ErrAccessInvalid Access token expired
 	ErrAccessInvalid = errors.New("access token invalid")
