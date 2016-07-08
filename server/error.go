@@ -18,6 +18,12 @@ var (
 	// ErrUserInvalid User invalid
 	ErrUserInvalid = errors.New("user invalid")
 
+	// ErrAuthorizationFormInvalid Authorization form invalid
+	ErrAuthorizationFormInvalid = errors.New("authorization form invalid")
+
 	// ErrAuthorizationHeaderInvalid Authorization header invalid
 	ErrAuthorizationHeaderInvalid = errors.New("authorization header invalid")
+
+	// ErrRefreshInvalid Refresh token invalid
+	ErrRefreshInvalid = errors.New("refresh token invalid")
 )

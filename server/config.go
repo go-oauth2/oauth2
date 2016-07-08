@@ -10,6 +10,8 @@ type Config struct {
 	AllowedResponseType []oauth2.ResponseType
 	// AllowedGrantType 允许的授权模式（默认authorization_code）
 	AllowedGrantType []oauth2.GrantType
+	// Handler 令牌请求处理
+	Handler *TokenRequestHandler
 }
 
 // NewConfig 创建默认的配置参数
@@ -18,5 +20,6 @@ func NewConfig() *Config {
 		TokenType:           "Bearer",
 		AllowedResponseType: []oauth2.ResponseType{oauth2.Code},
 		AllowedGrantType:    []oauth2.GrantType{oauth2.AuthorizationCodeCredentials},
+		Handler:             &TokenRequestHandler{},
 	}
 }

@@ -29,9 +29,8 @@ type Manager interface {
 	GenerateAccessToken(rt GrantType, tgr *TokenGenerateRequest) (accessToken TokenInfo, err error)
 
 	// RefreshAccessToken 更新访问令牌
-	// refresh 更新令牌
-	// scope 作用域
-	RefreshAccessToken(refresh, scope string) (accessToken TokenInfo, err error)
+	// tgr 生成令牌的请求参数
+	RefreshAccessToken(tgr *TokenGenerateRequest) (accessToken TokenInfo, err error)
 
 	// RemoveAccessToken 删除访问令牌
 	// access 访问令牌

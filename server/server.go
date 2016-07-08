@@ -24,6 +24,21 @@ type Server struct {
 	manager oauth2.Manager
 }
 
+// SetClientHandler 设置客户端处理
+func (s *Server) SetClientHandler(handler ClientHandler) {
+	s.cfg.Handler.ClientHandler = handler
+}
+
+// SetUserHandler 设置用户处理
+func (s *Server) SetUserHandler(handler UserHandler) {
+	s.cfg.Handler.UserHandler = handler
+}
+
+// SetScopeHandler 设置授权范围处理
+func (s *Server) SetScopeHandler(handler ScopeHandler) {
+	s.cfg.Handler.ScopeHandler = handler
+}
+
 // checkResponseType 检查允许的授权类型
 func (s *Server) checkResponseType(rt oauth2.ResponseType) bool {
 	for _, art := range s.cfg.AllowedResponseType {
@@ -95,7 +110,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, authReq *Authoriz
 // HandleTokenRequest 处理令牌请求
 // cli 获取客户端信息
 // user 获取用户信息
-func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request, ch ClientHandler, uh UserHandler) (err error) {
+func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err error) {
 	if r.Method != "POST" {
 		err = ErrRequestMethodInvalid
 		return
@@ -111,12 +126,8 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request, ch C
 	}
 
 	var ti oauth2.TokenInfo
-	clientID, clientSecret, err := ch(r)
+	clientID, clientSecret, err := s.cfg.Handler.ClientHandler(r)
 	if err != nil {
-		return
-	}
-	if clientID == "" || clientSecret == "" {
-		err = ErrClientInvalid
 		return
 	}
 	tgr := &oauth2.TokenGenerateRequest{
@@ -131,7 +142,7 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request, ch C
 		tgr.IsGenerateRefresh = true
 		ti, err = s.manager.GenerateAccessToken(oauth2.AuthorizationCodeCredentials, tgr)
 	case oauth2.PasswordCredentials:
-		userID, uerr := uh(r.Form.Get("username"), r.Form.Get("password"))
+		userID, uerr := s.cfg.Handler.UserHandler(r.Form.Get("username"), r.Form.Get("password"))
 		if uerr != nil {
 			err = uerr
 			return
@@ -139,11 +150,30 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request, ch C
 		tgr.UserID = userID
 		tgr.Scope = r.Form.Get("scope")
 		tgr.IsGenerateRefresh = true
+		ti, err = s.manager.GenerateAccessToken(oauth2.PasswordCredentials, tgr)
 	case oauth2.ClientCredentials:
 		tgr.Scope = r.Form.Get("scope")
+		ti, err = s.manager.GenerateAccessToken(oauth2.ClientCredentials, tgr)
 	case oauth2.RefreshCredentials:
 		tgr.Refresh = r.Form.Get("refresh_token")
 		tgr.Scope = r.Form.Get("scope")
+		if tgr.Scope != "" { // 检查授权范围
+			rti, rerr := s.manager.LoadRefreshToken(tgr.Refresh)
+			if rerr != nil {
+				err = rerr
+				return
+			} else if rti.GetClientID() != tgr.ClientID {
+				err = ErrRefreshInvalid
+				return
+			} else if verr := s.cfg.Handler.ScopeHandler(tgr.Scope, rti.GetScope()); verr != nil {
+				err = verr
+				return
+			}
+		}
+		ti, err = s.manager.RefreshAccessToken(tgr)
+		if err == nil {
+			ti.SetRefresh("")
+		}
 	}
 
 	if err != nil {
