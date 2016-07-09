@@ -8,15 +8,19 @@ import (
 )
 
 // NewTempStore 创建客户端临时存储实例
-func NewTempStore() oauth2.ClientStore {
-	return &TempStore{
-		data: map[string]*models.Client{
-			"1": &models.Client{
-				ID:     "1",
-				Secret: "11",
-				Domain: "http://localhost",
-			},
+func NewTempStore(clients ...*models.Client) oauth2.ClientStore {
+	data := map[string]*models.Client{
+		"1": &models.Client{
+			ID:     "1",
+			Secret: "11",
+			Domain: "http://localhost",
 		},
+	}
+	for _, cli := range clients {
+		data[cli.ID] = cli
+	}
+	return &TempStore{
+		data: data,
 	}
 }
 

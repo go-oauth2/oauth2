@@ -12,16 +12,33 @@ import (
 
 // NewServer 创建OAuth2服务实例
 func NewServer(cfg *Config, manager oauth2.Manager) *Server {
-	return &Server{
+	srv := &Server{
 		cfg:     cfg,
 		manager: manager,
 	}
+	srv.SetClientHandler(ClientFormHandler)
+	return srv
 }
 
 // Server OAuth2服务处理
 type Server struct {
 	cfg     *Config
 	manager oauth2.Manager
+}
+
+// SetTokenType 设置令牌类型
+func (s *Server) SetTokenType(tokenType string) {
+	s.cfg.TokenType = tokenType
+}
+
+// SetAllowedResponseType 设置允许的授权类型
+func (s *Server) SetAllowedResponseType(allowedTypes ...oauth2.ResponseType) {
+	s.cfg.AllowedResponseType = allowedTypes
+}
+
+// SetAllowedGrantType 允许的授权模式
+func (s *Server) SetAllowedGrantType(allowedTypes ...oauth2.GrantType) {
+	s.cfg.AllowedGrantType = allowedTypes
 }
 
 // SetClientHandler 设置客户端处理

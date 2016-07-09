@@ -5,12 +5,39 @@ import (
 
 	"github.com/LyricTian/inject"
 	"gopkg.in/oauth2.v2"
+	"gopkg.in/oauth2.v2/generates"
+	"gopkg.in/oauth2.v2/models"
+	"gopkg.in/oauth2.v2/store/token"
 )
 
 // Config 授权配置参数
 type Config struct {
 	TokenExp   time.Duration // 令牌有效期
-	RefreshExp time.Duration // g令牌有效期
+	RefreshExp time.Duration // 更新令牌有效期
+}
+
+// NewRedisManager 创建基于redis存储的管理实例
+func NewRedisManager(redisCfg *token.RedisConfig) *Manager {
+	m := NewManager()
+	m.MapClientModel(models.NewClient())
+	m.MapTokenModel(models.NewToken())
+	m.MapAuthorizeGenerate(generates.NewAuthorizeGenerate())
+	m.MapAccessGenerate(generates.NewAccessGenerate())
+	m.MustTokenStorage(token.NewRedisStore(redisCfg))
+
+	return m
+}
+
+// NewMongoManager 创建基于mongodb存储的管理实例
+func NewMongoManager(mongoCfg *token.MongoConfig) *Manager {
+	m := NewManager()
+	m.MapClientModel(models.NewClient())
+	m.MapTokenModel(models.NewToken())
+	m.MapAuthorizeGenerate(generates.NewAuthorizeGenerate())
+	m.MapAccessGenerate(generates.NewAccessGenerate())
+	m.MustTokenStorage(token.NewMongoStore(mongoCfg))
+
+	return m
 }
 
 // NewManager 创建Manager的实例
@@ -32,6 +59,7 @@ func NewManager() *Manager {
 	m.SetGTConfig(oauth2.PasswordCredentials, &Config{TokenExp: time.Hour * 2, RefreshExp: time.Hour * 24 * 7})
 	// 设定客户端模式令牌的有效期为1小时
 	m.SetGTConfig(oauth2.ClientCredentials, &Config{TokenExp: time.Hour * 2})
+
 	return m
 }
 
