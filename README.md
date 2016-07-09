@@ -1,90 +1,83 @@
-Golang OAuth 2.0协议实现
-========================
+OAuth2服务端
+===========
 
-[![GoDoc](https://godoc.org/gopkg.in/oauth2.v1?status.svg)](https://godoc.org/gopkg.in/oauth2.v1)
-[![Go Report Card](https://goreportcard.com/badge/gopkg.in/oauth2.v1)](https://goreportcard.com/report/gopkg.in/oauth2.v1)
+> 基于Golang实现的OAuth2协议，具有简单化、模块化的特点
+
+[![GoDoc](https://godoc.org/gopkg.in/oauth2.v2?status.svg)](https://godoc.org/gopkg.in/oauth2.v2)
+[![Go Report Card](https://goreportcard.com/badge/gopkg.in/oauth2.v2)](https://goreportcard.com/report/gopkg.in/oauth2.v2)
 
 获取
 ----
 
 ```bash
-$ go get -v gopkg.in/oauth2.v1
+$ go get -u gopkg.in/oauth2.v2/...
 ```
+
+使用
+----
+
+``` go
+package main
+
+import (
+	"log"
+	"net/http"
+
+	"gopkg.in/oauth2.v2/manage"
+	"gopkg.in/oauth2.v2/models"
+	"gopkg.in/oauth2.v2/server"
+	"gopkg.in/oauth2.v2/store/client"
+	"gopkg.in/oauth2.v2/store/token"
+)
+
+func main() {
+	manager := manage.NewRedisManager(
+		&token.RedisConfig{Addr: "192.168.33.70:6379"},
+	)
+	manager.MapClientStorage(client.NewTempStore())
+	srv := server.NewServer(server.NewConfig(), manager)
+
+	http.HandleFunc("/authorize", func(w http.ResponseWriter, r *http.Request) {
+		authReq, err := srv.GetAuthorizeRequest(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		// TODO: 登录验证、授权处理
+        authReq.UserID = "000000"
+
+		err = srv.HandleAuthorizeRequest(w, authReq)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+	})
+
+	http.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
+		err := srv.HandleTokenRequest(w, r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+	})
+
+	log.Fatal(http.ListenAndServe(":9096", nil))
+}
+
+```
+
+测试
+----
+
+``` bash
+$ goconvey -port=9092
+```
+
+> goconvey使用明细[https://github.com/smartystreets/goconvey](https://github.com/smartystreets/goconvey)
 
 范例
 ----
 
-> 使用之前，初始化客户端信息
+模拟授权码模式的测试范例，请查看[example](/example)
 
-```go
-package main
-
-import (
-	"fmt"
-
-	"gopkg.in/oauth2.v1"
-)
-
-func main() {
-	// 初始化配置参数
-	ocfg := &oauth2.OAuthConfig{
-		ACConfig: &oauth2.ACConfig{
-			ATExpiresIn: 60 * 60 * 24,
-		},
-	}
-	mcfg := oauth2.NewMongoConfig("mongodb://127.0.0.1:27017", "test")
-
-	// 创建默认的OAuth2管理实例(基于MongoDB)
-	manager, err := oauth2.NewDefaultOAuthManager(ocfg, mcfg, "xxx", "xxx")
-	if err != nil {
-		panic(err)
-	}
-	manager.SetACGenerate(oauth2.NewDefaultACGenerate())
-	manager.SetACStore(oauth2.NewACMemoryStore(0))
-
-	// 模拟授权码模式
-	// 使用默认参数，生成授权码
-	code, err := manager.GetACManager().
-		GenerateCode("clientID_x", "userID_x", "http://www.example.com/cb", "scopes")
-	if err != nil {
-		panic(err)
-	}
-
-	// 生成访问令牌及更新令牌
-	genToken, err := manager.GetACManager().
-		GenerateToken(code, "http://www.example.com/cb", "clientID_x", "clientSecret_x", true)
-	if err != nil {
-		panic(err)
-	}
-
-	// 检查访问令牌
-	checkToken, err := manager.CheckAccessToken(genToken.AccessToken)
-	if err != nil {
-		panic(err)
-	}
-
-	// TODO: 使用用户标识、申请的授权范围响应数据
-	fmt.Println(checkToken.UserID, checkToken.Scope)
-
-	// 更新令牌
-	newToken, err := manager.RefreshAccessToken(checkToken.RefreshToken, "scopes")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(newToken.AccessToken, newToken.ATExpiresIn)
-	// TODO: 将新的访问令牌响应给客户端
-	
-}
-```
-
-执行测试
--------
-
-```bash
-$ go test -v
-# 或
-$ goconvey -port=9090
-```
 
 License
 -------
