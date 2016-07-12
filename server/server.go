@@ -115,33 +115,58 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, authReq *Authoriz
 		RedirectURI: authReq.RedirectURI,
 		Scope:       authReq.Scope,
 	}
-	ti, terr := s.manager.GenerateAuthToken(oauth2.Code, tgr)
-	if terr != nil {
-		err = terr
+	ti, err := s.manager.GenerateAuthToken(oauth2.Code, tgr)
+	if err != nil {
 		return
 	}
-	s.ResRedirectURI(w, authReq, ti)
+	redirectURI, err := s.GetRedirectURI(authReq, ti)
+	if err != nil {
+		return
+	}
+	w.Header().Set("Location", redirectURI)
+	w.WriteHeader(302)
+	return
+}
+
+// GetRedirectURI 获取重定向URI
+func (s *Server) GetRedirectURI(authReq *AuthorizeRequest, ti oauth2.TokenInfo) (uri string, err error) {
+	u, err := url.Parse(authReq.RedirectURI)
+	if err != nil {
+		return
+	}
+	q := u.Query()
+	q.Set("state", authReq.State)
+	switch authReq.Type {
+	case oauth2.Code:
+		q.Set("code", ti.GetAccess())
+		u.RawQuery = q.Encode()
+	case oauth2.Token:
+		q.Set("access_token", ti.GetAccess())
+		q.Set("token_type", s.cfg.TokenType)
+		q.Set("expires_in", strconv.FormatInt(int64(ti.GetAccessExpiresIn()/time.Second), 10))
+		q.Set("scope", ti.GetScope())
+		u.RawQuery = ""
+		u.Fragment, err = url.QueryUnescape(q.Encode())
+		if err != nil {
+			return
+		}
+	}
+	uri = u.String()
 	return
 }
 
 // HandleTokenRequest 处理令牌请求
-// cli 获取客户端信息
-// user 获取用户信息
 func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err error) {
 	if r.Method != "POST" {
 		err = ErrRequestMethodInvalid
 		return
 	}
-	if verr := r.ParseForm(); verr != nil {
-		err = verr
-		return
-	}
+	r.ParseForm()
 	gt := oauth2.GrantType(r.Form.Get("grant_type"))
 	if gt == "" || !s.checkGrantType(gt) {
 		err = ErrGrantTypeInvalid
 		return
 	}
-
 	var ti oauth2.TokenInfo
 	clientID, clientSecret, err := s.cfg.Handler.ClientHandler(r)
 	if err != nil {
@@ -151,8 +176,7 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 	}
-
-	switch oauth2.GrantType(r.Form.Get("grant_type")) {
+	switch gt {
 	case oauth2.AuthorizationCodeCredentials:
 		tgr.RedirectURI = r.Form.Get("redirect_uri")
 		tgr.Code = r.Form.Get("code")
@@ -200,41 +224,6 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err
 	return
 }
 
-func (s *Server) handleReponse(w http.ResponseWriter) {
-	w.Header().Add("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
-	w.Header().Add("Pragma", "no-cache")
-	w.Header().Add("Expires", "Fri, 01 Jan 1990 00:00:00 GMT")
-}
-
-// ResRedirectURI 响应数据到重定向URI
-func (s *Server) ResRedirectURI(w http.ResponseWriter, authReq *AuthorizeRequest, ti oauth2.TokenInfo) (err error) {
-	u, err := url.Parse(authReq.RedirectURI)
-	if err != nil {
-		return
-	}
-	q := u.Query()
-	q.Set("state", authReq.State)
-	switch authReq.Type {
-	case oauth2.Code:
-		q.Set("code", ti.GetAccess())
-		u.RawQuery = q.Encode()
-	case oauth2.Token:
-		q.Set("access_token", ti.GetAccess())
-		q.Set("token_type", s.cfg.TokenType)
-		q.Set("expires_in", strconv.FormatInt(int64(ti.GetAccessExpiresIn()/time.Second), 10))
-		q.Set("scope", ti.GetScope())
-		u.RawQuery = ""
-		u.Fragment, err = url.QueryUnescape(q.Encode())
-		if err != nil {
-			return
-		}
-	}
-	s.handleReponse(w)
-	w.Header().Add("Location", u.String())
-	w.WriteHeader(302)
-	return
-}
-
 // ResJSON 响应Json数据
 func (s *Server) ResJSON(w http.ResponseWriter, ti oauth2.TokenInfo) (err error) {
 	data := map[string]interface{}{
@@ -248,7 +237,9 @@ func (s *Server) ResJSON(w http.ResponseWriter, ti oauth2.TokenInfo) (err error)
 	if refresh := ti.GetRefresh(); refresh != "" {
 		data["refresh_token"] = refresh
 	}
-	s.handleReponse(w)
+	w.Header().Set("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "Fri, 01 Jan 1990 00:00:00 GMT")
 	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	return json.NewEncoder(w).Encode(data)

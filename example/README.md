@@ -1,8 +1,9 @@
-OAuth2 服务端/客户端模拟
-=====================
+OAuth2授权码模式模拟
+=================
 
 运行服务端
 --------
+> 运行fasthttp服务端，请使用`cd example/fastserver`
 
 ```
 $ cd example/server
