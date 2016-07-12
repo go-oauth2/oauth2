@@ -1,7 +1,7 @@
-OAuth2服务端
-===========
+基于Golang的OAuth2服务实现
+=======================
 
-> 基于Golang实现的OAuth2协议，具有简单化、模块化的特点
+> 完全模块化、支持http/fasthttp的服务端处理、令牌存储支持redis/mongodb
 
 [![GoDoc](https://godoc.org/gopkg.in/oauth2.v2?status.svg)](https://godoc.org/gopkg.in/oauth2.v2)
 [![Go Report Card](https://goreportcard.com/badge/gopkg.in/oauth2.v2)](https://goreportcard.com/report/gopkg.in/oauth2.v2)
@@ -9,12 +9,12 @@ OAuth2服务端
 获取
 ----
 
-```bash
+``` bash
 $ go get -u gopkg.in/oauth2.v2/...
 ```
 
-使用
-----
+HTTP服务端
+--------
 
 ``` go
 package main
@@ -64,14 +64,42 @@ func main() {
 
 ```
 
+FastHTTP服务端
+-------------
+
+``` go
+srv := server.NewFastServer(server.NewConfig(), manager)
+
+fasthttp.ListenAndServe(":9096", func(ctx *fasthttp.RequestCtx) {
+	switch string(ctx.Request.URI().Path()) {
+	case "/authorize":
+		authReq, err := srv.GetAuthorizeRequest(ctx)
+		if err != nil {
+			ctx.Error(err.Error(), 400)
+			return
+		}
+		authReq.UserID = "000000"
+		// TODO: 登录验证、授权处理
+		err = srv.HandleAuthorizeRequest(ctx, authReq)
+		if err != nil {
+			ctx.Error(err.Error(), 400)
+		}
+	case "/token":
+		err := srv.HandleTokenRequest(ctx)
+		if err != nil {
+			ctx.Error(err.Error(), 400)
+		}
+	}
+})
+```
+
 测试
 ----
+> [goconvey](https://github.com/smartystreets/goconvey)
 
 ``` bash
 $ goconvey -port=9092
 ```
-
-> goconvey使用明细[https://github.com/smartystreets/goconvey](https://github.com/smartystreets/goconvey)
 
 范例
 ----
