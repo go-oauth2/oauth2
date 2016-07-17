@@ -4,9 +4,10 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/oauth2.v2"
 	"gopkg.in/oauth2.v2/models"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestAuthorize(t *testing.T) {
@@ -23,5 +24,6 @@ func TestAuthorize(t *testing.T) {
 		code, err := gen.Token(data)
 		So(err, ShouldBeNil)
 		So(code, ShouldNotBeEmpty)
+		Println("\nAuthorize Code:" + code)
 	})
 }

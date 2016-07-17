@@ -177,11 +177,11 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err
 		ClientSecret: clientSecret,
 	}
 	switch gt {
-	case oauth2.AuthorizationCodeCredentials:
+	case oauth2.AuthorizationCode:
 		tgr.RedirectURI = r.Form.Get("redirect_uri")
 		tgr.Code = r.Form.Get("code")
 		tgr.IsGenerateRefresh = true
-		ti, err = s.manager.GenerateAccessToken(oauth2.AuthorizationCodeCredentials, tgr)
+		ti, err = s.manager.GenerateAccessToken(oauth2.AuthorizationCode, tgr)
 	case oauth2.PasswordCredentials:
 		userID, uerr := s.cfg.Handler.UserHandler(r.Form.Get("username"), r.Form.Get("password"))
 		if uerr != nil {
@@ -195,7 +195,7 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err
 	case oauth2.ClientCredentials:
 		tgr.Scope = r.Form.Get("scope")
 		ti, err = s.manager.GenerateAccessToken(oauth2.ClientCredentials, tgr)
-	case oauth2.RefreshCredentials:
+	case oauth2.Refreshing:
 		tgr.Refresh = r.Form.Get("refresh_token")
 		tgr.Scope = r.Form.Get("scope")
 		if tgr.Scope != "" { // 检查授权范围

@@ -1,29 +1,34 @@
 package manage
 
-import "errors"
+import (
+	"github.com/LyricTian/errors"
+)
 
 var (
 	// ErrNilValue Nil Value
-	ErrNilValue = errors.New("nil value")
+	ErrNilValue = errors.Errorf("nil value")
 
-	// ErrClientNotFound Client not Found
-	ErrClientNotFound = errors.New("client not found")
+	// ErrInvalidUserID invalid user id
+	ErrInvalidUserID = errors.Errorf("invalid user id")
 
-	// ErrClientInvalid Client invalid
-	ErrClientInvalid = errors.New("client invalid")
+	// ErrInvalidRedirectURI invalid redirect uri
+	ErrInvalidRedirectURI = errors.Errorf("invalid redirect uri")
 
-	// ErrAuthCodeInvalid Authorize token invalid
-	ErrAuthCodeInvalid = errors.New("authorize code invalid")
+	// ErrInvalidClient invalid client
+	ErrInvalidClient = errors.Errorf("invalid client")
 
-	// ErrAccessInvalid Access token expired
-	ErrAccessInvalid = errors.New("access token invalid")
+	// ErrInvalidAuthorizeCode invalid authorize code
+	ErrInvalidAuthorizeCode = errors.Errorf("invalid authorize code")
 
-	// ErrAccessExpired Access token expired
-	ErrAccessExpired = errors.New("access token expired")
+	// ErrInvalidAccessToken invalid access token
+	ErrInvalidAccessToken = errors.Errorf("invalid access token")
 
-	// ErrRefreshInvalid Refresh token invalid
-	ErrRefreshInvalid = errors.New("refresh token invalid")
+	// ErrInvalidRefreshToken  invalid refresh token
+	ErrInvalidRefreshToken = errors.Errorf("invalid refresh token")
 
-	// ErrRefreshExpired Refresh token expired
-	ErrRefreshExpired = errors.New("refresh token expired")
+	// ErrExpiredAccessToken expired access token
+	ErrExpiredAccessToken = errors.Errorf("expired access token")
+
+	// ErrExpiredRefreshToken expired refresh token
+	ErrExpiredRefreshToken = errors.Errorf("expired refresh token")
 )

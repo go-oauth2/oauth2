@@ -1,33 +1,33 @@
 package models
 
-// NewClient 创建客户端模型实例
+// NewClient Create to client model instance
 func NewClient() *Client {
 	return &Client{}
 }
 
-// Client 客户端信息
+// Client Client model
 type Client struct {
-	ID     string // 客户端ID
-	Secret string // 密钥
-	Domain string // 域名url
+	ID     string // The client id
+	Secret string // The client secret
+	Domain string // The client domain
 }
 
-// GetID 客户端ID
+// GetID The client id
 func (c *Client) GetID() string {
 	return c.ID
 }
 
-// GetSecret 客户端秘钥
+// GetSecret The client domain
 func (c *Client) GetSecret() string {
 	return c.Secret
 }
 
-// GetDomain 域名URL
+// GetDomain The client domain
 func (c *Client) GetDomain() string {
 	return c.Domain
 }
 
-// GetExtraData 扩展数据
+// GetExtraData The extension data related to the client
 func (c *Client) GetExtraData() interface{} {
 	return nil
 }

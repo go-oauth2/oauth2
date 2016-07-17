@@ -1,25 +1,24 @@
 package manage
 
 import (
-	"errors"
 	"net/url"
+	"strings"
+
+	"github.com/go-errors/errors"
 )
 
-// ValidateURI 校验重定向的URI与域名的一致性
-func ValidateURI(domain string, redirectURI string) error {
+// ValidateURI Validates that RedirectURI is contained in domain
+func ValidateURI(domain string, redirectURI string) (err error) {
 	base, err := url.Parse(domain)
 	if err != nil {
-		return err
+		return
 	}
 	redirect, err := url.Parse(redirectURI)
 	if err != nil {
-		return err
-	} else if base.Fragment != "" || redirect.Fragment != "" {
-		return errors.New("Url must not include fragment.")
-	} else if base.Scheme != redirect.Scheme {
-		return errors.New("Scheme don't match.")
-	} else if base.Host != redirect.Host {
-		return errors.New("Host don't match.")
+		return
 	}
-	return nil
+	if !strings.HasSuffix(redirect.Host, base.Host) {
+		err = errors.New(ErrInvalidRedirectURI)
+	}
+	return
 }

@@ -24,7 +24,6 @@ import (
 	"net/http"
 
 	"gopkg.in/oauth2.v2/manage"
-	"gopkg.in/oauth2.v2/models"
 	"gopkg.in/oauth2.v2/server"
 	"gopkg.in/oauth2.v2/store/client"
 	"gopkg.in/oauth2.v2/store/token"

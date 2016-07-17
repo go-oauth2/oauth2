@@ -7,7 +7,7 @@ import (
 	"gopkg.in/oauth2.v2/models"
 )
 
-// NewTempStore 创建客户端临时存储实例
+// NewTempStore Create to client information temporary store instance
 func NewTempStore(clients ...*models.Client) oauth2.ClientStore {
 	data := map[string]*models.Client{
 		"1": &models.Client{
@@ -24,12 +24,12 @@ func NewTempStore(clients ...*models.Client) oauth2.ClientStore {
 	}
 }
 
-// TempStore 客户端信息的临时存储
+// TempStore Client information store
 type TempStore struct {
 	data map[string]*models.Client
 }
 
-// GetByID 获取客户端信息
+// GetByID According to the ID for the client information
 func (ts *TempStore) GetByID(id string) (cli oauth2.ClientInfo, err error) {
 	if c, ok := ts.data[id]; ok {
 		cli = c

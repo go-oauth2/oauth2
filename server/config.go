@@ -19,7 +19,7 @@ func NewConfig() *Config {
 	return &Config{
 		TokenType:           "Bearer",
 		AllowedResponseType: []oauth2.ResponseType{oauth2.Code},
-		AllowedGrantType:    []oauth2.GrantType{oauth2.AuthorizationCodeCredentials},
+		AllowedGrantType:    []oauth2.GrantType{oauth2.AuthorizationCode},
 		Handler:             &TokenRequestHandler{},
 	}
 }

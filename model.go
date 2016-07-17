@@ -2,67 +2,62 @@ package oauth2
 
 import "time"
 
-// 相关模型接口的定义
 type (
-	// ClientInfo 客户端信息模型接口
+	// ClientInfo The client information model interface
 	ClientInfo interface {
-		// 客户端ID
+		// The client id
 		GetID() string
-		// 客户端秘钥
+		// The client secret
 		GetSecret() string
-		// 客户端域名URL
+		// The client domain
 		GetDomain() string
-		// 扩展数据
+		// The extension data related to the client
 		GetExtraData() interface{}
 	}
 
-	// TokenInfo 令牌信息模型接口
+	// TokenInfo The token information model interface
 	TokenInfo interface {
-		// 客户端ID
+		// Get client id
 		GetClientID() string
-		// 设置客户端ID
+		// Set client id
 		SetClientID(string)
-		// 用户ID
+		// Get user id
 		GetUserID() string
-		// 设置用户ID
+		// Set user id
 		SetUserID(string)
-		// 重定向URI
+		// Get Redirect URI
 		GetRedirectURI() string
-		// 设置重定向URI
+		// Set Redirect URI
 		SetRedirectURI(string)
-		// 权限范围
+		// Get Scope of authorization
 		GetScope() string
-		// 设置权限范围
+		// Set Scope of authorization
 		SetScope(string)
-		// 令牌授权类型
-		GetAuthType() string
-		// 设置令牌授权类型
-		SetAuthType(string)
 
-		// 访问令牌(或授权令牌)
+		// Get Access Token
 		GetAccess() string
-		// 设置访问令牌(或授权令牌)
+		// Set Access Token
 		SetAccess(string)
-		// 访问令牌(或授权令牌)创建时间
+		// Get Create Time
 		GetAccessCreateAt() time.Time
-		// 设置访问令牌(或授权令牌)创建时间
+		// Set Create Time
 		SetAccessCreateAt(time.Time)
-		// 访问令牌(或授权令牌)有效期
+		// Get The lifetime in seconds of the access token
 		GetAccessExpiresIn() time.Duration
-		// 设置访问令牌(或授权令牌)有效期
+		// Set The lifetime in seconds of the access token
 		SetAccessExpiresIn(time.Duration)
 
-		// 更新令牌
+		// Get Refresh Token
 		GetRefresh() string
-		// 设置更新令牌
+		// Set Refresh Token
 		SetRefresh(string)
-		// 更新令牌创建时间
+		// Get Create Time
 		GetRefreshCreateAt() time.Time
-		// 设置更新令牌创建时间
+		// Set Create Time
 		SetRefreshCreateAt(time.Time)
-		// 更新令牌有效期
+		// Get The lifetime in seconds of the access token
 		GetRefreshExpiresIn() time.Duration
-		// 设置更新令牌有效期
+		// Set The lifetime in seconds of the access token
 		SetRefreshExpiresIn(time.Duration)
 	}
 )

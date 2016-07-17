@@ -3,12 +3,13 @@ package manage
 import (
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/oauth2.v2"
 	"gopkg.in/oauth2.v2/generates"
 	"gopkg.in/oauth2.v2/models"
 	"gopkg.in/oauth2.v2/store/client"
 	"gopkg.in/oauth2.v2/store/token"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestManager(t *testing.T) {
@@ -33,14 +34,6 @@ func TestManager(t *testing.T) {
 			))
 			testManager(manager)
 		})
-
-		Convey("MongoDB store test", func() {
-			manager.MustTokenStorage(token.NewMongoStore(
-				&token.MongoConfig{URL: "mongodb://admin:123456@192.168.33.70:27017"},
-			))
-			testManager(manager)
-		})
-
 	})
 }
 
@@ -64,7 +57,7 @@ func testManager(manager oauth2.Manager) {
 		Code:              code,
 		IsGenerateRefresh: true,
 	}
-	ati, err := manager.GenerateAccessToken(oauth2.AuthorizationCodeCredentials, atParams)
+	ati, err := manager.GenerateAccessToken(oauth2.AuthorizationCode, atParams)
 	So(err, ShouldBeNil)
 
 	accessToken, refreshToken := ati.GetAccess(), ati.GetRefresh()
@@ -97,11 +90,14 @@ func testManager(manager oauth2.Manager) {
 	So(err, ShouldBeNil)
 	So(refreshAInfo.GetScope(), ShouldEqual, "owner")
 
-	err = manager.RemoveRefreshToken(refreshToken)
+	err = manager.RemoveAccessToken(refreshAT)
 	So(err, ShouldBeNil)
 
 	_, err = manager.LoadAccessToken(refreshAT)
 	So(err, ShouldNotBeNil)
+
+	err = manager.RemoveRefreshToken(refreshToken)
+	So(err, ShouldBeNil)
 
 	_, err = manager.LoadRefreshToken(refreshToken)
 	So(err, ShouldNotBeNil)

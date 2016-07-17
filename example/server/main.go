@@ -12,11 +12,10 @@ import (
 )
 
 func main() {
-	// 创建基于redis的oauth2管理实例
 	manager := manage.NewRedisManager(
 		&token.RedisConfig{Addr: "192.168.33.70:6379"},
 	)
-	// 使用临时客户端存储
+	// Create the client temporary storage
 	manager.MapClientStorage(client.NewTempStore(&models.Client{
 		ID:     "222222",
 		Secret: "22222222",
@@ -31,8 +30,8 @@ func main() {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+		// TODO: User authentication...
 		authReq.UserID = "000000"
-		// TODO: 登录验证、授权处理
 		err = srv.HandleAuthorizeRequest(w, authReq)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -46,6 +45,6 @@ func main() {
 		}
 	})
 
-	log.Println("OAuth2 server is running at 9096 port.")
+	log.Println("Server is running at 9096 port.")
 	log.Fatal(http.ListenAndServe(":9096", nil))
 }

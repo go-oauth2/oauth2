@@ -4,9 +4,10 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/oauth2.v2"
 	"gopkg.in/oauth2.v2/models"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestAccess(t *testing.T) {
@@ -24,5 +25,7 @@ func TestAccess(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(access, ShouldNotBeEmpty)
 		So(refresh, ShouldNotBeEmpty)
+		Println("\nAccess Token:" + access)
+		Println("Refresh Token:" + refresh)
 	})
 }

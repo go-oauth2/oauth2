@@ -2,39 +2,34 @@ package generates
 
 import (
 	"bytes"
+	"encoding/base64"
 	"strconv"
 	"strings"
 
 	"github.com/LyricTian/go.uuid"
-	"gopkg.in/LyricTian/lib.v2"
 	"gopkg.in/oauth2.v2"
 )
 
-// NewAccessGenerate 创建访问令牌生成实例
+// NewAccessGenerate Create to generate the access token instance
 func NewAccessGenerate() *AccessGenerate {
 	return &AccessGenerate{}
 }
 
-// AccessGenerate 访问令牌生成
+// AccessGenerate Generate the access token
 type AccessGenerate struct {
 }
 
-// Token 生成令牌
+// Token Based on the UUID generated token
 func (ag *AccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool) (access, refresh string, err error) {
 	buf := bytes.NewBufferString(data.Client.GetID())
 	buf.WriteString(data.UserID)
 	buf.WriteString(strconv.FormatInt(data.CreateAt.UnixNano(), 10))
-	access, err = lib.NewEncryption(uuid.NewV3(uuid.NewV4(), buf.String()).Bytes()).MD5()
-	if err != nil {
-		return
-	}
-	access = strings.ToUpper(access)
+
+	access = base64.URLEncoding.EncodeToString(uuid.NewV3(uuid.NewV4(), buf.String()).Bytes())
+	access = strings.ToUpper(strings.TrimRight(access, "="))
 	if isGenRefresh {
-		refresh, err = lib.NewEncryption(uuid.NewV5(uuid.NewV4(), buf.String()).Bytes()).Sha1()
-		if err != nil {
-			return
-		}
-		refresh = strings.ToUpper(refresh)
+		refresh = base64.URLEncoding.EncodeToString(uuid.NewV5(uuid.NewV4(), buf.String()).Bytes())
+		refresh = strings.ToUpper(strings.TrimRight(refresh, "="))
 	}
 
 	return
