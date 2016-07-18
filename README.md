@@ -3,14 +3,14 @@
 
 > 完全模块化、支持http/fasthttp的服务端处理、令牌存储支持redis/mongodb
 
-[![GoDoc](https://godoc.org/gopkg.in/oauth2.v2?status.svg)](https://godoc.org/gopkg.in/oauth2.v2)
-[![Go Report Card](https://goreportcard.com/badge/gopkg.in/oauth2.v2)](https://goreportcard.com/report/gopkg.in/oauth2.v2)
+[![GoDoc](https://godoc.org/gopkg.in/oauth2.v3?status.svg)](https://godoc.org/gopkg.in/oauth2.v3)
+[![Go Report Card](https://goreportcard.com/badge/gopkg.in/oauth2.v3)](https://goreportcard.com/report/gopkg.in/oauth2.v3)
 
 获取
 ----
 
 ``` bash
-$ go get -u gopkg.in/oauth2.v2/...
+$ go get -u gopkg.in/oauth2.v3/...
 ```
 
 HTTP服务端
@@ -23,10 +23,10 @@ import (
 	"log"
 	"net/http"
 
-	"gopkg.in/oauth2.v2/manage"
-	"gopkg.in/oauth2.v2/server"
-	"gopkg.in/oauth2.v2/store/client"
-	"gopkg.in/oauth2.v2/store/token"
+	"gopkg.in/oauth2.v3/manage"
+	"gopkg.in/oauth2.v3/server"
+	"gopkg.in/oauth2.v3/store/client"
+	"gopkg.in/oauth2.v3/store/token"
 )
 
 func main() {

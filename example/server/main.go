@@ -4,11 +4,14 @@ import (
 	"log"
 	"net/http"
 
-	"gopkg.in/oauth2.v2/manage"
-	"gopkg.in/oauth2.v2/models"
-	"gopkg.in/oauth2.v2/server"
-	"gopkg.in/oauth2.v2/store/client"
-	"gopkg.in/oauth2.v2/store/token"
+	"fmt"
+
+	"gopkg.in/oauth2.v3"
+	"gopkg.in/oauth2.v3/manage"
+	"gopkg.in/oauth2.v3/models"
+	"gopkg.in/oauth2.v3/server"
+	"gopkg.in/oauth2.v3/store/client"
+	"gopkg.in/oauth2.v3/store/token"
 )
 
 func main() {
@@ -23,16 +26,18 @@ func main() {
 	}))
 
 	srv := server.NewServer(server.NewConfig(), manager)
+	srv.SetAllowedResponseType(oauth2.Code)
+	srv.SetAllowedGrantType(oauth2.AuthorizationCode)
+	srv.SetErrorHandler(func(err error) {
+		fmt.Println("OAuth2 Error:", err.Error())
+	})
+	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+		userID = "000000"
+		return
+	})
 
 	http.HandleFunc("/authorize", func(w http.ResponseWriter, r *http.Request) {
-		authReq, err := srv.GetAuthorizeRequest(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		// TODO: User authentication...
-		authReq.UserID = "000000"
-		err = srv.HandleAuthorizeRequest(w, authReq)
+		err := srv.HandleAuthorizeRequest(w, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}

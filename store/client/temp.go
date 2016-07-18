@@ -3,8 +3,8 @@ package client
 import (
 	"errors"
 
-	"gopkg.in/oauth2.v2"
-	"gopkg.in/oauth2.v2/models"
+	"gopkg.in/oauth2.v3"
+	"gopkg.in/oauth2.v3/models"
 )
 
 // NewTempStore Create to client information temporary store instance

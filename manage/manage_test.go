@@ -3,11 +3,11 @@ package manage
 import (
 	"testing"
 
-	"gopkg.in/oauth2.v2"
-	"gopkg.in/oauth2.v2/generates"
-	"gopkg.in/oauth2.v2/models"
-	"gopkg.in/oauth2.v2/store/client"
-	"gopkg.in/oauth2.v2/store/token"
+	"gopkg.in/oauth2.v3"
+	"gopkg.in/oauth2.v3/generates"
+	"gopkg.in/oauth2.v3/models"
+	"gopkg.in/oauth2.v3/store/client"
+	"gopkg.in/oauth2.v3/store/token"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

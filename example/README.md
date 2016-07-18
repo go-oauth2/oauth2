@@ -3,7 +3,6 @@ Authorization code simulation
 
 Run Server
 ---------
-> Run fasthttp server(`cd example/fastserver`)
 
 ``` bash
 $ cd example/server

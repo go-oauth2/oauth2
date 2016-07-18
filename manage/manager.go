@@ -3,19 +3,20 @@ package manage
 import (
 	"time"
 
-	"github.com/LyricTian/errors"
 	"github.com/LyricTian/inject"
 
-	"gopkg.in/oauth2.v2"
-	"gopkg.in/oauth2.v2/generates"
-	"gopkg.in/oauth2.v2/models"
-	"gopkg.in/oauth2.v2/store/token"
+	"gopkg.in/oauth2.v3"
+	"gopkg.in/oauth2.v3/errors"
+	"gopkg.in/oauth2.v3/generates"
+	"gopkg.in/oauth2.v3/models"
+	"gopkg.in/oauth2.v3/store/token"
 )
 
 // Config Configuration parameters
 type Config struct {
-	AccessTokenExp  time.Duration // Access token expiration time (in seconds)
-	RefreshTokenExp time.Duration // Refresh token expiration time
+	AccessTokenExp    time.Duration // Access token expiration time (in seconds)
+	RefreshTokenExp   time.Duration // Refresh token expiration time
+	IsGenerateRefresh bool          // Whether to generate the refreshing token
 }
 
 // NewRedisManager Create to based on redis store authorization management instance
@@ -37,9 +38,9 @@ func NewManager() *Manager {
 		gtcfg:    make(map[oauth2.GrantType]*Config),
 	}
 	m.SetAuthorizeCodeExp(time.Minute * 10)
-	m.SetAuthorizeCodeTokenExp(&Config{AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 3})
+	m.SetAuthorizeCodeTokenExp(&Config{IsGenerateRefresh: true, AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 3})
 	m.SetImplicitTokenExp(&Config{AccessTokenExp: time.Hour * 1})
-	m.SetPasswordTokenExp(&Config{AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 7})
+	m.SetPasswordTokenExp(&Config{IsGenerateRefresh: true, AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 7})
 	m.SetClientTokenExp(&Config{AccessTokenExp: time.Hour * 2})
 
 	return m
@@ -80,7 +81,7 @@ func (m *Manager) SetClientTokenExp(cfg *Config) {
 // MapClientModel Mapping the client information model
 func (m *Manager) MapClientModel(cli oauth2.ClientInfo) error {
 	if cli == nil {
-		return errors.New(ErrNilValue)
+		return errors.ErrNilValue
 	}
 	m.injector.Map(cli)
 	return nil
@@ -89,7 +90,7 @@ func (m *Manager) MapClientModel(cli oauth2.ClientInfo) error {
 // MapTokenModel Mapping the token information model
 func (m *Manager) MapTokenModel(token oauth2.TokenInfo) error {
 	if token == nil {
-		return errors.New(ErrNilValue)
+		return errors.ErrNilValue
 	}
 	m.injector.Map(token)
 	return nil
@@ -98,7 +99,7 @@ func (m *Manager) MapTokenModel(token oauth2.TokenInfo) error {
 // MapAuthorizeGenerate Mapping the authorize code generate interface
 func (m *Manager) MapAuthorizeGenerate(gen oauth2.AuthorizeGenerate) error {
 	if gen == nil {
-		return errors.New(ErrNilValue)
+		return errors.ErrNilValue
 	}
 	m.injector.Map(gen)
 	return nil
@@ -107,7 +108,7 @@ func (m *Manager) MapAuthorizeGenerate(gen oauth2.AuthorizeGenerate) error {
 // MapAccessGenerate Mapping the access token generate interface
 func (m *Manager) MapAccessGenerate(gen oauth2.AccessGenerate) error {
 	if gen == nil {
-		return errors.New(ErrNilValue)
+		return errors.ErrNilValue
 	}
 	m.injector.Map(gen)
 	return nil
@@ -116,7 +117,7 @@ func (m *Manager) MapAccessGenerate(gen oauth2.AccessGenerate) error {
 // MapClientStorage Mapping the client store interface
 func (m *Manager) MapClientStorage(stor oauth2.ClientStore) error {
 	if stor == nil {
-		return errors.New(ErrNilValue)
+		return errors.ErrNilValue
 	}
 	m.injector.Map(stor)
 	return nil
@@ -136,7 +137,7 @@ func (m *Manager) MustClientStorage(stor oauth2.ClientStore, err error) {
 // MapTokenStorage Mapping the token store interface
 func (m *Manager) MapTokenStorage(stor oauth2.TokenStore) error {
 	if stor == nil {
-		return errors.New(ErrNilValue)
+		return (errors.ErrNilValue)
 	}
 	m.injector.Map(stor)
 	return nil
@@ -160,7 +161,7 @@ func (m *Manager) GetClient(clientID string) (cli oauth2.ClientInfo, err error) 
 		if err != nil {
 			return
 		} else if cli == nil {
-			err = errors.New(ErrInvalidClient)
+			err = errors.ErrInvalidClient
 		}
 	})
 	if err == nil && ierr != nil {
@@ -225,7 +226,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 			err = terr
 			return
 		} else if ti.GetRedirectURI() != tgr.RedirectURI || ti.GetClientID() != tgr.ClientID {
-			err = errors.New(ErrInvalidAuthorizeCode)
+			err = errors.ErrInvalidAuthorizeCode
 			return
 		} else if verr := m.RemoveAccessToken(tgr.Code); verr != nil { // remove authorize code
 			err = verr
@@ -238,7 +239,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 	if err != nil {
 		return
 	} else if tgr.ClientSecret != cli.GetSecret() {
-		err = errors.New(ErrInvalidClient)
+		err = errors.ErrInvalidClient
 		return
 	}
 	_, ierr := m.injector.Invoke(func(ti oauth2.TokenInfo, gen oauth2.AccessGenerate, stor oauth2.TokenStore) {
@@ -247,7 +248,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 			UserID:   tgr.UserID,
 			CreateAt: time.Now(),
 		}
-		av, rv, terr := gen.Token(td, tgr.IsGenerateRefresh)
+		av, rv, terr := gen.Token(td, m.gtcfg[gt].IsGenerateRefresh)
 		if terr != nil {
 			err = terr
 			return
@@ -259,7 +260,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 		ti.SetAccessCreateAt(td.CreateAt)
 		ti.SetAccessExpiresIn(m.gtcfg[gt].AccessTokenExp)
 		ti.SetAccess(av)
-		if tgr.IsGenerateRefresh && rv != "" {
+		if m.gtcfg[gt].IsGenerateRefresh && rv != "" {
 			ti.SetRefreshCreateAt(td.CreateAt)
 			ti.SetRefreshExpiresIn(m.gtcfg[gt].RefreshTokenExp)
 			ti.SetRefresh(rv)
@@ -282,14 +283,14 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 	if err != nil {
 		return
 	} else if tgr.ClientSecret != cli.GetSecret() {
-		err = errors.New(ErrInvalidClient)
+		err = errors.ErrInvalidClient
 		return
 	}
 	ti, err := m.LoadRefreshToken(tgr.Refresh)
 	if err != nil {
 		return
 	} else if ti.GetClientID() != tgr.ClientID {
-		err = errors.New(ErrInvalidRefreshToken)
+		err = errors.ErrInvalidRefreshToken
 		return
 	}
 	oldAccess := ti.GetAccess()
@@ -329,7 +330,7 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 // RemoveAccessToken Use the access token to delete the token information
 func (m *Manager) RemoveAccessToken(access string) (err error) {
 	if access == "" {
-		err = errors.New(ErrInvalidAccessToken)
+		err = errors.ErrInvalidAccessToken
 		return
 	}
 	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore) {
@@ -344,7 +345,7 @@ func (m *Manager) RemoveAccessToken(access string) (err error) {
 // RemoveRefreshToken Use the refresh token to delete the token information
 func (m *Manager) RemoveRefreshToken(refresh string) (err error) {
 	if refresh == "" {
-		err = errors.New(ErrInvalidAccessToken)
+		err = errors.ErrInvalidAccessToken
 		return
 	}
 	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore) {
@@ -359,7 +360,7 @@ func (m *Manager) RemoveRefreshToken(refresh string) (err error) {
 // LoadAccessToken According to the access token for corresponding token information
 func (m *Manager) LoadAccessToken(access string) (info oauth2.TokenInfo, err error) {
 	if access == "" {
-		err = errors.New(ErrInvalidAccessToken)
+		err = errors.ErrInvalidAccessToken
 		return
 	}
 	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore) {
@@ -369,12 +370,12 @@ func (m *Manager) LoadAccessToken(access string) (info oauth2.TokenInfo, err err
 			err = terr
 			return
 		} else if ti == nil {
-			err = errors.New(ErrInvalidAccessToken)
+			err = errors.ErrInvalidAccessToken
 			return
 		} else if ti.GetRefresh() != "" && ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(ct) {
-			err = errors.New(ErrExpiredRefreshToken)
+			err = errors.ErrExpiredRefreshToken
 		} else if ti.GetAccessCreateAt().Add(ti.GetAccessExpiresIn()).Before(ct) {
-			err = errors.New(ErrExpiredAccessToken)
+			err = errors.ErrExpiredAccessToken
 			return
 		}
 		info = ti
@@ -388,7 +389,7 @@ func (m *Manager) LoadAccessToken(access string) (info oauth2.TokenInfo, err err
 // LoadRefreshToken According to the refresh token for corresponding token information
 func (m *Manager) LoadRefreshToken(refresh string) (info oauth2.TokenInfo, err error) {
 	if refresh == "" {
-		err = errors.New(ErrInvalidRefreshToken)
+		err = errors.ErrInvalidRefreshToken
 		return
 	}
 	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore) {
@@ -397,10 +398,10 @@ func (m *Manager) LoadRefreshToken(refresh string) (info oauth2.TokenInfo, err e
 			err = terr
 			return
 		} else if ti == nil {
-			err = errors.New(ErrInvalidRefreshToken)
+			err = errors.ErrInvalidRefreshToken
 			return
 		} else if ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(time.Now()) {
-			err = errors.New(ErrExpiredRefreshToken)
+			err = errors.ErrExpiredRefreshToken
 			return
 		}
 		info = ti

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/LyricTian/go.uuid"
-	"gopkg.in/oauth2.v2"
+	"gopkg.in/oauth2.v3"
 )
 
 // NewAccessGenerate Create to generate the access token instance

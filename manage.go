@@ -2,14 +2,13 @@ package oauth2
 
 // TokenGenerateRequest Provide to generate the token request parameters
 type TokenGenerateRequest struct {
-	ClientID          string // The client information
-	ClientSecret      string // The client secret
-	UserID            string // The user id
-	RedirectURI       string // Redirect URI
-	Scope             string // Scope of authorization
-	Code              string // Authorization code
-	Refresh           string // Refresh token
-	IsGenerateRefresh bool   // Whether to generate refresh token
+	ClientID     string // The client information
+	ClientSecret string // The client secret
+	UserID       string // The user id
+	RedirectURI  string // Redirect URI
+	Scope        string // Scope of authorization
+	Code         string // Authorization code
+	Refresh      string // Refreshing token
 }
 
 // Manager Authorization management interface

@@ -7,8 +7,8 @@ import (
 
 	"strconv"
 
-	"gopkg.in/oauth2.v2"
-	"gopkg.in/oauth2.v2/models"
+	"gopkg.in/oauth2.v3"
+	"gopkg.in/oauth2.v3/models"
 )
 
 // DefaultIncrKey store incr id
