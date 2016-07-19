@@ -39,7 +39,7 @@ func TestRedisStore(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			ainfo, err = store.GetByAccess(info.GetAccess())
-			So(err, ShouldNotBeNil)
+			So(err, ShouldBeNil)
 			So(ainfo, ShouldBeNil)
 		})
 
@@ -67,7 +67,7 @@ func TestRedisStore(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			rinfo, err = store.GetByRefresh(info.GetRefresh())
-			So(err, ShouldNotBeNil)
+			So(err, ShouldBeNil)
 			So(rinfo, ShouldBeNil)
 		})
 	})
