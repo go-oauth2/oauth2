@@ -126,8 +126,7 @@ func (s *Server) ValidationAuthorizeRequest(r *http.Request) (req *AuthorizeRequ
 // GetAuthorizeToken Get authorization token(code)
 func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (ti oauth2.TokenInfo, rerr, ierr error) {
 	if req.RedirectURI == "" ||
-		req.ClientID == "" ||
-		req.UserID == "" {
+		req.ClientID == "" {
 		rerr = errors.ErrInvalidRequest
 		return
 	} else if req.ResponseType == "" {
@@ -231,9 +230,6 @@ func (s *Server) GetErrorData(rerr, ierr error) (data map[string]interface{}) {
 		err = rerr
 		ierr = rerr
 	}
-	if err == nil {
-		return
-	}
 	if fn := s.ErrorHandler; fn != nil {
 		s.ErrorHandler(err)
 	}
@@ -243,47 +239,52 @@ func (s *Server) GetErrorData(rerr, ierr error) (data map[string]interface{}) {
 	return
 }
 
+func (s *Server) resRedirectError(w http.ResponseWriter, req *AuthorizeRequest, rerr, ierr error) (err error) {
+	if req == nil {
+		err = ierr
+		return
+	}
+	err = s.resRedirect(w, req, s.GetErrorData(rerr, ierr))
+	return
+}
+
+func (s *Server) resRedirect(w http.ResponseWriter, req *AuthorizeRequest, data map[string]interface{}) (err error) {
+	uri, verr := s.GetRedirectURI(req, data)
+	if verr != nil {
+		err = verr
+		return
+	}
+	w.Header().Set("Location", uri)
+	w.WriteHeader(302)
+	return
+}
+
 // HandleAuthorizeRequest The authorization request handling
 func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) (err error) {
-	var (
-		ti   oauth2.TokenInfo
-		req  *AuthorizeRequest
-		rerr error
-		ierr error
-	)
 	defer func() {
 		if verr := recover(); verr != nil {
 			err = fmt.Errorf("%v", verr)
-			return
 		}
-		data := s.GetErrorData(rerr, ierr)
-		if data != nil {
-			if req == nil {
-				err = ierr
-				return
-			}
-		} else {
-			data = s.GetAuthorizeData(req.ResponseType, ti)
-		}
-		uri, verr := s.GetRedirectURI(req, data)
-		if verr != nil {
-			err = verr
-			return
-		}
-		w.Header().Set("Location", uri)
-		w.WriteHeader(302)
 	}()
-	req, rerr, ierr = s.ValidationAuthorizeRequest(r)
+	req, rerr, ierr := s.ValidationAuthorizeRequest(r)
 	if rerr != nil || ierr != nil {
+		err = s.resRedirectError(w, req, rerr, ierr)
 		return
 	}
 	userID, err := s.UserAuthorizationHandler(w, r)
 	if err != nil {
-		ierr = err
+		err = s.resRedirectError(w, req, nil, err)
+		return
+	} else if userID == "" {
 		return
 	}
 	req.UserID = userID
-	ti, rerr, ierr = s.GetAuthorizeToken(req)
+	ti, rerr, ierr := s.GetAuthorizeToken(req)
+	if rerr != nil || ierr != nil {
+		err = s.resRedirectError(w, req, rerr, ierr)
+		return
+	}
+	err = s.resRedirect(w, req, s.GetAuthorizeData(req.ResponseType, ti))
 	return
 }
 
@@ -442,32 +443,37 @@ func (s *Server) GetTokenData(ti oauth2.TokenInfo) (data map[string]interface{})
 	return
 }
 
+func (s *Server) resTokenError(w http.ResponseWriter, rerr, ierr error) (err error) {
+	err = s.resToken(w, s.GetErrorData(rerr, ierr))
+	return
+}
+
+func (s *Server) resToken(w http.ResponseWriter, data map[string]interface{}) (err error) {
+	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Pragma", "no-cache")
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(data)
+	return
+}
+
 // HandleTokenRequest The token request handling
 func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err error) {
-	var (
-		ti   oauth2.TokenInfo
-		rerr error
-		ierr error
-	)
 	defer func() {
 		if verr := recover(); verr != nil {
 			err = fmt.Errorf("%v", verr)
-			return
 		}
-		data := s.GetErrorData(rerr, ierr)
-		if data == nil {
-			data = s.GetTokenData(ti)
-		}
-		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-		w.Header().Set("Cache-Control", "no-store")
-		w.Header().Set("Pragma", "no-cache")
-		w.WriteHeader(http.StatusOK)
-		err = json.NewEncoder(w).Encode(data)
 	}()
 	gt, tgr, rerr, ierr := s.ValidationTokenRequest(r)
 	if rerr != nil || ierr != nil {
+		err = s.resTokenError(w, rerr, ierr)
 		return
 	}
-	ti, rerr, ierr = s.GetAccessToken(gt, tgr)
+	ti, rerr, ierr := s.GetAccessToken(gt, tgr)
+	if rerr != nil || ierr != nil {
+		err = s.resTokenError(w, rerr, ierr)
+		return
+	}
+	err = s.resToken(w, s.GetTokenData(ti))
 	return
 }
