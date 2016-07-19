@@ -1,10 +1,11 @@
-package generates
+package generates_test
 
 import (
 	"testing"
 	"time"
 
 	"gopkg.in/oauth2.v3"
+	"gopkg.in/oauth2.v3/generates"
 	"gopkg.in/oauth2.v3/models"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -20,7 +21,7 @@ func TestAccess(t *testing.T) {
 			UserID:   "000000",
 			CreateAt: time.Now(),
 		}
-		gen := NewAccessGenerate()
+		gen := generates.NewAccessGenerate()
 		access, refresh, err := gen.Token(data, true)
 		So(err, ShouldBeNil)
 		So(access, ShouldNotBeEmpty)

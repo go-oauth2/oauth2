@@ -87,7 +87,10 @@ func (rs *RedisStore) Create(info oauth2.TokenInfo) (err error) {
 
 // remove
 func (rs *RedisStore) remove(key string) (err error) {
-	_, err = rs.cli.Del(key).Result()
+	_, verr := rs.cli.Del(key).Result()
+	if verr != redis.Nil {
+		err = verr
+	}
 	return
 }
 
@@ -105,16 +108,28 @@ func (rs *RedisStore) RemoveByRefresh(refresh string) (err error) {
 
 // get
 func (rs *RedisStore) get(token string) (ti oauth2.TokenInfo, err error) {
-	tv, err := rs.cli.Get(token).Result()
-	if err != nil {
+	tv, verr := rs.cli.Get(token).Result()
+	if verr != nil {
+		if verr == redis.Nil {
+			return
+		}
+		err = verr
 		return
 	}
-	iv, err := rs.cli.Get(tv).Result()
+	result := rs.cli.Get(tv)
+	if verr := result.Err(); verr != nil {
+		if verr == redis.Nil {
+			return
+		}
+		err = verr
+		return
+	}
+	iv, err := result.Bytes()
 	if err != nil {
 		return
 	}
 	var tm models.Token
-	if verr := json.Unmarshal([]byte(iv), &tm); verr != nil {
+	if verr := json.Unmarshal(iv, &tm); verr != nil {
 		err = verr
 		return
 	}

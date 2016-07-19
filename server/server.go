@@ -252,6 +252,10 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 		ierr error
 	)
 	defer func() {
+		if verr := recover(); verr != nil {
+			err = fmt.Errorf("%v", verr)
+			return
+		}
 		data := s.GetErrorData(rerr, ierr)
 		if data != nil {
 			if req == nil {
@@ -303,8 +307,10 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (gt oauth2.GrantType, t
 		ierr = err
 		return
 	}
-	tgr.ClientID = clientID
-	tgr.ClientSecret = clientSecret
+	tgr = &oauth2.TokenGenerateRequest{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+	}
 	switch gt {
 	case oauth2.AuthorizationCode:
 		tgr.RedirectURI = r.Form.Get("redirect_uri")
@@ -425,7 +431,7 @@ func (s *Server) GetTokenData(ti oauth2.TokenInfo) (data map[string]interface{})
 	data = map[string]interface{}{
 		"access_token": ti.GetAccess(),
 		"token_type":   s.Config.TokenType,
-		"expires_in":   ti.GetAccessExpiresIn() / time.Second,
+		"expires_in":   int64(ti.GetAccessExpiresIn() / time.Second),
 	}
 	if scope := ti.GetScope(); scope != "" {
 		data["scope"] = scope
@@ -444,6 +450,10 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err
 		ierr error
 	)
 	defer func() {
+		if verr := recover(); verr != nil {
+			err = fmt.Errorf("%v", verr)
+			return
+		}
 		data := s.GetErrorData(rerr, ierr)
 		if data == nil {
 			data = s.GetTokenData(ti)

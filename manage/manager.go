@@ -223,6 +223,10 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 	if gt == oauth2.AuthorizationCode {
 		ti, terr := m.LoadAccessToken(tgr.Code)
 		if terr != nil {
+			if terr == errors.ErrInvalidAccessToken {
+				err = errors.ErrInvalidAuthorizeCode
+				return
+			}
 			err = terr
 			return
 		} else if ti.GetRedirectURI() != tgr.RedirectURI || ti.GetClientID() != tgr.ClientID {

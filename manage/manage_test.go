@@ -1,10 +1,11 @@
-package manage
+package manage_test
 
 import (
 	"testing"
 
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/generates"
+	"gopkg.in/oauth2.v3/manage"
 	"gopkg.in/oauth2.v3/models"
 	"gopkg.in/oauth2.v3/store/client"
 	"gopkg.in/oauth2.v3/store/token"
@@ -14,7 +15,7 @@ import (
 
 func TestManager(t *testing.T) {
 	Convey("Manager test", t, func() {
-		manager := NewManager()
+		manager := manage.NewManager()
 
 		manager.MapClientModel(models.NewClient())
 		manager.MapTokenModel(models.NewToken())
@@ -51,11 +52,10 @@ func testManager(manager oauth2.Manager) {
 	So(code, ShouldNotBeEmpty)
 
 	atParams := &oauth2.TokenGenerateRequest{
-		ClientID:          reqParams.ClientID,
-		ClientSecret:      "11",
-		RedirectURI:       reqParams.RedirectURI,
-		Code:              code,
-		IsGenerateRefresh: true,
+		ClientID:     reqParams.ClientID,
+		ClientSecret: "11",
+		RedirectURI:  reqParams.RedirectURI,
+		Code:         code,
 	}
 	ati, err := manager.GenerateAccessToken(oauth2.AuthorizationCode, atParams)
 	So(err, ShouldBeNil)

@@ -1,8 +1,6 @@
 package client
 
 import (
-	"errors"
-
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/models"
 )
@@ -33,8 +31,6 @@ type TempStore struct {
 func (ts *TempStore) GetByID(id string) (cli oauth2.ClientInfo, err error) {
 	if c, ok := ts.data[id]; ok {
 		cli = c
-		return
 	}
-	err = errors.New("not found")
 	return
 }

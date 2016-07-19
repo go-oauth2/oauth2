@@ -1,20 +1,21 @@
-package token
+package token_test
 
 import (
 	"testing"
 	"time"
 
 	"gopkg.in/oauth2.v3/models"
+	"gopkg.in/oauth2.v3/store/token"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestRedisStore(t *testing.T) {
 	Convey("Test redis store", t, func() {
-		cfg := &RedisConfig{
+		cfg := &token.RedisConfig{
 			Addr: "192.168.33.70:6379",
 		}
-		store, err := NewRedisStore(cfg)
+		store, err := token.NewRedisStore(cfg)
 		So(err, ShouldBeNil)
 
 		Convey("Test access token store", func() {
