@@ -3,12 +3,18 @@ package token
 import (
 	"encoding/json"
 
-	"gopkg.in/oauth2.v2"
-	"gopkg.in/oauth2.v2/models"
 	"gopkg.in/redis.v4"
+
+	"strconv"
+
+	"gopkg.in/oauth2.v3"
+	"gopkg.in/oauth2.v3/models"
 )
 
-// NewRedisStore 创建redis存储的实例
+// DefaultIncrKey store incr id
+const DefaultIncrKey = "oauth2_incr"
+
+// NewRedisStore Create a token store instance based on redis
 func NewRedisStore(cfg *RedisConfig) (store oauth2.TokenStore, err error) {
 	opt := &redis.Options{
 		Network:      cfg.Network,
@@ -31,36 +37,47 @@ func NewRedisStore(cfg *RedisConfig) (store oauth2.TokenStore, err error) {
 	return
 }
 
-// RedisStore 令牌的redis存储
+// RedisStore Redis Store
 type RedisStore struct {
 	cli *redis.Client
 }
 
-// Create 存储令牌信息
+func (rs *RedisStore) getBasicID(id int64, info oauth2.TokenInfo) string {
+	return "oauth2_" + info.GetClientID() + "_" + strconv.FormatInt(id, 10)
+}
+
+// Create Create and store the new token information
 func (rs *RedisStore) Create(info oauth2.TokenInfo) (err error) {
 	jv, err := json.Marshal(info)
 	if err != nil {
 		return
 	}
+	id, err := rs.cli.Incr(DefaultIncrKey).Result()
+	if err != nil {
+		return
+	}
 	pipe := rs.cli.Pipeline()
-
+	basicID := rs.getBasicID(id, info)
 	aexp := info.GetAccessExpiresIn()
+	rexp := aexp
+
 	if refresh := info.GetRefresh(); refresh != "" {
-		exp := info.GetRefreshExpiresIn()
+		rexp = info.GetRefreshExpiresIn()
 		ttl := rs.cli.TTL(refresh)
 		if verr := ttl.Err(); verr != nil {
 			err = verr
 			return
 		}
 		if v := ttl.Val(); v.Seconds() > 0 {
-			exp = v
+			rexp = v
 		}
-		if aexp.Seconds() > exp.Seconds() {
-			aexp = exp
+		if aexp.Seconds() > rexp.Seconds() {
+			aexp = rexp
 		}
-		pipe.Set(refresh, jv, exp)
+		pipe.Set(refresh, basicID, rexp)
 	}
-	pipe.Set(info.GetAccess(), jv, aexp)
+	pipe.Set(info.GetAccess(), basicID, aexp)
+	pipe.Set(basicID, jv, rexp)
 
 	if _, verr := pipe.Exec(); verr != nil {
 		err = verr
@@ -70,44 +87,49 @@ func (rs *RedisStore) Create(info oauth2.TokenInfo) (err error) {
 
 // remove
 func (rs *RedisStore) remove(key string) (err error) {
-	info, err := rs.get(key)
-	if err != nil || info == nil {
-		return
-	}
-	pipe := rs.cli.Pipeline()
-	pipe.Del(info.GetAccess())
-	if v := info.GetRefresh(); v != "" {
-		pipe.Del(v)
-	}
-	if _, verr := pipe.Exec(); verr != nil {
+	_, verr := rs.cli.Del(key).Result()
+	if verr != redis.Nil {
 		err = verr
 	}
 	return
 }
 
-// RemoveByAccess 移除令牌
+// RemoveByAccess Use the access token to delete the token information(Along with the refresh token)
 func (rs *RedisStore) RemoveByAccess(access string) (err error) {
 	err = rs.remove(access)
 	return
 }
 
-// RemoveByRefresh 移除令牌
+// RemoveByRefresh Use the refresh token to delete the token information
 func (rs *RedisStore) RemoveByRefresh(refresh string) (err error) {
 	err = rs.remove(refresh)
 	return
 }
 
-func (rs *RedisStore) get(key string) (ti oauth2.TokenInfo, err error) {
-	gv, gerr := rs.cli.Get(key).Result()
-	if gerr != nil {
-		if gerr == redis.Nil {
+// get
+func (rs *RedisStore) get(token string) (ti oauth2.TokenInfo, err error) {
+	tv, verr := rs.cli.Get(token).Result()
+	if verr != nil {
+		if verr == redis.Nil {
 			return
 		}
-		err = gerr
+		err = verr
+		return
+	}
+	result := rs.cli.Get(tv)
+	if verr := result.Err(); verr != nil {
+		if verr == redis.Nil {
+			return
+		}
+		err = verr
+		return
+	}
+	iv, err := result.Bytes()
+	if err != nil {
 		return
 	}
 	var tm models.Token
-	if verr := json.Unmarshal([]byte(gv), &tm); verr != nil {
+	if verr := json.Unmarshal(iv, &tm); verr != nil {
 		err = verr
 		return
 	}
@@ -115,13 +137,13 @@ func (rs *RedisStore) get(key string) (ti oauth2.TokenInfo, err error) {
 	return
 }
 
-// GetByAccess 获取令牌数据
+// GetByAccess Use the access token for token information data
 func (rs *RedisStore) GetByAccess(access string) (ti oauth2.TokenInfo, err error) {
 	ti, err = rs.get(access)
 	return
 }
 
-// GetByRefresh 获取令牌数据
+// GetByRefresh Use the refresh token for token information data
 func (rs *RedisStore) GetByRefresh(refresh string) (ti oauth2.TokenInfo, err error) {
 	ti, err = rs.get(refresh)
 	return

@@ -4,19 +4,22 @@ import (
 	"time"
 
 	"github.com/LyricTian/inject"
-	"gopkg.in/oauth2.v2"
-	"gopkg.in/oauth2.v2/generates"
-	"gopkg.in/oauth2.v2/models"
-	"gopkg.in/oauth2.v2/store/token"
+
+	"gopkg.in/oauth2.v3"
+	"gopkg.in/oauth2.v3/errors"
+	"gopkg.in/oauth2.v3/generates"
+	"gopkg.in/oauth2.v3/models"
+	"gopkg.in/oauth2.v3/store/token"
 )
 
-// Config 授权配置参数
+// Config Configuration parameters
 type Config struct {
-	TokenExp   time.Duration // 令牌有效期
-	RefreshExp time.Duration // 更新令牌有效期
+	AccessTokenExp    time.Duration // Access token expiration time (in seconds)
+	RefreshTokenExp   time.Duration // Refresh token expiration time
+	IsGenerateRefresh bool          // Whether to generate the refreshing token
 }
 
-// NewRedisManager 创建基于redis存储的管理实例
+// NewRedisManager Create to based on redis store authorization management instance
 func NewRedisManager(redisCfg *token.RedisConfig) *Manager {
 	m := NewManager()
 	m.MapClientModel(models.NewClient())
@@ -28,141 +31,137 @@ func NewRedisManager(redisCfg *token.RedisConfig) *Manager {
 	return m
 }
 
-// NewMongoManager 创建基于mongodb存储的管理实例
-func NewMongoManager(mongoCfg *token.MongoConfig) *Manager {
-	m := NewManager()
-	m.MapClientModel(models.NewClient())
-	m.MapTokenModel(models.NewToken())
-	m.MapAuthorizeGenerate(generates.NewAuthorizeGenerate())
-	m.MapAccessGenerate(generates.NewAccessGenerate())
-	m.MustTokenStorage(token.NewMongoStore(mongoCfg))
-
-	return m
-}
-
-// NewManager 创建Manager的实例
+// NewManager Create to authorization management instance
 func NewManager() *Manager {
 	m := &Manager{
 		injector: inject.New(),
-		rtcfg:    make(map[oauth2.ResponseType]*Config),
 		gtcfg:    make(map[oauth2.GrantType]*Config),
 	}
-	// 设定参数默认值
-	// 设定授权码的有效期为10分钟
-	m.SetRTConfig(oauth2.Code, &Config{TokenExp: time.Minute * 10})
-	// 设定简化模式授权令牌的有效期为1小时
-	m.SetRTConfig(oauth2.Token, &Config{TokenExp: time.Hour * 1})
-
-	// 设定授权码模式令牌的有效期为2小时,更新令牌的有效期为3天
-	m.SetGTConfig(oauth2.AuthorizationCodeCredentials, &Config{TokenExp: time.Hour * 2, RefreshExp: time.Hour * 24 * 3})
-	// 设定密码模式令牌的有效期为2小时,更新令牌的有效期为7天
-	m.SetGTConfig(oauth2.PasswordCredentials, &Config{TokenExp: time.Hour * 2, RefreshExp: time.Hour * 24 * 7})
-	// 设定客户端模式令牌的有效期为1小时
-	m.SetGTConfig(oauth2.ClientCredentials, &Config{TokenExp: time.Hour * 2})
+	m.SetAuthorizeCodeExp(time.Minute * 10)
+	m.SetAuthorizeCodeTokenExp(&Config{IsGenerateRefresh: true, AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 3})
+	m.SetImplicitTokenExp(&Config{AccessTokenExp: time.Hour * 1})
+	m.SetPasswordTokenExp(&Config{IsGenerateRefresh: true, AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 7})
+	m.SetClientTokenExp(&Config{AccessTokenExp: time.Hour * 2})
 
 	return m
 }
 
-// Manager OAuth2授权管理
+// Manager Provide authorization management
 type Manager struct {
-	injector inject.Injector                 // 注入器
-	rtcfg    map[oauth2.ResponseType]*Config // 授权类型配置参数
-	gtcfg    map[oauth2.GrantType]*Config    // 授权模式配置参数
+	injector inject.Injector              // Dependency injection
+	codeExp  time.Duration                // Authorize code expiration time
+	gtcfg    map[oauth2.GrantType]*Config // Authorization grant configuration
 }
 
-// SetRTConfig 设定授权类型配置参数
-// rt 授权类型
-// cfg 配置参数
-func (m *Manager) SetRTConfig(rt oauth2.ResponseType, cfg *Config) {
-	m.rtcfg[rt] = cfg
+// SetAuthorizeCodeExp Set the authorization code expiration time
+func (m *Manager) SetAuthorizeCodeExp(exp time.Duration) {
+	m.codeExp = exp
 }
 
-// SetGTConfig 设定授权模式配置参数
-// gt 授权模式
-// cfg 配置参数
-func (m *Manager) SetGTConfig(gt oauth2.GrantType, cfg *Config) {
-	m.gtcfg[gt] = cfg
+// SetAuthorizeCodeTokenExp Set the authorization code grant token expiration time
+func (m *Manager) SetAuthorizeCodeTokenExp(cfg *Config) {
+	m.gtcfg[oauth2.AuthorizationCode] = cfg
 }
 
-// MapClientModel 注入客户端信息模型
-func (m *Manager) MapClientModel(cli oauth2.ClientInfo) {
+// SetImplicitTokenExp Set the implicit grant token expiration time
+func (m *Manager) SetImplicitTokenExp(cfg *Config) {
+	m.gtcfg[oauth2.Implicit] = cfg
+}
+
+// SetPasswordTokenExp Set the password grant token expiration time
+func (m *Manager) SetPasswordTokenExp(cfg *Config) {
+	m.gtcfg[oauth2.PasswordCredentials] = cfg
+}
+
+// SetClientTokenExp Set the client grant token expiration time
+func (m *Manager) SetClientTokenExp(cfg *Config) {
+	m.gtcfg[oauth2.ClientCredentials] = cfg
+}
+
+// MapClientModel Mapping the client information model
+func (m *Manager) MapClientModel(cli oauth2.ClientInfo) error {
 	if cli == nil {
-		panic(ErrNilValue)
+		return errors.ErrNilValue
 	}
 	m.injector.Map(cli)
+	return nil
 }
 
-// MapTokenModel 注入令牌信息模型
-func (m *Manager) MapTokenModel(token oauth2.TokenInfo) {
+// MapTokenModel Mapping the token information model
+func (m *Manager) MapTokenModel(token oauth2.TokenInfo) error {
 	if token == nil {
-		panic(ErrNilValue)
+		return errors.ErrNilValue
 	}
 	m.injector.Map(token)
+	return nil
 }
 
-// MapAuthorizeGenerate 注入授权令牌生成接口
-func (m *Manager) MapAuthorizeGenerate(gen oauth2.AuthorizeGenerate) {
+// MapAuthorizeGenerate Mapping the authorize code generate interface
+func (m *Manager) MapAuthorizeGenerate(gen oauth2.AuthorizeGenerate) error {
 	if gen == nil {
-		panic(ErrNilValue)
+		return errors.ErrNilValue
 	}
 	m.injector.Map(gen)
+	return nil
 }
 
-// MapAccessGenerate 注入访问令牌生成接口
-func (m *Manager) MapAccessGenerate(gen oauth2.AccessGenerate) {
+// MapAccessGenerate Mapping the access token generate interface
+func (m *Manager) MapAccessGenerate(gen oauth2.AccessGenerate) error {
 	if gen == nil {
-		panic(ErrNilValue)
+		return errors.ErrNilValue
 	}
 	m.injector.Map(gen)
+	return nil
 }
 
-// MapClientStorage 注入客户端信息存储接口
-func (m *Manager) MapClientStorage(stor oauth2.ClientStore) {
+// MapClientStorage Mapping the client store interface
+func (m *Manager) MapClientStorage(stor oauth2.ClientStore) error {
 	if stor == nil {
-		panic(ErrNilValue)
+		return errors.ErrNilValue
 	}
 	m.injector.Map(stor)
+	return nil
 }
 
-// MustClientStorage 强制注入客户端信息存储接口
+// MustClientStorage Mandatory mapping the client store interface
 func (m *Manager) MustClientStorage(stor oauth2.ClientStore, err error) {
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 	if stor == nil {
-		panic(ErrNilValue)
+		panic("client store can't be nil value")
 	}
 	m.injector.Map(stor)
 }
 
-// MapTokenStorage 注入令牌信息存储接口
-func (m *Manager) MapTokenStorage(stor oauth2.TokenStore) {
+// MapTokenStorage Mapping the token store interface
+func (m *Manager) MapTokenStorage(stor oauth2.TokenStore) error {
 	if stor == nil {
-		panic(ErrNilValue)
+		return (errors.ErrNilValue)
 	}
 	m.injector.Map(stor)
+	return nil
 }
 
-// MustTokenStorage 强制注入令牌信息存储接口
+// MustTokenStorage Mandatory mapping the token store interface
 func (m *Manager) MustTokenStorage(stor oauth2.TokenStore, err error) {
 	if err != nil {
 		panic(err)
 	}
 	if stor == nil {
-		panic(ErrNilValue)
+		panic("token store can't be nil value")
 	}
 	m.injector.Map(stor)
 }
 
-// GetClient 获取客户端信息
-// clientID 客户端标识
+// GetClient Get the client information
 func (m *Manager) GetClient(clientID string) (cli oauth2.ClientInfo, err error) {
 	_, ierr := m.injector.Invoke(func(stor oauth2.ClientStore) {
 		cli, err = stor.GetByID(clientID)
 		if err != nil {
 			return
 		} else if cli == nil {
-			err = ErrClientNotFound
+			err = errors.ErrInvalidClient
 		}
 	})
 	if err == nil && ierr != nil {
@@ -171,9 +170,7 @@ func (m *Manager) GetClient(clientID string) (cli oauth2.ClientInfo, err error) 
 	return
 }
 
-// GenerateAuthToken 生成授权令牌
-// rt 授权类型
-// tgr 生成令牌的配置参数
+// GenerateAuthToken Generate the authorization token(code)
 func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGenerateRequest) (authToken oauth2.TokenInfo, err error) {
 	cli, err := m.GetClient(tgr.ClientID)
 	if err != nil {
@@ -182,25 +179,33 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 		err = verr
 		return
 	}
-	_, ierr := m.injector.Invoke(func(ti oauth2.TokenInfo, gen oauth2.AuthorizeGenerate, stor oauth2.TokenStore) {
+	_, ierr := m.injector.Invoke(func(ti oauth2.TokenInfo, gen oauth2.AuthorizeGenerate, tgen oauth2.AccessGenerate, stor oauth2.TokenStore) {
+		var (
+			tv   string
+			terr error
+		)
 		td := &oauth2.GenerateBasic{
 			Client:   cli,
 			UserID:   tgr.UserID,
 			CreateAt: time.Now(),
 		}
-		tv, terr := gen.Token(td)
+		if rt == oauth2.Code {
+			ti.SetAccessExpiresIn(m.codeExp)
+			tv, terr = gen.Token(td)
+		} else {
+			ti.SetAccessExpiresIn(m.gtcfg[oauth2.Implicit].AccessTokenExp)
+			tv, _, terr = tgen.Token(td, false)
+		}
 		if terr != nil {
 			err = terr
 			return
 		}
+		ti.SetAccess(tv)
+		ti.SetAccessCreateAt(td.CreateAt)
 		ti.SetClientID(tgr.ClientID)
 		ti.SetUserID(tgr.UserID)
 		ti.SetRedirectURI(tgr.RedirectURI)
 		ti.SetScope(tgr.Scope)
-		ti.SetAuthType(rt.String())
-		ti.SetAccess(tv)
-		ti.SetAccessCreateAt(td.CreateAt)
-		ti.SetAccessExpiresIn(m.rtcfg[rt].TokenExp)
 		err = stor.Create(ti)
 		if err != nil {
 			return
@@ -213,19 +218,21 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 	return
 }
 
-// GenerateAccessToken 生成访问令牌、更新令牌
-// gt 授权模式
-// tgr 生成令牌的参数
+// GenerateAccessToken Generate the access token
 func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (accessToken oauth2.TokenInfo, err error) {
-	if gt == oauth2.AuthorizationCodeCredentials { // 授权码模式
+	if gt == oauth2.AuthorizationCode {
 		ti, terr := m.LoadAccessToken(tgr.Code)
 		if terr != nil {
+			if terr == errors.ErrInvalidAccessToken {
+				err = errors.ErrInvalidAuthorizeCode
+				return
+			}
 			err = terr
 			return
 		} else if ti.GetRedirectURI() != tgr.RedirectURI || ti.GetClientID() != tgr.ClientID {
-			err = ErrAuthCodeInvalid
+			err = errors.ErrInvalidAuthorizeCode
 			return
-		} else if verr := m.RemoveAccessToken(tgr.Code); verr != nil { // 删除授权码
+		} else if verr := m.RemoveAccessToken(tgr.Code); verr != nil { // remove authorize code
 			err = verr
 			return
 		}
@@ -235,8 +242,8 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 	cli, err := m.GetClient(tgr.ClientID)
 	if err != nil {
 		return
-	} else if tgr.ClientSecret != "" && tgr.ClientSecret != cli.GetSecret() {
-		err = ErrClientInvalid
+	} else if tgr.ClientSecret != cli.GetSecret() {
+		err = errors.ErrInvalidClient
 		return
 	}
 	_, ierr := m.injector.Invoke(func(ti oauth2.TokenInfo, gen oauth2.AccessGenerate, stor oauth2.TokenStore) {
@@ -245,7 +252,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 			UserID:   tgr.UserID,
 			CreateAt: time.Now(),
 		}
-		av, rv, terr := gen.Token(td, tgr.IsGenerateRefresh)
+		av, rv, terr := gen.Token(td, m.gtcfg[gt].IsGenerateRefresh)
 		if terr != nil {
 			err = terr
 			return
@@ -254,13 +261,12 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 		ti.SetUserID(tgr.UserID)
 		ti.SetRedirectURI(tgr.RedirectURI)
 		ti.SetScope(tgr.Scope)
-		ti.SetAuthType(gt.String())
 		ti.SetAccessCreateAt(td.CreateAt)
-		ti.SetAccessExpiresIn(m.gtcfg[gt].TokenExp)
+		ti.SetAccessExpiresIn(m.gtcfg[gt].AccessTokenExp)
 		ti.SetAccess(av)
-		if rv != "" {
+		if m.gtcfg[gt].IsGenerateRefresh && rv != "" {
 			ti.SetRefreshCreateAt(td.CreateAt)
-			ti.SetRefreshExpiresIn(m.gtcfg[gt].RefreshExp)
+			ti.SetRefreshExpiresIn(m.gtcfg[gt].RefreshTokenExp)
 			ti.SetRefresh(rv)
 		}
 		err = stor.Create(ti)
@@ -275,28 +281,24 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 	return
 }
 
-// RefreshAccessToken 更新访问令牌
+// RefreshAccessToken Refreshing an access token
 func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessToken oauth2.TokenInfo, err error) {
 	cli, err := m.GetClient(tgr.ClientID)
 	if err != nil {
 		return
-	} else if tgr.ClientSecret != "" && tgr.ClientSecret != cli.GetSecret() {
-		err = ErrClientInvalid
+	} else if tgr.ClientSecret != cli.GetSecret() {
+		err = errors.ErrInvalidClient
 		return
 	}
 	ti, err := m.LoadRefreshToken(tgr.Refresh)
 	if err != nil {
 		return
 	} else if ti.GetClientID() != tgr.ClientID {
-		err = ErrRefreshInvalid
+		err = errors.ErrInvalidRefreshToken
 		return
 	}
+	oldAccess := ti.GetAccess()
 	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore, gen oauth2.AccessGenerate) {
-		// 移除旧的访问令牌
-		if verr := stor.RemoveByAccess(ti.GetAccess()); verr != nil {
-			err = verr
-			return
-		}
 		td := &oauth2.GenerateBasic{
 			Client:   cli,
 			UserID:   ti.GetUserID(),
@@ -316,6 +318,11 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 			err = verr
 			return
 		}
+		// remove the old access token
+		if verr := stor.RemoveByAccess(oldAccess); verr != nil {
+			err = verr
+			return
+		}
 		accessToken = ti
 	})
 	if ierr != nil && err == nil {
@@ -324,10 +331,10 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 	return
 }
 
-// RemoveAccessToken 删除访问令牌
+// RemoveAccessToken Use the access token to delete the token information
 func (m *Manager) RemoveAccessToken(access string) (err error) {
 	if access == "" {
-		err = ErrAccessInvalid
+		err = errors.ErrInvalidAccessToken
 		return
 	}
 	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore) {
@@ -339,10 +346,10 @@ func (m *Manager) RemoveAccessToken(access string) (err error) {
 	return
 }
 
-// RemoveRefreshToken 删除更新令牌
+// RemoveRefreshToken Use the refresh token to delete the token information
 func (m *Manager) RemoveRefreshToken(refresh string) (err error) {
 	if refresh == "" {
-		err = ErrAccessInvalid
+		err = errors.ErrInvalidAccessToken
 		return
 	}
 	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore) {
@@ -354,10 +361,10 @@ func (m *Manager) RemoveRefreshToken(refresh string) (err error) {
 	return
 }
 
-// LoadAccessToken 加载访问令牌信息
+// LoadAccessToken According to the access token for corresponding token information
 func (m *Manager) LoadAccessToken(access string) (info oauth2.TokenInfo, err error) {
 	if access == "" {
-		err = ErrAccessInvalid
+		err = errors.ErrInvalidAccessToken
 		return
 	}
 	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore) {
@@ -367,12 +374,12 @@ func (m *Manager) LoadAccessToken(access string) (info oauth2.TokenInfo, err err
 			err = terr
 			return
 		} else if ti == nil {
-			err = ErrAccessInvalid
+			err = errors.ErrInvalidAccessToken
 			return
-		} else if ti.GetRefresh() != "" && ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(ct) { // 检查更新令牌是否过期
-			err = ErrRefreshExpired
-		} else if ti.GetAccessCreateAt().Add(ti.GetAccessExpiresIn()).Before(ct) { // 检查访问令牌是否过期
-			err = ErrAccessExpired
+		} else if ti.GetRefresh() != "" && ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(ct) {
+			err = errors.ErrExpiredRefreshToken
+		} else if ti.GetAccessCreateAt().Add(ti.GetAccessExpiresIn()).Before(ct) {
+			err = errors.ErrExpiredAccessToken
 			return
 		}
 		info = ti
@@ -383,10 +390,10 @@ func (m *Manager) LoadAccessToken(access string) (info oauth2.TokenInfo, err err
 	return
 }
 
-// LoadRefreshToken 加载更新令牌信息
+// LoadRefreshToken According to the refresh token for corresponding token information
 func (m *Manager) LoadRefreshToken(refresh string) (info oauth2.TokenInfo, err error) {
 	if refresh == "" {
-		err = ErrRefreshInvalid
+		err = errors.ErrInvalidRefreshToken
 		return
 	}
 	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore) {
@@ -395,10 +402,10 @@ func (m *Manager) LoadRefreshToken(refresh string) (info oauth2.TokenInfo, err e
 			err = terr
 			return
 		} else if ti == nil {
-			err = ErrRefreshInvalid
+			err = errors.ErrInvalidRefreshToken
 			return
 		} else if ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(time.Now()) {
-			err = ErrRefreshExpired
+			err = errors.ErrExpiredRefreshToken
 			return
 		}
 		info = ti

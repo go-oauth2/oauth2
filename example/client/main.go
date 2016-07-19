@@ -54,6 +54,6 @@ func main() {
 		io.Copy(w, resp.Body)
 	})
 
-	log.Println("OAuth2 client is running at 9094 port.")
+	log.Println("Client is running at 9094 port.")
 	log.Fatal(http.ListenAndServe(":9094", nil))
 }

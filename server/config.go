@@ -1,25 +1,24 @@
 package server
 
-import "gopkg.in/oauth2.v2"
+import "gopkg.in/oauth2.v3"
 
-// Config 配置参数
+// Config Configuration parameters
 type Config struct {
-	// TokenType 令牌类型（默认为Bearer）
-	TokenType string
-	// AllowedResponseType 允许的授权类型（默认code）
-	AllowedResponseType []oauth2.ResponseType
-	// AllowedGrantType 允许的授权模式（默认authorization_code）
-	AllowedGrantType []oauth2.GrantType
-	// Handler 令牌请求处理
-	Handler *TokenRequestHandler
+	TokenType            string                // TokenType token type（Default is Bearer）
+	AllowedResponseTypes []oauth2.ResponseType // Allow the authorization type(Default is all)
+	AllowedGrantTypes    []oauth2.GrantType    // Allow the grant type(Default is all)
 }
 
-// NewConfig 创建默认的配置参数
+// NewConfig Create to configuration instance
 func NewConfig() *Config {
 	return &Config{
-		TokenType:           "Bearer",
-		AllowedResponseType: []oauth2.ResponseType{oauth2.Code},
-		AllowedGrantType:    []oauth2.GrantType{oauth2.AuthorizationCodeCredentials},
-		Handler:             &TokenRequestHandler{},
+		TokenType:            "Bearer",
+		AllowedResponseTypes: []oauth2.ResponseType{oauth2.Code, oauth2.Token},
+		AllowedGrantTypes: []oauth2.GrantType{
+			oauth2.AuthorizationCode,
+			oauth2.PasswordCredentials,
+			oauth2.ClientCredentials,
+			oauth2.Refreshing,
+		},
 	}
 }

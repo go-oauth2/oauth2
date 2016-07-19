@@ -1,111 +1,78 @@
-基于Golang的OAuth2服务实现
-=======================
+OAuth 2.0
+=========
+>  [OAuth 2.0](http://oauth.net/2/) is the next evolution of the OAuth protocol which was originally created in late 2006.
 
-> 完全模块化、支持http/fasthttp的服务端处理、令牌存储支持redis/mongodb
+[![GoDoc](https://godoc.org/gopkg.in/oauth2.v3?status.svg)](https://godoc.org/gopkg.in/oauth2.v3)
+[![Go Report Card](https://goreportcard.com/badge/gopkg.in/oauth2.v3)](https://goreportcard.com/report/gopkg.in/oauth2.v3)
 
-[![GoDoc](https://godoc.org/gopkg.in/oauth2.v2?status.svg)](https://godoc.org/gopkg.in/oauth2.v2)
-[![Go Report Card](https://goreportcard.com/badge/gopkg.in/oauth2.v2)](https://goreportcard.com/report/gopkg.in/oauth2.v2)
+Quick Start
+-----------
 
-获取
-----
+### Download and install
 
 ``` bash
-$ go get -u gopkg.in/oauth2.v2/...
+$ go get -u gopkg.in/oauth2.v3/...
 ```
 
-HTTP服务端
---------
+### Create file `server.go`
 
 ``` go
 package main
 
 import (
-	"log"
 	"net/http"
 
-	"gopkg.in/oauth2.v2/manage"
-	"gopkg.in/oauth2.v2/models"
-	"gopkg.in/oauth2.v2/server"
-	"gopkg.in/oauth2.v2/store/client"
-	"gopkg.in/oauth2.v2/store/token"
+	"gopkg.in/oauth2.v3/manage"
+	"gopkg.in/oauth2.v3/server"
+	"gopkg.in/oauth2.v3/store/token"
 )
 
 func main() {
 	manager := manage.NewRedisManager(
 		&token.RedisConfig{Addr: "192.168.33.70:6379"},
 	)
-	manager.MapClientStorage(client.NewTempStore())
 	srv := server.NewServer(server.NewConfig(), manager)
-
+	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+		// validation and to get the user id
+		userID = "000000"
+		return
+	})
 	http.HandleFunc("/authorize", func(w http.ResponseWriter, r *http.Request) {
-		authReq, err := srv.GetAuthorizeRequest(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		// TODO: 登录验证、授权处理
-        authReq.UserID = "000000"
-
-		err = srv.HandleAuthorizeRequest(w, authReq)
+		err := srv.HandleAuthorizeRequest(w, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
 	})
-
 	http.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
 		err := srv.HandleTokenRequest(w, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
 	})
-
-	log.Fatal(http.ListenAndServe(":9096", nil))
+	http.ListenAndServe(":9096", nil)
 }
-
 ```
 
-FastHTTP服务端
--------------
-
-``` go
-srv := server.NewFastServer(server.NewConfig(), manager)
-
-fasthttp.ListenAndServe(":9096", func(ctx *fasthttp.RequestCtx) {
-	switch string(ctx.Request.URI().Path()) {
-	case "/authorize":
-		authReq, err := srv.GetAuthorizeRequest(ctx)
-		if err != nil {
-			ctx.Error(err.Error(), 400)
-			return
-		}
-		authReq.UserID = "000000"
-		// TODO: 登录验证、授权处理
-		err = srv.HandleAuthorizeRequest(ctx, authReq)
-		if err != nil {
-			ctx.Error(err.Error(), 400)
-		}
-	case "/token":
-		err := srv.HandleTokenRequest(ctx)
-		if err != nil {
-			ctx.Error(err.Error(), 400)
-		}
-	}
-})
-```
-
-测试
-----
-> [goconvey](https://github.com/smartystreets/goconvey)
+### Build and run
 
 ``` bash
-$ goconvey -port=9092
+$ go build server.go
+$ ./server
 ```
 
-范例
-----
+Features
+--------
 
-模拟授权码模式的测试范例，请查看[example](/example)
+* Based on the [RFC 6749](https://tools.ietf.org/html/rfc6749) implementation
+* Easy to use
+* Modularity
+* Flexible
+* Elegant
 
+Example
+-------
+
+Simulation examples of authorization code model, please check [example](/example)
 
 License
 -------

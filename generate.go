@@ -3,22 +3,20 @@ package oauth2
 import "time"
 
 type (
-	// GenerateBasic 提供生成令牌的基础数据
+	// GenerateBasic Provide the basis of the generated token data
 	GenerateBasic struct {
-		Client   ClientInfo // 客户端信息
-		UserID   string     // 用户标识
-		CreateAt time.Time  // 创建时间
+		Client   ClientInfo // The client information
+		UserID   string     // The user id
+		CreateAt time.Time  // Creation time
 	}
 
-	// AuthorizeGenerate 授权令牌生成接口
+	// AuthorizeGenerate Generate the authorization code interface
 	AuthorizeGenerate interface {
-		// 授权令牌
 		Token(data *GenerateBasic) (code string, err error)
 	}
 
-	// AccessGenerate 访问令牌生成接口
+	// AccessGenerate Generate the access and refresh tokens interface
 	AccessGenerate interface {
-		// 访问令牌、更新令牌
 		Token(data *GenerateBasic, isGenRefresh bool) (access, refresh string, err error)
 	}
 )

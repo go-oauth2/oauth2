@@ -1,25 +1,24 @@
-OAuth2授权码模式模拟
-=================
+Authorization code simulation
+=============================
 
-运行服务端
---------
-> 运行fasthttp服务端，请使用`cd example/fastserver`
+Run Server
+---------
 
-```
+``` bash
 $ cd example/server
 $ go run main.go
 ```
 
-运行客户端
---------
+Run Client
+----------
 
 ```
 $ cd example/client
 $ go run main.go
 ```
 
-打开浏览器
---------
+Open the browser
+----------------
 
 [http://localhost:9094](http://localhost:9094)
 

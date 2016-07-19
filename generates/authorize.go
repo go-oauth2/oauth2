@@ -2,30 +2,28 @@ package generates
 
 import (
 	"bytes"
+	"encoding/base64"
 	"strings"
 
 	"github.com/LyricTian/go.uuid"
-	"gopkg.in/LyricTian/lib.v2"
-	"gopkg.in/oauth2.v2"
+	"gopkg.in/oauth2.v3"
 )
 
-// NewAuthorizeGenerate 创建授权令牌生成实例
+// NewAuthorizeGenerate Create to generate the authorize code instance
 func NewAuthorizeGenerate() *AuthorizeGenerate {
 	return &AuthorizeGenerate{}
 }
 
-// AuthorizeGenerate 授权令牌生成
+// AuthorizeGenerate Generate the authorize code
 type AuthorizeGenerate struct{}
 
-// Token 生成令牌
+// Token Based on the UUID generated token
 func (ag *AuthorizeGenerate) Token(data *oauth2.GenerateBasic) (code string, err error) {
-	buf := bytes.NewBuffer(uuid.NewV1().Bytes())
+	buf := bytes.NewBufferString(data.Client.GetID())
 	buf.WriteString(data.UserID)
-	buf.WriteString(data.Client.GetID())
-	code, err = lib.NewEncryption(buf.Bytes()).MD5()
-	if err != nil {
-		return
-	}
-	code = strings.ToUpper(code)
+	token := uuid.NewV3(uuid.NewV1(), buf.String())
+	code = base64.URLEncoding.EncodeToString(token.Bytes())
+	code = strings.ToUpper(strings.TrimRight(code, "="))
+
 	return
 }

@@ -2,63 +2,86 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
 
-	"gopkg.in/oauth2.v2"
+	"gopkg.in/oauth2.v3"
+	"gopkg.in/oauth2.v3/errors"
 )
 
-// NewServer 创建OAuth2服务实例
+// NewServer Create to authorization server instance
 func NewServer(cfg *Config, manager oauth2.Manager) *Server {
 	srv := &Server{
-		cfg:     cfg,
-		manager: manager,
+		Config:            cfg,
+		Manager:           manager,
+		ClientInfoHandler: ClientFormHandler,
 	}
-	srv.SetClientHandler(ClientFormHandler)
 	return srv
 }
 
-// Server OAuth2服务处理
+// Server Provide authorization server
 type Server struct {
-	cfg     *Config
-	manager oauth2.Manager
+	Config                       *Config
+	Manager                      oauth2.Manager
+	ClientInfoHandler            ClientInfoHandler
+	ClientAuthorizedHandler      ClientAuthorizedHandler
+	ClientScopeHandler           ClientScopeHandler
+	UserAuthorizationHandler     UserAuthorizationHandler
+	PasswordAuthorizationHandler PasswordAuthorizationHandler
+	RefreshingScopeHandler       RefreshingScopeHandler
+	ErrorHandler                 ErrorHandler
 }
 
-// SetTokenType 设置令牌类型
-func (s *Server) SetTokenType(tokenType string) {
-	s.cfg.TokenType = tokenType
+// SetAllowedResponseType Allow the authorization types
+func (s *Server) SetAllowedResponseType(types ...oauth2.ResponseType) {
+	s.Config.AllowedResponseTypes = types
 }
 
-// SetAllowedResponseType 设置允许的授权类型
-func (s *Server) SetAllowedResponseType(allowedTypes ...oauth2.ResponseType) {
-	s.cfg.AllowedResponseType = allowedTypes
+// SetAllowedGrantType Allow the grant types
+func (s *Server) SetAllowedGrantType(types ...oauth2.GrantType) {
+	s.Config.AllowedGrantTypes = types
 }
 
-// SetAllowedGrantType 允许的授权模式
-func (s *Server) SetAllowedGrantType(allowedTypes ...oauth2.GrantType) {
-	s.cfg.AllowedGrantType = allowedTypes
+// SetClientInfoHandler Get client info from request
+func (s *Server) SetClientInfoHandler(handler ClientInfoHandler) {
+	s.ClientInfoHandler = handler
 }
 
-// SetClientHandler 设置客户端处理
-func (s *Server) SetClientHandler(handler ClientHandler) {
-	s.cfg.Handler.ClientHandler = handler
+// SetClientAuthorizedHandler Check the client allows to use this authorization grant type
+func (s *Server) SetClientAuthorizedHandler(handler ClientAuthorizedHandler) {
+	s.ClientAuthorizedHandler = handler
 }
 
-// SetUserHandler 设置用户处理
-func (s *Server) SetUserHandler(handler UserHandler) {
-	s.cfg.Handler.UserHandler = handler
+// SetClientScopeHandler Check the client allows to use scope
+func (s *Server) SetClientScopeHandler(handler ClientScopeHandler) {
+	s.ClientScopeHandler = handler
 }
 
-// SetScopeHandler 设置授权范围处理
-func (s *Server) SetScopeHandler(handler ScopeHandler) {
-	s.cfg.Handler.ScopeHandler = handler
+// SetUserAuthorizationHandler Get user id from request authorization
+func (s *Server) SetUserAuthorizationHandler(handler UserAuthorizationHandler) {
+	s.UserAuthorizationHandler = handler
 }
 
-// checkResponseType 检查允许的授权类型
-func (s *Server) checkResponseType(rt oauth2.ResponseType) bool {
-	for _, art := range s.cfg.AllowedResponseType {
+// SetPasswordAuthorizationHandler Get user id from username and password
+func (s *Server) SetPasswordAuthorizationHandler(handler PasswordAuthorizationHandler) {
+	s.PasswordAuthorizationHandler = handler
+}
+
+// SetRefreshingScopeHandler Check the scope of the refreshing token
+func (s *Server) SetRefreshingScopeHandler(handler RefreshingScopeHandler) {
+	s.RefreshingScopeHandler = handler
+}
+
+// SetErrorHandler Error handling
+func (s *Server) SetErrorHandler(handler ErrorHandler) {
+	s.ErrorHandler = handler
+}
+
+// CheckResponseType Check allows response type
+func (s *Server) CheckResponseType(rt oauth2.ResponseType) bool {
+	for _, art := range s.Config.AllowedResponseTypes {
 		if art == rt {
 			return true
 		}
@@ -66,9 +89,9 @@ func (s *Server) checkResponseType(rt oauth2.ResponseType) bool {
 	return false
 }
 
-// checkGrantType 检查允许的授权模式
-func (s *Server) checkGrantType(gt oauth2.GrantType) bool {
-	for _, agt := range s.cfg.AllowedGrantType {
+// CheckGrantType Check allows grant type
+func (s *Server) CheckGrantType(gt oauth2.GrantType) bool {
+	for _, agt := range s.Config.AllowedGrantTypes {
 		if agt == gt {
 			return true
 		}
@@ -76,75 +99,106 @@ func (s *Server) checkGrantType(gt oauth2.GrantType) bool {
 	return false
 }
 
-// GetAuthorizeRequest 获取授权请求参数
-func (s *Server) GetAuthorizeRequest(r *http.Request) (authReq *AuthorizeRequest, err error) {
-	if r.Method != "GET" {
-		err = ErrRequestMethodInvalid
+// ValidationAuthorizeRequest The authorization request validation
+func (s *Server) ValidationAuthorizeRequest(r *http.Request) (req *AuthorizeRequest, rerr, ierr error) {
+	if err := r.ParseForm(); err != nil {
+		ierr = err
 		return
 	}
-	r.ParseForm()
 	redirectURI, err := url.QueryUnescape(r.Form.Get("redirect_uri"))
 	if err != nil {
+		ierr = err
 		return
 	}
-	authReq = &AuthorizeRequest{
-		Type:        oauth2.ResponseType(r.Form.Get("response_type")),
-		RedirectURI: redirectURI,
-		State:       r.Form.Get("state"),
-		Scope:       r.Form.Get("scope"),
-		ClientID:    r.Form.Get("client_id"),
+	req = &AuthorizeRequest{
+		RedirectURI:  redirectURI,
+		ResponseType: oauth2.ResponseType(r.Form.Get("response_type")),
+		ClientID:     r.Form.Get("client_id"),
+		State:        r.Form.Get("state"),
+		Scope:        r.Form.Get("scope"),
 	}
-	if authReq.Type == "" || !s.checkResponseType(authReq.Type) {
-		err = ErrResponseTypeInvalid
-		return
-	} else if authReq.ClientID == "" {
-		err = ErrClientInvalid
+	if r.Method != "GET" {
+		rerr = errors.ErrInvalidRequest
 	}
 	return
 }
 
-// HandleAuthorizeRequest 处理授权请求
-func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, authReq *AuthorizeRequest) (err error) {
-	if authReq.UserID == "" {
-		err = ErrUserInvalid
+// GetAuthorizeToken Get authorization token(code)
+func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (ti oauth2.TokenInfo, rerr, ierr error) {
+	if req.RedirectURI == "" ||
+		req.ClientID == "" ||
+		req.UserID == "" {
+		rerr = errors.ErrInvalidRequest
 		return
+	} else if req.ResponseType == "" {
+		rerr = errors.ErrUnsupportedResponseType
+		return
+	}
+	if allowed := s.CheckResponseType(req.ResponseType); !allowed {
+		rerr = errors.ErrUnauthorizedClient
+		return
+	}
+	if fn := s.ClientAuthorizedHandler; fn != nil {
+		gt := oauth2.AuthorizationCode
+		if req.ResponseType == oauth2.Token {
+			gt = oauth2.Implicit
+		}
+		allowed, err := fn(req.ClientID, gt)
+		if err != nil {
+			ierr = err
+			return
+		}
+		if !allowed {
+			rerr = errors.ErrUnauthorizedClient
+			return
+		}
+	}
+	if fn := s.ClientScopeHandler; fn != nil {
+		allowed, err := fn(req.ClientID, req.Scope)
+		if err != nil {
+			ierr = err
+			return
+		}
+		if !allowed {
+			rerr = errors.ErrInvalidScope
+			return
+		}
 	}
 	tgr := &oauth2.TokenGenerateRequest{
-		ClientID:    authReq.ClientID,
-		UserID:      authReq.UserID,
-		RedirectURI: authReq.RedirectURI,
-		Scope:       authReq.Scope,
+		ClientID:    req.ClientID,
+		UserID:      req.UserID,
+		RedirectURI: req.RedirectURI,
+		Scope:       req.Scope,
 	}
-	ti, err := s.manager.GenerateAuthToken(oauth2.Code, tgr)
+	ti, err := s.Manager.GenerateAuthToken(req.ResponseType, tgr)
 	if err != nil {
-		return
+		if err == errors.ErrInvalidClient {
+			rerr = err
+		} else {
+			ierr = err
+		}
 	}
-	redirectURI, err := s.GetRedirectURI(authReq, ti)
-	if err != nil {
-		return
-	}
-	w.Header().Set("Location", redirectURI)
-	w.WriteHeader(302)
 	return
 }
 
-// GetRedirectURI 获取重定向URI
-func (s *Server) GetRedirectURI(authReq *AuthorizeRequest, ti oauth2.TokenInfo) (uri string, err error) {
-	u, err := url.Parse(authReq.RedirectURI)
+// GetRedirectURI Get redirect uri
+func (s *Server) GetRedirectURI(req *AuthorizeRequest, data map[string]interface{}) (uri string, err error) {
+	if req == nil {
+		return
+	}
+	u, err := url.Parse(req.RedirectURI)
 	if err != nil {
 		return
 	}
 	q := u.Query()
-	q.Set("state", authReq.State)
-	switch authReq.Type {
+	q.Set("state", req.State)
+	for k, v := range data {
+		q.Set(k, fmt.Sprint(v))
+	}
+	switch req.ResponseType {
 	case oauth2.Code:
-		q.Set("code", ti.GetAccess())
 		u.RawQuery = q.Encode()
 	case oauth2.Token:
-		q.Set("access_token", ti.GetAccess())
-		q.Set("token_type", s.cfg.TokenType)
-		q.Set("expires_in", strconv.FormatInt(int64(ti.GetAccessExpiresIn()/time.Second), 10))
-		q.Set("scope", ti.GetScope())
 		u.RawQuery = ""
 		u.Fragment, err = url.QueryUnescape(q.Encode())
 		if err != nil {
@@ -155,81 +209,229 @@ func (s *Server) GetRedirectURI(authReq *AuthorizeRequest, ti oauth2.TokenInfo) 
 	return
 }
 
-// HandleTokenRequest 处理令牌请求
-func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err error) {
-	if r.Method != "POST" {
-		err = ErrRequestMethodInvalid
+// GetAuthorizeData Get authorization response data
+func (s *Server) GetAuthorizeData(rt oauth2.ResponseType, ti oauth2.TokenInfo) (data map[string]interface{}) {
+	if rt == oauth2.Code {
+		data = map[string]interface{}{
+			"code": ti.GetAccess(),
+		}
+	} else {
+		data = s.GetTokenData(ti)
+	}
+	return
+}
+
+// GetErrorData Get error response data
+func (s *Server) GetErrorData(rerr, ierr error) (data map[string]interface{}) {
+	var err error
+	if ierr != nil {
+		rerr = errors.ErrServerError
+		err = ierr
+	} else if rerr != nil {
+		err = rerr
+		ierr = rerr
+	}
+	if err == nil {
 		return
 	}
-	r.ParseForm()
-	gt := oauth2.GrantType(r.Form.Get("grant_type"))
-	if gt == "" || !s.checkGrantType(gt) {
-		err = ErrGrantTypeInvalid
+	if fn := s.ErrorHandler; fn != nil {
+		s.ErrorHandler(err)
+	}
+	data = map[string]interface{}{
+		"error": err.Error(),
+	}
+	return
+}
+
+// HandleAuthorizeRequest The authorization request handling
+func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) (err error) {
+	var (
+		ti   oauth2.TokenInfo
+		req  *AuthorizeRequest
+		rerr error
+		ierr error
+	)
+	defer func() {
+		if verr := recover(); verr != nil {
+			err = fmt.Errorf("%v", verr)
+			return
+		}
+		data := s.GetErrorData(rerr, ierr)
+		if data != nil {
+			if req == nil {
+				err = ierr
+				return
+			}
+		} else {
+			data = s.GetAuthorizeData(req.ResponseType, ti)
+		}
+		uri, verr := s.GetRedirectURI(req, data)
+		if verr != nil {
+			err = verr
+			return
+		}
+		w.Header().Set("Location", uri)
+		w.WriteHeader(302)
+	}()
+	req, rerr, ierr = s.ValidationAuthorizeRequest(r)
+	if rerr != nil || ierr != nil {
 		return
 	}
-	var ti oauth2.TokenInfo
-	clientID, clientSecret, err := s.cfg.Handler.ClientHandler(r)
+	userID, err := s.UserAuthorizationHandler(w, r)
 	if err != nil {
+		ierr = err
 		return
 	}
-	tgr := &oauth2.TokenGenerateRequest{
+	req.UserID = userID
+	ti, rerr, ierr = s.GetAuthorizeToken(req)
+	return
+}
+
+// ValidationTokenRequest The token request validation
+func (s *Server) ValidationTokenRequest(r *http.Request) (gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest, rerr, ierr error) {
+	if r.Method != "POST" {
+		rerr = errors.ErrInvalidRequest
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		ierr = err
+		return
+	}
+	gt = oauth2.GrantType(r.Form.Get("grant_type"))
+	if gt == "" {
+		rerr = errors.ErrUnsupportedGrantType
+		return
+	}
+	clientID, clientSecret, err := s.ClientInfoHandler(r)
+	if err != nil {
+		ierr = err
+		return
+	}
+	tgr = &oauth2.TokenGenerateRequest{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 	}
 	switch gt {
-	case oauth2.AuthorizationCodeCredentials:
+	case oauth2.AuthorizationCode:
 		tgr.RedirectURI = r.Form.Get("redirect_uri")
 		tgr.Code = r.Form.Get("code")
-		tgr.IsGenerateRefresh = true
-		ti, err = s.manager.GenerateAccessToken(oauth2.AuthorizationCodeCredentials, tgr)
+		if tgr.RedirectURI == "" ||
+			tgr.Code == "" {
+			rerr = errors.ErrInvalidRequest
+		}
 	case oauth2.PasswordCredentials:
-		userID, uerr := s.cfg.Handler.UserHandler(r.Form.Get("username"), r.Form.Get("password"))
-		if uerr != nil {
-			err = uerr
+		tgr.Scope = r.Form.Get("scope")
+		userID, verr := s.PasswordAuthorizationHandler(r.Form.Get("username"), r.Form.Get("password"))
+		if verr != nil {
+			ierr = verr
+			return
+		}
+		if userID == "" {
+			rerr = errors.ErrInvalidRequest
 			return
 		}
 		tgr.UserID = userID
-		tgr.Scope = r.Form.Get("scope")
-		tgr.IsGenerateRefresh = true
-		ti, err = s.manager.GenerateAccessToken(oauth2.PasswordCredentials, tgr)
 	case oauth2.ClientCredentials:
 		tgr.Scope = r.Form.Get("scope")
-		ti, err = s.manager.GenerateAccessToken(oauth2.ClientCredentials, tgr)
-	case oauth2.RefreshCredentials:
+	case oauth2.Refreshing:
 		tgr.Refresh = r.Form.Get("refresh_token")
 		tgr.Scope = r.Form.Get("scope")
-		if tgr.Scope != "" { // 检查授权范围
-			rti, rerr := s.manager.LoadRefreshToken(tgr.Refresh)
-			if rerr != nil {
-				err = rerr
+		if tgr.Refresh == "" {
+			rerr = errors.ErrInvalidRequest
+		}
+	}
+	return
+}
+
+// GetAccessToken Get access token
+func (s *Server) GetAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (ti oauth2.TokenInfo, rerr, ierr error) {
+	if allowed := s.CheckGrantType(gt); !allowed {
+		rerr = errors.ErrUnauthorizedClient
+		return
+	}
+	if fn := s.ClientAuthorizedHandler; fn != nil {
+		allowed, err := fn(tgr.ClientID, gt)
+		if err != nil {
+			ierr = err
+			return
+		}
+		if !allowed {
+			rerr = errors.ErrUnauthorizedClient
+			return
+		}
+	}
+	switch gt {
+	case oauth2.AuthorizationCode:
+		ti, ierr = s.Manager.GenerateAccessToken(gt, tgr)
+		if ierr != nil {
+			if ierr == errors.ErrInvalidAuthorizeCode {
+				rerr = errors.ErrInvalidGrant
+				ierr = nil
+			} else if ierr == errors.ErrInvalidClient {
+				rerr = errors.ErrInvalidClient
+				ierr = nil
+			}
+		}
+	case oauth2.PasswordCredentials:
+		fallthrough
+	case oauth2.ClientCredentials:
+		if fn := s.ClientScopeHandler; fn != nil {
+			allowed, err := fn(tgr.ClientID, tgr.Scope)
+			if err != nil {
+				ierr = err
 				return
-			} else if rti.GetClientID() != tgr.ClientID {
-				err = ErrRefreshInvalid
-				return
-			} else if verr := s.cfg.Handler.ScopeHandler(tgr.Scope, rti.GetScope()); verr != nil {
-				err = verr
+			}
+			if !allowed {
+				rerr = errors.ErrInvalidScope
 				return
 			}
 		}
-		ti, err = s.manager.RefreshAccessToken(tgr)
-		if err == nil {
+		ti, ierr = s.Manager.GenerateAccessToken(gt, tgr)
+		if ierr != nil {
+			if ierr == errors.ErrInvalidClient {
+				rerr = errors.ErrInvalidClient
+				ierr = nil
+			}
+		}
+	case oauth2.Refreshing:
+		if scope := tgr.Scope; scope != "" {
+			rti, err := s.Manager.LoadRefreshToken(tgr.Refresh)
+			if err != nil {
+				if err == errors.ErrInvalidRefreshToken {
+					rerr = err
+					return
+				}
+				ierr = err
+				return
+			}
+			if fn := s.RefreshingScopeHandler; fn != nil && !fn(scope, rti.GetScope()) {
+				rerr = errors.ErrInvalidScope
+				return
+			}
+		}
+		ti, ierr = s.Manager.RefreshAccessToken(tgr)
+		if ierr != nil {
+			if ierr == errors.ErrInvalidClient {
+				rerr = errors.ErrInvalidClient
+				ierr = nil
+			} else if ierr == errors.ErrInvalidRefreshToken {
+				rerr = errors.ErrInvalidRefreshToken
+				ierr = nil
+			}
+		} else {
 			ti.SetRefresh("")
 		}
 	}
 
-	if err != nil {
-		return
-	}
-	err = s.ResJSON(w, ti)
 	return
 }
 
-// ResJSON 响应Json数据
-func (s *Server) ResJSON(w http.ResponseWriter, ti oauth2.TokenInfo) (err error) {
-	data := map[string]interface{}{
+// GetTokenData Get token data
+func (s *Server) GetTokenData(ti oauth2.TokenInfo) (data map[string]interface{}) {
+	data = map[string]interface{}{
 		"access_token": ti.GetAccess(),
-		"token_type":   s.cfg.TokenType,
-		"expires_in":   ti.GetAccessExpiresIn() / time.Second,
+		"token_type":   s.Config.TokenType,
+		"expires_in":   int64(ti.GetAccessExpiresIn() / time.Second),
 	}
 	if scope := ti.GetScope(); scope != "" {
 		data["scope"] = scope
@@ -237,10 +439,35 @@ func (s *Server) ResJSON(w http.ResponseWriter, ti oauth2.TokenInfo) (err error)
 	if refresh := ti.GetRefresh(); refresh != "" {
 		data["refresh_token"] = refresh
 	}
-	w.Header().Set("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
-	w.Header().Set("Pragma", "no-cache")
-	w.Header().Set("Expires", "Fri, 01 Jan 1990 00:00:00 GMT")
-	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	return json.NewEncoder(w).Encode(data)
+	return
+}
+
+// HandleTokenRequest The token request handling
+func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err error) {
+	var (
+		ti   oauth2.TokenInfo
+		rerr error
+		ierr error
+	)
+	defer func() {
+		if verr := recover(); verr != nil {
+			err = fmt.Errorf("%v", verr)
+			return
+		}
+		data := s.GetErrorData(rerr, ierr)
+		if data == nil {
+			data = s.GetTokenData(ti)
+		}
+		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Pragma", "no-cache")
+		w.WriteHeader(http.StatusOK)
+		err = json.NewEncoder(w).Encode(data)
+	}()
+	gt, tgr, rerr, ierr := s.ValidationTokenRequest(r)
+	if rerr != nil || ierr != nil {
+		return
+	}
+	ti, rerr, ierr = s.GetAccessToken(gt, tgr)
+	return
 }

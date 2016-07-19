@@ -1,12 +1,12 @@
 package oauth2
 
-// ResponseType 定义授权类型
+// ResponseType Response Type
 type ResponseType string
 
 const (
-	// Code 授权码类型
+	// Code Authorization code type
 	Code ResponseType = "code"
-	// Token 令牌类型
+	// Token Token type
 	Token ResponseType = "token"
 )
 
@@ -14,18 +14,20 @@ func (rt ResponseType) String() string {
 	return string(rt)
 }
 
-// GrantType 定义授权模式
+// GrantType Authorization Grant
 type GrantType string
 
 const (
-	// AuthorizationCodeCredentials 授权码模式
-	AuthorizationCodeCredentials GrantType = "authorization_code"
-	// PasswordCredentials 密码模式
+	// AuthorizationCode Authorization Code
+	AuthorizationCode GrantType = "authorization_code"
+	// PasswordCredentials Resource Owner Password Credentials
 	PasswordCredentials GrantType = "password"
-	// ClientCredentials 客户端模式
+	// ClientCredentials Client Credentials
 	ClientCredentials GrantType = "clientcredentials"
-	// RefreshCredentials 更新令牌模式
-	RefreshCredentials GrantType = "refreshtoken"
+	// Refreshing Refresh Token
+	Refreshing GrantType = "refreshtoken"
+	// Implicit Implicit Grant
+	Implicit GrantType = "__implicit"
 )
 
 func (gt GrantType) String() string {

@@ -1,28 +1,27 @@
 package oauth2
 
-// 提供存储接口
 type (
-	// ClientStore 客户端信息存储接口
+	// ClientStore The client information storage interface
 	ClientStore interface {
-		// GetByID 根据ID获取客户端信息
+		// GetByID According to the ID for the client information
 		GetByID(id string) (ClientInfo, error)
 	}
 
-	// TokenStore 令牌信息存储接口
+	// TokenStore The token information storage interface
 	TokenStore interface {
-		// Create 创建并存储新的令牌信息
+		// Create Create and store the new token information
 		Create(info TokenInfo) error
 
-		// RemoveByAccess 使用访问令牌删除令牌信息
+		// RemoveByAccess Use the access token to delete the token information(Along with the refresh token)
 		RemoveByAccess(access string) error
 
-		// RemoveByRefresh 使用更新令牌删除令牌信息
+		// RemoveByRefresh Use the refresh token to delete the token information
 		RemoveByRefresh(refresh string) error
 
-		// 使用访问令牌获取令牌信息数据
+		// Use the access token for token information data
 		GetByAccess(access string) (TokenInfo, error)
 
-		// 根据更新令牌获取令牌信息数据
+		// Use the refresh token for token information data
 		GetByRefresh(refresh string) (TokenInfo, error)
 	}
 )

@@ -1,22 +1,23 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
-	"gopkg.in/oauth2.v2/manage"
-	"gopkg.in/oauth2.v2/models"
-	"gopkg.in/oauth2.v2/server"
-	"gopkg.in/oauth2.v2/store/client"
-	"gopkg.in/oauth2.v2/store/token"
+	"gopkg.in/oauth2.v3"
+	"gopkg.in/oauth2.v3/manage"
+	"gopkg.in/oauth2.v3/models"
+	"gopkg.in/oauth2.v3/server"
+	"gopkg.in/oauth2.v3/store/client"
+	"gopkg.in/oauth2.v3/store/token"
 )
 
 func main() {
-	// 创建基于redis的oauth2管理实例
 	manager := manage.NewRedisManager(
 		&token.RedisConfig{Addr: "192.168.33.70:6379"},
 	)
-	// 使用临时客户端存储
+	// Create the client temporary storage
 	manager.MapClientStorage(client.NewTempStore(&models.Client{
 		ID:     "222222",
 		Secret: "22222222",
@@ -24,16 +25,18 @@ func main() {
 	}))
 
 	srv := server.NewServer(server.NewConfig(), manager)
+	srv.SetAllowedResponseType(oauth2.Code)
+	srv.SetAllowedGrantType(oauth2.AuthorizationCode)
+	srv.SetErrorHandler(func(err error) {
+		fmt.Println("OAuth2 Error:", err.Error())
+	})
+	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+		userID = "000000"
+		return
+	})
 
 	http.HandleFunc("/authorize", func(w http.ResponseWriter, r *http.Request) {
-		authReq, err := srv.GetAuthorizeRequest(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		authReq.UserID = "000000"
-		// TODO: 登录验证、授权处理
-		err = srv.HandleAuthorizeRequest(w, authReq)
+		err := srv.HandleAuthorizeRequest(w, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
@@ -46,6 +49,6 @@ func main() {
 		}
 	})
 
-	log.Println("OAuth2 server is running at 9096 port.")
+	log.Println("Server is running at 9096 port.")
 	log.Fatal(http.ListenAndServe(":9096", nil))
 }
