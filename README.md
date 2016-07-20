@@ -3,6 +3,7 @@ OAuth 2.0
 >  [OAuth 2.0](http://oauth.net/2/) is the next evolution of the OAuth protocol which was originally created in late 2006.
 
 [![GoDoc](https://godoc.org/gopkg.in/oauth2.v3?status.svg)](https://godoc.org/gopkg.in/oauth2.v3)
+[![Go Report Card](https://goreportcard.com/badge/gopkg.in/oauth2.v3)](https://goreportcard.com/report/gopkg.in/oauth2.v3)
 
 Quick Start
 -----------
@@ -10,7 +11,7 @@ Quick Start
 ### Download and install
 
 ``` bash
-$ go get -u gopkg.in/oauth2.v3/...
+$ go get -u -v gopkg.in/oauth2.v3
 ```
 
 ### Create file `server.go`
@@ -66,7 +67,6 @@ Features
 * Easy to use
 * Modularity
 * Flexible
-* Elegant
 
 Example
 -------
@@ -77,13 +77,6 @@ License
 -------
 
 ```
-Copyright 2016.All rights reserved.
+Copyright (c) 2016, OAuth 2.0
+All rights reserved.
 ```
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
-
-```
-   http://www.apache.org/licenses/LICENSE-2.0
-```
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
