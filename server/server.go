@@ -101,21 +101,17 @@ func (s *Server) CheckGrantType(gt oauth2.GrantType) bool {
 
 // ValidationAuthorizeRequest The authorization request validation
 func (s *Server) ValidationAuthorizeRequest(r *http.Request) (req *AuthorizeRequest, rerr, ierr error) {
-	if err := r.ParseForm(); err != nil {
-		ierr = err
-		return
-	}
-	redirectURI, err := url.QueryUnescape(r.Form.Get("redirect_uri"))
+	redirectURI, err := url.QueryUnescape(r.FormValue("redirect_uri"))
 	if err != nil {
 		ierr = err
 		return
 	}
 	req = &AuthorizeRequest{
 		RedirectURI:  redirectURI,
-		ResponseType: oauth2.ResponseType(r.Form.Get("response_type")),
-		ClientID:     r.Form.Get("client_id"),
-		State:        r.Form.Get("state"),
-		Scope:        r.Form.Get("scope"),
+		ResponseType: oauth2.ResponseType(r.FormValue("response_type")),
+		ClientID:     r.FormValue("client_id"),
+		State:        r.FormValue("state"),
+		Scope:        r.FormValue("scope"),
 	}
 	if r.Method != "GET" {
 		rerr = errors.ErrInvalidRequest
@@ -294,11 +290,7 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (gt oauth2.GrantType, t
 		rerr = errors.ErrInvalidRequest
 		return
 	}
-	if err := r.ParseForm(); err != nil {
-		ierr = err
-		return
-	}
-	gt = oauth2.GrantType(r.Form.Get("grant_type"))
+	gt = oauth2.GrantType(r.FormValue("grant_type"))
 	if gt == "" {
 		rerr = errors.ErrUnsupportedGrantType
 		return
@@ -314,15 +306,15 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (gt oauth2.GrantType, t
 	}
 	switch gt {
 	case oauth2.AuthorizationCode:
-		tgr.RedirectURI = r.Form.Get("redirect_uri")
-		tgr.Code = r.Form.Get("code")
+		tgr.RedirectURI = r.FormValue("redirect_uri")
+		tgr.Code = r.FormValue("code")
 		if tgr.RedirectURI == "" ||
 			tgr.Code == "" {
 			rerr = errors.ErrInvalidRequest
 		}
 	case oauth2.PasswordCredentials:
-		tgr.Scope = r.Form.Get("scope")
-		userID, verr := s.PasswordAuthorizationHandler(r.Form.Get("username"), r.Form.Get("password"))
+		tgr.Scope = r.FormValue("scope")
+		userID, verr := s.PasswordAuthorizationHandler(r.FormValue("username"), r.FormValue("password"))
 		if verr != nil {
 			ierr = verr
 			return
@@ -333,10 +325,10 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (gt oauth2.GrantType, t
 		}
 		tgr.UserID = userID
 	case oauth2.ClientCredentials:
-		tgr.Scope = r.Form.Get("scope")
+		tgr.Scope = r.FormValue("scope")
 	case oauth2.Refreshing:
-		tgr.Refresh = r.Form.Get("refresh_token")
-		tgr.Scope = r.Form.Get("scope")
+		tgr.Refresh = r.FormValue("refresh_token")
+		tgr.Scope = r.FormValue("scope")
 		if tgr.Refresh == "" {
 			rerr = errors.ErrInvalidRequest
 		}

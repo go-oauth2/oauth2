@@ -24,9 +24,9 @@ Open the browser
 
 ``` json
 {
-    "access_token": "143C1A45CFF9E0922F9DC68F7EBC81DC",
+    "access_token": "BIX-RYRPMHYY4L7O4QTP3Q",
     "expires_in": 7200,
-    "refresh_token": "5BD7453B8E7C5A3A308166F1675AD57216811391",
+    "refresh_token": "JRITD106WU6YNRE4UUEV_A",
     "scope": "all",
     "token_type": "Bearer"
 }
