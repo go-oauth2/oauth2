@@ -4,6 +4,7 @@ OAuth 2.0
 
 [![GoDoc](https://godoc.org/gopkg.in/oauth2.v3?status.svg)](https://godoc.org/gopkg.in/oauth2.v3)
 [![Go Report Card](https://goreportcard.com/badge/gopkg.in/oauth2.v3)](https://goreportcard.com/report/gopkg.in/oauth2.v3)
+[![Build Status](https://travis-ci.org/go-oauth2/oauth2.svg?branch=master)](https://travis-ci.org/go-oauth2/oauth2)
 
 Quick Start
 -----------
