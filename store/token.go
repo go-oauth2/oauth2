@@ -31,50 +31,65 @@ type MemoryTokenStore struct {
 	gcInterval time.Duration
 	globalID   int64
 	lock       sync.RWMutex
-	basicList  *list.List
 	data       map[string]oauth2.TokenInfo
 	access     map[string]string
 	refresh    map[string]string
+	basicList  *list.List
+	listLock   sync.RWMutex
 }
 
 func (mts *MemoryTokenStore) gc() {
 	time.AfterFunc(mts.gcInterval, func() {
 		defer mts.gc()
-		mts.lock.RLock()
+		rmeles := make([]*list.Element, 0, 32)
+		mts.listLock.RLock()
 		ele := mts.basicList.Front()
-		mts.lock.RUnlock()
-		if ele == nil {
-			return
-		}
-		basicID := ele.Value.(string)
-		mts.lock.RLock()
-		ti, ok := mts.data[basicID]
-		mts.lock.RUnlock()
-		if !ok {
-			mts.lock.Lock()
-			mts.basicList.Remove(ele)
-			mts.lock.Unlock()
-			return
-		}
-		ct := time.Now()
-		if refresh := ti.GetRefresh(); refresh != "" &&
-			ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(ct) {
-			mts.lock.RLock()
-			delete(mts.access, ti.GetAccess())
-			delete(mts.refresh, refresh)
-			delete(mts.data, basicID)
-			mts.basicList.Remove(ele)
-			mts.lock.RUnlock()
-		} else if ti.GetAccessCreateAt().Add(ti.GetAccessExpiresIn()).Before(ct) {
-			mts.lock.RLock()
-			delete(mts.access, ti.GetAccess())
-			if refresh := ti.GetRefresh(); refresh == "" {
-				delete(mts.data, basicID)
-				mts.basicList.Remove(ele)
+		mts.listLock.RUnlock()
+		for ele != nil {
+			if rm := mts.gcElement(ele); rm {
+				rmeles = append(rmeles, ele)
 			}
-			mts.lock.RUnlock()
+			mts.listLock.RLock()
+			ele = ele.Next()
+			mts.listLock.RUnlock()
+		}
+
+		for _, e := range rmeles {
+			mts.listLock.Lock()
+			mts.basicList.Remove(e)
+			mts.listLock.Unlock()
 		}
 	})
+}
+
+func (mts *MemoryTokenStore) gcElement(ele *list.Element) (rm bool) {
+	basicID := ele.Value.(string)
+	mts.lock.RLock()
+	ti, ok := mts.data[basicID]
+	mts.lock.RUnlock()
+	if !ok {
+		rm = true
+		return
+	}
+	ct := time.Now()
+	if refresh := ti.GetRefresh(); refresh != "" &&
+		ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(ct) {
+		mts.lock.RLock()
+		delete(mts.access, ti.GetAccess())
+		delete(mts.refresh, refresh)
+		delete(mts.data, basicID)
+		mts.lock.RUnlock()
+		rm = true
+	} else if ti.GetAccessCreateAt().Add(ti.GetAccessExpiresIn()).Before(ct) {
+		mts.lock.RLock()
+		delete(mts.access, ti.GetAccess())
+		if refresh := ti.GetRefresh(); refresh == "" {
+			delete(mts.data, basicID)
+			rm = true
+		}
+		mts.lock.RUnlock()
+	}
+	return
 }
 
 func (mts *MemoryTokenStore) getBasicID(id int64, info oauth2.TokenInfo) string {
@@ -92,7 +107,10 @@ func (mts *MemoryTokenStore) Create(info oauth2.TokenInfo) (err error) {
 	if refresh := info.GetRefresh(); refresh != "" {
 		mts.refresh[refresh] = basicID
 	}
+
+	mts.listLock.Lock()
 	mts.basicList.PushBack(basicID)
+	mts.listLock.Unlock()
 	return
 }
 

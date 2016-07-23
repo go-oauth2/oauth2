@@ -29,7 +29,7 @@ type RefreshingScopeHandler func(newScope, oldScope string) (allowed bool)
 type ResponseErrorHandler func(re *errors.Response)
 
 // InternalErrorHandler Internal error handing
-type InternalErrorHandler func(err error)
+type InternalErrorHandler func(req *http.Request, err error)
 
 // ClientFormHandler Get client data from form
 func ClientFormHandler(r *http.Request) (clientID, clientSecret string, err error) {
