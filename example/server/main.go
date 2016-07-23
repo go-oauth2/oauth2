@@ -37,8 +37,8 @@ func main() {
 
 	srv := server.NewServer(server.NewConfig(), manager)
 	srv.SetUserAuthorizationHandler(userAuthorizeHandler)
-	srv.SetInternalErrorHandler(func(err error) {
-		fmt.Println("OAuth2 Error:", err.Error())
+	srv.SetInternalErrorHandler(func(r *http.Request, err error) {
+		fmt.Println("OAuth2 Error:", r.RequestURI, err.Error())
 	})
 
 	http.HandleFunc("/login", loginHandler)

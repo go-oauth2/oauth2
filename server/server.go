@@ -228,9 +228,6 @@ func (s *Server) GetAuthorizeData(rt oauth2.ResponseType, ti oauth2.TokenInfo) (
 func (s *Server) GetErrorData(rerr, ierr error) (data map[string]interface{}, statusCode int) {
 	if ierr != nil {
 		rerr = errors.ErrServerError
-		if fn := s.InternalErrorHandler; fn != nil {
-			fn(ierr)
-		}
 	}
 	re := &errors.Response{
 		Error:       rerr,
@@ -253,10 +250,17 @@ func (s *Server) GetErrorData(rerr, ierr error) (data map[string]interface{}, st
 }
 
 // response redirect error
-func (s *Server) resRedirectError(w http.ResponseWriter, req *AuthorizeRequest, rerr, ierr error) (err error) {
+func (s *Server) resRedirectError(w http.ResponseWriter, r *http.Request, req *AuthorizeRequest, rerr, ierr error) (err error) {
 	if req == nil {
 		err = ierr
 		return
+	}
+	if fn := s.InternalErrorHandler; fn != nil {
+		verr := ierr
+		if verr == nil {
+			verr = rerr
+		}
+		fn(r, verr)
 	}
 	data, _ := s.GetErrorData(rerr, ierr)
 	err = s.resRedirect(w, req, data)
@@ -283,12 +287,12 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 	}()
 	req, rerr, ierr := s.ValidationAuthorizeRequest(r)
 	if rerr != nil || ierr != nil {
-		err = s.resRedirectError(w, req, rerr, ierr)
+		err = s.resRedirectError(w, r, req, rerr, ierr)
 		return
 	}
 	userID, err := s.UserAuthorizationHandler(w, r)
 	if err != nil {
-		err = s.resRedirectError(w, req, nil, err)
+		err = s.resRedirectError(w, r, req, nil, err)
 		return
 	} else if userID == "" {
 		return
@@ -296,7 +300,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 	req.UserID = userID
 	ti, rerr, ierr := s.GetAuthorizeToken(req)
 	if rerr != nil || ierr != nil {
-		err = s.resRedirectError(w, req, rerr, ierr)
+		err = s.resRedirectError(w, r, req, rerr, ierr)
 		return
 	}
 	err = s.resRedirect(w, req, s.GetAuthorizeData(req.ResponseType, ti))
@@ -460,19 +464,26 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err
 	}()
 	gt, tgr, rerr, ierr := s.ValidationTokenRequest(r)
 	if rerr != nil || ierr != nil {
-		err = s.resTokenError(w, rerr, ierr)
+		err = s.resTokenError(w, r, rerr, ierr)
 		return
 	}
 	ti, rerr, ierr := s.GetAccessToken(gt, tgr)
 	if rerr != nil || ierr != nil {
-		err = s.resTokenError(w, rerr, ierr)
+		err = s.resTokenError(w, r, rerr, ierr)
 		return
 	}
 	err = s.resToken(w, s.GetTokenData(ti))
 	return
 }
 
-func (s *Server) resTokenError(w http.ResponseWriter, rerr, ierr error) (err error) {
+func (s *Server) resTokenError(w http.ResponseWriter, r *http.Request, rerr, ierr error) (err error) {
+	if fn := s.InternalErrorHandler; fn != nil {
+		verr := ierr
+		if verr == nil {
+			verr = rerr
+		}
+		fn(r, verr)
+	}
 	data, statusCode := s.GetErrorData(rerr, ierr)
 	s.resToken(w, data, statusCode)
 	return
