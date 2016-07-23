@@ -1,22 +1,18 @@
-package token_test
+package store_test
 
 import (
 	"testing"
 	"time"
 
 	"gopkg.in/oauth2.v3/models"
-	"gopkg.in/oauth2.v3/store/token"
+	"gopkg.in/oauth2.v3/store"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestRedisStore(t *testing.T) {
-	Convey("Test redis store", t, func() {
-		cfg := &token.RedisConfig{
-			Addr: "192.168.33.70:6379",
-		}
-		store, err := token.NewRedisStore(cfg)
-		So(err, ShouldBeNil)
+func TestTokenStore(t *testing.T) {
+	Convey("Test memory store", t, func() {
+		store := store.NewMemoryTokenStore(time.Second * 1)
 
 		Convey("Test access token store", func() {
 			info := &models.Token{
@@ -54,7 +50,7 @@ func TestRedisStore(t *testing.T) {
 				AccessExpiresIn:  time.Second * 5,
 				Refresh:          "1_2_2",
 				RefreshCreateAt:  time.Now(),
-				RefreshExpiresIn: time.Minute * 1,
+				RefreshExpiresIn: time.Second * 15,
 			}
 			err := store.Create(info)
 			So(err, ShouldBeNil)
@@ -69,6 +65,25 @@ func TestRedisStore(t *testing.T) {
 			rinfo, err = store.GetByRefresh(info.GetRefresh())
 			So(err, ShouldBeNil)
 			So(rinfo, ShouldBeNil)
+		})
+
+		Convey("Test gc", func() {
+			info := &models.Token{
+				ClientID:        "1",
+				UserID:          "1_3",
+				RedirectURI:     "http://localhost/",
+				Scope:           "all",
+				Access:          "1_3_1",
+				AccessCreateAt:  time.Now(),
+				AccessExpiresIn: time.Second * 1,
+			}
+			err := store.Create(info)
+			So(err, ShouldBeNil)
+
+			time.Sleep(time.Second * 1)
+			ainfo, err := store.GetByRefresh(info.GetAccess())
+			So(err, ShouldBeNil)
+			So(ainfo, ShouldBeNil)
 		})
 	})
 }

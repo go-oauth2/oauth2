@@ -4,24 +4,16 @@ import (
 	"testing"
 
 	"gopkg.in/oauth2.v3"
-	"gopkg.in/oauth2.v3/generates"
 	"gopkg.in/oauth2.v3/manage"
-	"gopkg.in/oauth2.v3/models"
-	"gopkg.in/oauth2.v3/store/client"
-	"gopkg.in/oauth2.v3/store/token"
+	"gopkg.in/oauth2.v3/store"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestManager(t *testing.T) {
 	Convey("Manager test", t, func() {
-		manager := manage.NewManager()
-
-		manager.MapClientModel(models.NewClient())
-		manager.MapTokenModel(models.NewToken())
-		manager.MapAuthorizeGenerate(generates.NewAuthorizeGenerate())
-		manager.MapAccessGenerate(generates.NewAccessGenerate())
-		manager.MapClientStorage(client.NewTempStore())
+		manager := manage.NewDefaultManager()
+		manager.MapClientStorage(store.NewTestClientStore())
 
 		Convey("GetClient test", func() {
 			cli, err := manager.GetClient("1")
@@ -29,10 +21,8 @@ func TestManager(t *testing.T) {
 			So(cli.GetSecret(), ShouldEqual, "11")
 		})
 
-		Convey("Redis store test", func() {
-			manager.MustTokenStorage(token.NewRedisStore(
-				&token.RedisConfig{Addr: "192.168.33.70:6379"},
-			))
+		Convey("Memory store test", func() {
+			manager.MapTokenStorage(store.NewMemoryTokenStore(0))
 			testManager(manager)
 		})
 	})
