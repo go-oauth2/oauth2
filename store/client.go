@@ -1,12 +1,12 @@
-package client
+package store
 
 import (
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/models"
 )
 
-// NewTempStore Create to client information temporary store instance
-func NewTempStore(clients ...*models.Client) oauth2.ClientStore {
+// NewTestClientStore Create to client information store instance
+func NewTestClientStore(clients ...*models.Client) oauth2.ClientStore {
 	data := map[string]*models.Client{
 		"1": &models.Client{
 			ID:     "1",
@@ -17,18 +17,18 @@ func NewTempStore(clients ...*models.Client) oauth2.ClientStore {
 	for _, cli := range clients {
 		data[cli.ID] = cli
 	}
-	return &TempStore{
+	return &TestClientStore{
 		data: data,
 	}
 }
 
-// TempStore Client information store
-type TempStore struct {
+// TestClientStore Client information store
+type TestClientStore struct {
 	data map[string]*models.Client
 }
 
 // GetByID According to the ID for the client information
-func (ts *TempStore) GetByID(id string) (cli oauth2.ClientInfo, err error) {
+func (ts *TestClientStore) GetByID(id string) (cli oauth2.ClientInfo, err error) {
 	if c, ok := ts.data[id]; ok {
 		cli = c
 	}

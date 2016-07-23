@@ -1,10 +1,5 @@
 package models
 
-// NewClient Create to client model instance
-func NewClient() *Client {
-	return &Client{}
-}
-
 // Client Client model
 type Client struct {
 	ID     string // The client id

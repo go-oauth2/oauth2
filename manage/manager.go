@@ -5,11 +5,12 @@ import (
 
 	"github.com/LyricTian/inject"
 
+	"reflect"
+
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/errors"
 	"gopkg.in/oauth2.v3/generates"
 	"gopkg.in/oauth2.v3/models"
-	"gopkg.in/oauth2.v3/store/token"
 )
 
 // Config Configuration parameters
@@ -19,31 +20,30 @@ type Config struct {
 	IsGenerateRefresh bool          // Whether to generate the refreshing token
 }
 
-// NewRedisManager Create to based on redis store authorization management instance
-func NewRedisManager(redisCfg *token.RedisConfig) *Manager {
+// NewDefaultManager Create to default authorization management instance
+func NewDefaultManager() *Manager {
 	m := NewManager()
-	m.MapClientModel(models.NewClient())
+
+	// default config
+	m.SetAuthorizeCodeExp(time.Minute * 10)
+	m.SetImplicitTokenExp(time.Hour * 1)
+	m.SetClientTokenExp(time.Hour * 2)
+	m.SetAuthorizeCodeTokenCfg(&Config{IsGenerateRefresh: true, AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 3})
+	m.SetPasswordTokenCfg(&Config{IsGenerateRefresh: true, AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 7})
+
 	m.MapTokenModel(models.NewToken())
 	m.MapAuthorizeGenerate(generates.NewAuthorizeGenerate())
 	m.MapAccessGenerate(generates.NewAccessGenerate())
-	m.MustTokenStorage(token.NewRedisStore(redisCfg))
 
 	return m
 }
 
 // NewManager Create to authorization management instance
 func NewManager() *Manager {
-	m := &Manager{
+	return &Manager{
 		injector: inject.New(),
 		gtcfg:    make(map[oauth2.GrantType]*Config),
 	}
-	m.SetAuthorizeCodeExp(time.Minute * 10)
-	m.SetAuthorizeCodeTokenExp(&Config{IsGenerateRefresh: true, AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 3})
-	m.SetImplicitTokenExp(&Config{AccessTokenExp: time.Hour * 1})
-	m.SetPasswordTokenExp(&Config{IsGenerateRefresh: true, AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 7})
-	m.SetClientTokenExp(&Config{AccessTokenExp: time.Hour * 2})
-
-	return m
 }
 
 // Manager Provide authorization management
@@ -53,38 +53,38 @@ type Manager struct {
 	gtcfg    map[oauth2.GrantType]*Config // Authorization grant configuration
 }
 
+func (m *Manager) newTokenInfo(ti oauth2.TokenInfo) oauth2.TokenInfo {
+	in := reflect.ValueOf(ti)
+	if in.IsNil() {
+		return ti
+	}
+	out := reflect.New(in.Type().Elem())
+	return out.Interface().(oauth2.TokenInfo)
+}
+
 // SetAuthorizeCodeExp Set the authorization code expiration time
 func (m *Manager) SetAuthorizeCodeExp(exp time.Duration) {
 	m.codeExp = exp
 }
 
-// SetAuthorizeCodeTokenExp Set the authorization code grant token expiration time
-func (m *Manager) SetAuthorizeCodeTokenExp(cfg *Config) {
+// SetAuthorizeCodeTokenCfg Set the authorization code grant token config
+func (m *Manager) SetAuthorizeCodeTokenCfg(cfg *Config) {
 	m.gtcfg[oauth2.AuthorizationCode] = cfg
 }
 
 // SetImplicitTokenExp Set the implicit grant token expiration time
-func (m *Manager) SetImplicitTokenExp(cfg *Config) {
-	m.gtcfg[oauth2.Implicit] = cfg
+func (m *Manager) SetImplicitTokenExp(exp time.Duration) {
+	m.gtcfg[oauth2.Implicit] = &Config{AccessTokenExp: exp}
 }
 
-// SetPasswordTokenExp Set the password grant token expiration time
-func (m *Manager) SetPasswordTokenExp(cfg *Config) {
+// SetPasswordTokenCfg Set the password grant token config
+func (m *Manager) SetPasswordTokenCfg(cfg *Config) {
 	m.gtcfg[oauth2.PasswordCredentials] = cfg
 }
 
 // SetClientTokenExp Set the client grant token expiration time
-func (m *Manager) SetClientTokenExp(cfg *Config) {
-	m.gtcfg[oauth2.ClientCredentials] = cfg
-}
-
-// MapClientModel Mapping the client information model
-func (m *Manager) MapClientModel(cli oauth2.ClientInfo) error {
-	if cli == nil {
-		return errors.ErrNilValue
-	}
-	m.injector.Map(cli)
-	return nil
+func (m *Manager) SetClientTokenExp(exp time.Duration) {
+	m.gtcfg[oauth2.ClientCredentials] = &Config{AccessTokenExp: exp}
 }
 
 // MapTokenModel Mapping the token information model
@@ -137,7 +137,7 @@ func (m *Manager) MustClientStorage(stor oauth2.ClientStore, err error) {
 // MapTokenStorage Mapping the token store interface
 func (m *Manager) MapTokenStorage(stor oauth2.TokenStore) error {
 	if stor == nil {
-		return (errors.ErrNilValue)
+		return errors.ErrNilValue
 	}
 	m.injector.Map(stor)
 	return nil
@@ -180,6 +180,7 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 		return
 	}
 	_, ierr := m.injector.Invoke(func(ti oauth2.TokenInfo, gen oauth2.AuthorizeGenerate, tgen oauth2.AccessGenerate, stor oauth2.TokenStore) {
+		ti = m.newTokenInfo(ti)
 		var (
 			tv   string
 			terr error
@@ -247,6 +248,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 		return
 	}
 	_, ierr := m.injector.Invoke(func(ti oauth2.TokenInfo, gen oauth2.AccessGenerate, stor oauth2.TokenStore) {
+		ti = m.newTokenInfo(ti)
 		td := &oauth2.GenerateBasic{
 			Client:   cli,
 			UserID:   tgr.UserID,

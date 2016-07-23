@@ -25,8 +25,11 @@ type PasswordAuthorizationHandler func(username, password string) (userID string
 // RefreshingScopeHandler Check the scope of the refreshing token
 type RefreshingScopeHandler func(newScope, oldScope string) (allowed bool)
 
-// ErrorHandler Error handling
-type ErrorHandler func(err error)
+// ResponseErrorHandler Response error handing
+type ResponseErrorHandler func(re *errors.Response)
+
+// InternalErrorHandler Internal error handing
+type InternalErrorHandler func(err error)
 
 // ClientFormHandler Get client data from form
 func ClientFormHandler(r *http.Request) (clientID, clientSecret string, err error) {

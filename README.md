@@ -24,13 +24,15 @@ import (
 
 	"gopkg.in/oauth2.v3/manage"
 	"gopkg.in/oauth2.v3/server"
-	"gopkg.in/oauth2.v3/store/token"
+	"gopkg.in/oauth2.v3/store"
 )
 
 func main() {
-	manager := manage.NewRedisManager(
-		&token.RedisConfig{Addr: "192.168.33.70:6379"},
-	)
+	manager := manage.NewDefaultManager()
+	manager.MapTokenStorage(store.NewMemoryTokenStore(0))
+	// client test store
+	manager.MapClientStorage(store.NewTestClientStore())
+
 	srv := server.NewServer(server.NewConfig(), manager)
 	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 		// validation and to get the user id
@@ -72,6 +74,12 @@ Example
 -------
 
 Simulation examples of authorization code model, please check [example](/example)
+
+Token storage implements
+------------------------
+
+* [Redis](https://github.com/go-oauth2/redis)
+* [MongoDB](https://github.com/go-oauth2/mongo)
 
 License
 -------

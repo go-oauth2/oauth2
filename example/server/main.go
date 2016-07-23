@@ -10,8 +10,8 @@ import (
 	"gopkg.in/oauth2.v3/manage"
 	"gopkg.in/oauth2.v3/models"
 	"gopkg.in/oauth2.v3/server"
-	"gopkg.in/oauth2.v3/store/client"
-	"gopkg.in/oauth2.v3/store/token"
+	"gopkg.in/oauth2.v3/store"
+
 	"gopkg.in/session.v1"
 )
 
@@ -25,11 +25,11 @@ func init() {
 }
 
 func main() {
-	manager := manage.NewRedisManager(
-		&token.RedisConfig{Addr: "192.168.33.70:6379"},
-	)
-	// Create the client temporary storage
-	manager.MapClientStorage(client.NewTempStore(&models.Client{
+	manager := manage.NewDefaultManager()
+	// token store
+	manager.MapTokenStorage(store.NewMemoryTokenStore(0))
+	// client store
+	manager.MapClientStorage(store.NewTestClientStore(&models.Client{
 		ID:     "222222",
 		Secret: "22222222",
 		Domain: "http://localhost:9094",
@@ -37,7 +37,7 @@ func main() {
 
 	srv := server.NewServer(server.NewConfig(), manager)
 	srv.SetUserAuthorizationHandler(userAuthorizeHandler)
-	srv.SetErrorHandler(func(err error) {
+	srv.SetInternalErrorHandler(func(err error) {
 		fmt.Println("OAuth2 Error:", err.Error())
 	})
 
