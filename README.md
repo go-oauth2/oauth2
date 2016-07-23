@@ -29,6 +29,7 @@ import (
 
 func main() {
 	manager := manage.NewDefaultManager()
+	// token memory store
 	manager.MapTokenStorage(store.NewMemoryTokenStore(0))
 	// client test store
 	manager.MapClientStorage(store.NewTestClientStore())
@@ -75,8 +76,8 @@ Example
 
 Simulation examples of authorization code model, please check [example](/example)
 
-Token storage implements
-------------------------
+Storage implements
+------------------
 
 * [Redis](https://github.com/go-oauth2/redis)
 * [MongoDB](https://github.com/go-oauth2/mongo)
