@@ -31,7 +31,7 @@ import (
 func main() {
 	manager := manage.NewDefaultManager()
 	// token memory store
-	manager.MapTokenStorage(store.NewMemoryTokenStore(0))
+	manager.MustTokenStorage(store.NewMemoryTokenStore())
 	// client test store
 	manager.MapClientStorage(store.NewTestClientStore())
 
@@ -64,6 +64,12 @@ $ go build server.go
 $ ./server
 ```
 
+### Open in your web browser
+
+```
+http://localhost:9096/authorize?response_type=code&client_id=1&redirect_uri=http%253A%252F%252Flocalhost&scope=all&state=xyz
+```
+
 Features
 --------
 
@@ -74,12 +80,14 @@ Features
 
 Example
 -------
+> A complete example of simulation authorization code model
 
 Simulation examples of authorization code model, please check [example](/example)
 
 Storage implements
 ------------------
 
+* [BuntDB](https://github.com/tidwall/buntdb)(The default storage)
 * [Redis](https://github.com/go-oauth2/redis)
 * [MongoDB](https://github.com/go-oauth2/mongo)
 
