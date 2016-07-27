@@ -22,7 +22,7 @@ func TestManager(t *testing.T) {
 		})
 
 		Convey("Memory store test", func() {
-			manager.MapTokenStorage(store.NewMemoryTokenStore(0))
+			manager.MustTokenStorage(store.NewMemoryTokenStore())
 			testManager(manager)
 		})
 	})

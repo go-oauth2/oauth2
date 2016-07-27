@@ -27,7 +27,7 @@ var (
 
 func init() {
 	manager = manage.NewDefaultManager()
-	manager.MapTokenStorage(store.NewMemoryTokenStore(0))
+	manager.MustTokenStorage(store.NewMemoryTokenStore())
 }
 
 func clientStore(domain string) oauth2.ClientStore {
