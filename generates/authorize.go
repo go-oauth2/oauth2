@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"strings"
 
-	"github.com/LyricTian/go.uuid"
+	"github.com/satori/go.uuid"
 	"gopkg.in/oauth2.v3"
 )
 

@@ -27,7 +27,7 @@ func init() {
 func main() {
 	manager := manage.NewDefaultManager()
 	// token store
-	manager.MapTokenStorage(store.NewMemoryTokenStore(0))
+	manager.MustTokenStorage(store.NewMemoryTokenStore())
 	// client store
 	manager.MapClientStorage(store.NewTestClientStore(&models.Client{
 		ID:     "222222",

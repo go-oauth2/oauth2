@@ -1,12 +1,10 @@
 package manage
 
 import (
+	"reflect"
 	"time"
 
-	"github.com/LyricTian/inject"
-
-	"reflect"
-
+	"github.com/codegangsta/inject"
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/errors"
 	"gopkg.in/oauth2.v3/generates"
