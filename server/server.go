@@ -36,6 +36,9 @@ type Server struct {
 	RefreshingScopeHandler       RefreshingScopeHandler
 	ResponseErrorHandler         ResponseErrorHandler
 	InternalErrorHandler         InternalErrorHandler
+	ExtensionFieldsHandler       ExtensionFieldsHandler
+	AccessTokenExpHandler        AccessTokenExpHandler
+	AuthorizeScopeHandler        AuthorizeScopeHandler
 }
 
 // SetAllowedResponseType Allow the authorization types
@@ -86,6 +89,21 @@ func (s *Server) SetResponseErrorHandler(handler ResponseErrorHandler) {
 // SetInternalErrorHandler Internal error handling
 func (s *Server) SetInternalErrorHandler(handler InternalErrorHandler) {
 	s.InternalErrorHandler = handler
+}
+
+// SetExtensionFieldsHandler In response to the access token with the extension of the field
+func (s *Server) SetExtensionFieldsHandler(handler ExtensionFieldsHandler) {
+	s.ExtensionFieldsHandler = handler
+}
+
+// SetAccessTokenExpHandler Set expiration date for the access token
+func (s *Server) SetAccessTokenExpHandler(handler AccessTokenExpHandler) {
+	s.AccessTokenExpHandler = handler
+}
+
+// SetAuthorizeScopeHandler Set scope for the access token
+func (s *Server) SetAuthorizeScopeHandler(handler AuthorizeScopeHandler) {
+	s.AuthorizeScopeHandler = handler
 }
 
 // CheckResponseType Check allows response type
@@ -174,6 +192,9 @@ func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (ti oauth2.TokenInfo, 
 		RedirectURI: req.RedirectURI,
 		Scope:       req.Scope,
 	}
+	if exp := req.AccessTokenExp; exp > 0 {
+		tgr.AccessTokenExp = exp
+	}
 	ti, err := s.Manager.GenerateAuthToken(req.ResponseType, tgr)
 	if err != nil {
 		if err == errors.ErrInvalidClient {
@@ -216,7 +237,7 @@ func (s *Server) GetRedirectURI(req *AuthorizeRequest, data map[string]interface
 func (s *Server) GetAuthorizeData(rt oauth2.ResponseType, ti oauth2.TokenInfo) (data map[string]interface{}) {
 	if rt == oauth2.Code {
 		data = map[string]interface{}{
-			"code": ti.GetAccess(),
+			"code": ti.GetCode(),
 		}
 	} else {
 		data = s.GetTokenData(ti)
@@ -290,6 +311,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 		err = s.resRedirectError(w, r, req, rerr, ierr)
 		return
 	}
+	// user authorization
 	userID, err := s.UserAuthorizationHandler(w, r)
 	if err != nil {
 		err = s.resRedirectError(w, r, req, nil, err)
@@ -298,6 +320,18 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	req.UserID = userID
+	// specify the scope of authorization
+	if fn := s.AuthorizeScopeHandler; fn != nil {
+		if scope := fn(w, r); scope != "" {
+			req.Scope = scope
+		}
+	}
+	// specify the expiration time of access token
+	if fn := s.AccessTokenExpHandler; fn != nil {
+		if exp := fn(w, r); exp > 0 {
+			req.AccessTokenExp = exp
+		}
+	}
 	ti, rerr, ierr := s.GetAuthorizeToken(req)
 	if rerr != nil || ierr != nil {
 		err = s.resRedirectError(w, r, req, rerr, ierr)
@@ -431,8 +465,6 @@ func (s *Server) GetAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRe
 				rerr = errors.ErrInvalidRefreshToken
 				ierr = nil
 			}
-		} else {
-			ti.SetRefresh("")
 		}
 	}
 
@@ -472,7 +504,17 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err
 		err = s.resTokenError(w, r, rerr, ierr)
 		return
 	}
-	err = s.resToken(w, s.GetTokenData(ti))
+	tokenData := s.GetTokenData(ti)
+	if fn := s.ExtensionFieldsHandler; fn != nil {
+		ext := fn(w, r)
+		for k, v := range ext {
+			if _, ok := tokenData[k]; ok {
+				continue
+			}
+			tokenData[k] = v
+		}
+	}
+	err = s.resToken(w, tokenData)
 	return
 }
 

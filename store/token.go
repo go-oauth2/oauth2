@@ -38,11 +38,14 @@ func (ts *TokenStore) Create(info oauth2.TokenInfo) (err error) {
 	if err != nil {
 		return
 	}
-	basicID := uuid.NewV4().String()
-	aexp := info.GetAccessExpiresIn()
-	rexp := aexp
-
 	err = ts.db.Update(func(tx *buntdb.Tx) (err error) {
+		if code := info.GetCode(); code != "" {
+			_, _, err = tx.Set(code, string(jv), &buntdb.SetOptions{Expires: true, TTL: info.GetCodeExpiresIn()})
+			return
+		}
+		basicID := uuid.NewV4().String()
+		aexp := info.GetAccessExpiresIn()
+		rexp := aexp
 		if refresh := info.GetRefresh(); refresh != "" {
 			rexp = info.GetRefreshCreateAt().Add(info.GetRefreshExpiresIn()).Sub(ct)
 			if aexp.Seconds() > rexp.Seconds() {
@@ -76,6 +79,12 @@ func (ts *TokenStore) remove(key string) (err error) {
 	return
 }
 
+// RemoveByCode Use the authorization code to delete the token information
+func (ts *TokenStore) RemoveByCode(code string) (err error) {
+	err = ts.remove(code)
+	return
+}
+
 // RemoveByAccess Use the access token to delete the token information
 func (ts *TokenStore) RemoveByAccess(access string) (err error) {
 	err = ts.remove(access)
@@ -88,13 +97,9 @@ func (ts *TokenStore) RemoveByRefresh(refresh string) (err error) {
 	return
 }
 
-func (ts *TokenStore) get(key string) (ti oauth2.TokenInfo, err error) {
+func (ts *TokenStore) getData(key string) (ti oauth2.TokenInfo, err error) {
 	verr := ts.db.View(func(tx *buntdb.Tx) (err error) {
-		basicID, err := tx.Get(key)
-		if err != nil {
-			return
-		}
-		jv, err := tx.Get(basicID)
+		jv, err := tx.Get(key)
 		if err != nil {
 			return
 		}
@@ -106,21 +111,55 @@ func (ts *TokenStore) get(key string) (ti oauth2.TokenInfo, err error) {
 		ti = &tm
 		return
 	})
-	if verr == buntdb.ErrNotFound {
-		return
+	if verr != nil {
+		if verr == buntdb.ErrNotFound {
+			return
+		}
+		err = verr
 	}
-	err = verr
+	return
+}
+
+func (ts *TokenStore) getBasicID(key string) (basicID string, err error) {
+	verr := ts.db.View(func(tx *buntdb.Tx) (err error) {
+		v, err := tx.Get(key)
+		if err != nil {
+			return
+		}
+		basicID = v
+		return
+	})
+	if verr != nil {
+		if verr == buntdb.ErrNotFound {
+			return
+		}
+		err = verr
+	}
+	return
+}
+
+// GetByCode Use the authorization code for token information data
+func (ts *TokenStore) GetByCode(code string) (ti oauth2.TokenInfo, err error) {
+	ti, err = ts.getData(code)
 	return
 }
 
 // GetByAccess Use the access token for token information data
 func (ts *TokenStore) GetByAccess(access string) (ti oauth2.TokenInfo, err error) {
-	ti, err = ts.get(access)
+	basicID, err := ts.getBasicID(access)
+	if err != nil {
+		return
+	}
+	ti, err = ts.getData(basicID)
 	return
 }
 
 // GetByRefresh Use the refresh token for token information data
 func (ts *TokenStore) GetByRefresh(refresh string) (ti oauth2.TokenInfo, err error) {
-	ti, err = ts.get(refresh)
+	basicID, err := ts.getBasicID(refresh)
+	if err != nil {
+		return
+	}
+	ti, err = ts.getData(basicID)
 	return
 }

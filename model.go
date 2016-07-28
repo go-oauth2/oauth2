@@ -34,6 +34,19 @@ type (
 		// Set Scope of authorization
 		SetScope(string)
 
+		// Get Authorization code
+		GetCode() string
+		// Set Authorization code
+		SetCode(string)
+		// Get Create Time
+		GetCodeCreateAt() time.Time
+		// Set Create Time
+		SetCodeCreateAt(time.Time)
+		// Get The lifetime in seconds of the authorization code
+		GetCodeExpiresIn() time.Duration
+		// Set The lifetime in seconds of the authorization code
+		SetCodeExpiresIn(time.Duration)
+
 		// Get Access Token
 		GetAccess() string
 		// Set Access Token

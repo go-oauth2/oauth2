@@ -13,6 +13,9 @@ type Token struct {
 	UserID           string        `bson:"UserID"`           // The user id
 	RedirectURI      string        `bson:"RedirectURI"`      // Redirect URI
 	Scope            string        `bson:"Scope"`            // Scope of authorization
+	Code             string        `bson:"Code"`             // Authorization code
+	CodeCreateAt     time.Time     `bson:"CodeCreateAt"`     // Create Time
+	CodeExpiresIn    time.Duration `bson:"CodeExpiresIn"`    // The lifetime in seconds of the authorization code
 	Access           string        `bson:"Access"`           // Access Token
 	AccessCreateAt   time.Time     `bson:"AccessCreateAt"`   // Create Time
 	AccessExpiresIn  time.Duration `bson:"AccessExpiresIn"`  // The lifetime in seconds of the access token
@@ -59,6 +62,36 @@ func (t *Token) GetScope() string {
 // SetScope Get Scope of authorization
 func (t *Token) SetScope(scope string) {
 	t.Scope = scope
+}
+
+// GetCode Authorization code
+func (t *Token) GetCode() string {
+	return t.Code
+}
+
+// SetCode Authorization code
+func (t *Token) SetCode(code string) {
+	t.Code = code
+}
+
+// GetCodeCreateAt Create Time
+func (t *Token) GetCodeCreateAt() time.Time {
+	return t.CodeCreateAt
+}
+
+// SetCodeCreateAt Create Time
+func (t *Token) SetCodeCreateAt(createAt time.Time) {
+	t.CodeCreateAt = createAt
+}
+
+// GetCodeExpiresIn The lifetime in seconds of the authorization code
+func (t *Token) GetCodeExpiresIn() time.Duration {
+	return t.CodeExpiresIn
+}
+
+// SetCodeExpiresIn The lifetime in seconds of the authorization code
+func (t *Token) SetCodeExpiresIn(exp time.Duration) {
+	t.CodeExpiresIn = exp
 }
 
 // GetAccess Access Token

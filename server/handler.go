@@ -3,6 +3,8 @@ package server
 import (
 	"net/http"
 
+	"time"
+
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/errors"
 )
@@ -29,7 +31,16 @@ type RefreshingScopeHandler func(newScope, oldScope string) (allowed bool)
 type ResponseErrorHandler func(re *errors.Response)
 
 // InternalErrorHandler Internal error handing
-type InternalErrorHandler func(req *http.Request, err error)
+type InternalErrorHandler func(r *http.Request, err error)
+
+// AuthorizeScopeHandler Set the authorized scope
+type AuthorizeScopeHandler func(w http.ResponseWriter, r *http.Request) (scope string)
+
+// AccessTokenExpHandler Set expiration date for the access token
+type AccessTokenExpHandler func(w http.ResponseWriter, r *http.Request) (exp time.Duration)
+
+// ExtensionFieldsHandler In response to the access token with the extension of the field
+type ExtensionFieldsHandler func(w http.ResponseWriter, r *http.Request) (fieldsValue map[string]interface{})
 
 // ClientFormHandler Get client data from form
 func ClientFormHandler(r *http.Request) (clientID, clientSecret string, err error) {

@@ -21,7 +21,7 @@ func TestManager(t *testing.T) {
 			So(cli.GetSecret(), ShouldEqual, "11")
 		})
 
-		Convey("Memory store test", func() {
+		Convey("Token test", func() {
 			manager.MustTokenStorage(store.NewMemoryTokenStore())
 			testManager(manager)
 		})
@@ -37,8 +37,9 @@ func testManager(manager oauth2.Manager) {
 	}
 	cti, err := manager.GenerateAuthToken(oauth2.Code, reqParams)
 	So(err, ShouldBeNil)
+	Println(cti.GetCode())
 
-	code := cti.GetAccess()
+	code := cti.GetCode()
 	So(code, ShouldNotBeEmpty)
 
 	atParams := &oauth2.TokenGenerateRequest{
@@ -53,9 +54,6 @@ func testManager(manager oauth2.Manager) {
 	accessToken, refreshToken := ati.GetAccess(), ati.GetRefresh()
 	So(accessToken, ShouldNotBeEmpty)
 	So(refreshToken, ShouldNotBeEmpty)
-
-	_, err = manager.LoadAccessToken(code)
-	So(err, ShouldNotBeNil)
 
 	ainfo, err := manager.LoadAccessToken(accessToken)
 	So(err, ShouldBeNil)
