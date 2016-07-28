@@ -26,6 +26,31 @@ func TestTokenStore(t *testing.T) {
 }
 
 func testToken(store oauth2.TokenStore) {
+	Convey("Test authorization code store", func() {
+		info := &models.Token{
+			ClientID:      "1",
+			UserID:        "1_1",
+			RedirectURI:   "http://localhost/",
+			Scope:         "all",
+			Code:          "11_11_11",
+			CodeCreateAt:  time.Now(),
+			CodeExpiresIn: time.Second * 5,
+		}
+		err := store.Create(info)
+		So(err, ShouldBeNil)
+
+		cinfo, err := store.GetByCode(info.Code)
+		So(err, ShouldBeNil)
+		So(cinfo.GetUserID(), ShouldEqual, info.UserID)
+
+		err = store.RemoveByCode(info.Code)
+		So(err, ShouldBeNil)
+
+		cinfo, err = store.GetByCode(info.Code)
+		So(err, ShouldBeNil)
+		So(cinfo, ShouldBeNil)
+	})
+
 	Convey("Test access token store", func() {
 		info := &models.Token{
 			ClientID:        "1",
@@ -79,22 +104,28 @@ func testToken(store oauth2.TokenStore) {
 		So(rinfo, ShouldBeNil)
 	})
 
-	Convey("Test gc", func() {
+	Convey("Test TTL", func() {
 		info := &models.Token{
-			ClientID:        "1",
-			UserID:          "1_3",
-			RedirectURI:     "http://localhost/",
-			Scope:           "all",
-			Access:          "1_3_1",
-			AccessCreateAt:  time.Now(),
-			AccessExpiresIn: time.Second * 1,
+			ClientID:         "1",
+			UserID:           "1_1",
+			RedirectURI:      "http://localhost/",
+			Scope:            "all",
+			Access:           "1_3_1",
+			AccessCreateAt:   time.Now(),
+			AccessExpiresIn:  time.Second * 1,
+			Refresh:          "1_3_2",
+			RefreshCreateAt:  time.Now(),
+			RefreshExpiresIn: time.Second * 1,
 		}
 		err := store.Create(info)
 		So(err, ShouldBeNil)
 
 		time.Sleep(time.Second * 1)
-		ainfo, err := store.GetByAccess(info.GetAccess())
+		ainfo, err := store.GetByAccess(info.Access)
 		So(err, ShouldBeNil)
 		So(ainfo, ShouldBeNil)
+		rinfo, err := store.GetByRefresh(info.Refresh)
+		So(err, ShouldBeNil)
+		So(rinfo, ShouldBeNil)
 	})
 }

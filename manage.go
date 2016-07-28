@@ -1,14 +1,19 @@
 package oauth2
 
+import (
+	"time"
+)
+
 // TokenGenerateRequest Provide to generate the token request parameters
 type TokenGenerateRequest struct {
-	ClientID     string // The client information
-	ClientSecret string // The client secret
-	UserID       string // The user id
-	RedirectURI  string // Redirect URI
-	Scope        string // Scope of authorization
-	Code         string // Authorization code
-	Refresh      string // Refreshing token
+	ClientID       string        // The client information
+	ClientSecret   string        // The client secret
+	UserID         string        // The user id
+	RedirectURI    string        // Redirect URI
+	Scope          string        // Scope of authorization
+	Code           string        // Authorization code
+	Refresh        string        // Refreshing token
+	AccessTokenExp time.Duration // Access token expiration time (in seconds)
 }
 
 // Manager Authorization management interface

@@ -206,6 +206,8 @@ func TestRefreshing(t *testing.T) {
 				Status(http.StatusOK).
 				JSON()
 
+			t.Log(jval.Object().Raw())
+
 			refresh := jval.Object().Value("refresh_token").String().Raw()
 			rval := e.POST("/token").
 				WithFormField("grant_type", "refreshtoken").
@@ -223,6 +225,7 @@ func TestRefreshing(t *testing.T) {
 	defer csrv.Close()
 
 	manager.MapClientStorage(clientStore(csrv.URL))
+	manager.SetRefreshTokenCfg(&manage.Config{IsGenerateRefresh: false})
 	srv = server.NewServer(server.NewConfig(), manager)
 	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 		userID = "000000"

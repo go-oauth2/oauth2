@@ -12,11 +12,17 @@ type (
 		// Create Create and store the new token information
 		Create(info TokenInfo) error
 
+		// RemoveByCode Delete the authorization code
+		RemoveByCode(code string) error
+
 		// RemoveByAccess Use the access token to delete the token information
 		RemoveByAccess(access string) error
 
 		// RemoveByRefresh Use the refresh token to delete the token information
 		RemoveByRefresh(refresh string) error
+
+		// GetByCode Use the authorization code for token information data
+		GetByCode(code string) (TokenInfo, error)
 
 		// GetByAccess Use the access token for token information data
 		GetByAccess(access string) (TokenInfo, error)

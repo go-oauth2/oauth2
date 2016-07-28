@@ -1,10 +1,34 @@
 OAuth 2.0
 =========
->  [OAuth 2.0](http://oauth.net/2/) is the next evolution of the OAuth protocol which was originally created in late 2006.
+>  An open protocol to allow secure authorization in a simple and standard method from web, mobile and desktop applications.
 
 [![GoDoc](https://godoc.org/gopkg.in/oauth2.v3?status.svg)](https://godoc.org/gopkg.in/oauth2.v3)
 [![Go Report Card](https://goreportcard.com/badge/gopkg.in/oauth2.v3)](https://goreportcard.com/report/gopkg.in/oauth2.v3)
 [![Build Status](https://travis-ci.org/go-oauth2/oauth2.svg?branch=master)](https://travis-ci.org/go-oauth2/oauth2)
+
+Protocol Flow
+-------------
+
+```
+     +--------+                               +---------------+
+     |        |--(A)- Authorization Request ->|   Resource    |
+     |        |                               |     Owner     |
+     |        |<-(B)-- Authorization Grant ---|               |
+     |        |                               +---------------+
+     |        |
+     |        |                               +---------------+
+     |        |--(C)-- Authorization Grant -->| Authorization |
+     | Client |                               |     Server    |
+     |        |<-(D)----- Access Token -------|               |
+     |        |                               +---------------+
+     |        |
+     |        |                               +---------------+
+     |        |--(E)----- Access Token ------>|    Resource   |
+     |        |                               |     Server    |
+     |        |<-(F)--- Protected Resource ---|               |
+     +--------+                               +---------------+
+```
+
 
 Quick Start
 -----------
@@ -73,10 +97,12 @@ http://localhost:9096/authorize?response_type=code&client_id=1&redirect_uri=http
 Features
 --------
 
-* Based on the [RFC 6749](https://tools.ietf.org/html/rfc6749) implementation
 * Easy to use
-* Modularity
-* Flexible
+* Based on the [RFC 6749](https://tools.ietf.org/html/rfc6749) implementation
+* Token storage support TTL
+* Support custom extension field
+* Support custom scope
+* Support custom expiration time of the access token
 
 Example
 -------
