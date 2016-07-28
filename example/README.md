@@ -22,9 +22,6 @@ Open the browser
 
 [http://localhost:9094](http://localhost:9094)
 
-![login](/server/testdata/login.png)
-![authorize](/server/testdata/authorize.png)
-
 ``` json
 {
     "access_token": "BIX-RYRPMHYY4L7O4QTP3Q",
