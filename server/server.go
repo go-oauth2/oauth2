@@ -322,13 +322,21 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 	req.UserID = userID
 	// specify the scope of authorization
 	if fn := s.AuthorizeScopeHandler; fn != nil {
-		if scope := fn(w, r); scope != "" {
+		scope, verr := fn(w, r)
+		if verr != nil {
+			err = verr
+			return
+		} else if scope != "" {
 			req.Scope = scope
 		}
 	}
 	// specify the expiration time of access token
 	if fn := s.AccessTokenExpHandler; fn != nil {
-		if exp := fn(w, r); exp > 0 {
+		exp, verr := fn(w, r)
+		if verr != nil {
+			err = verr
+			return
+		} else if exp > 0 {
 			req.AccessTokenExp = exp
 		}
 	}
@@ -403,8 +411,7 @@ func (s *Server) GetAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRe
 		if err != nil {
 			ierr = err
 			return
-		}
-		if !allowed {
+		} else if !allowed {
 			rerr = errors.ErrUnauthorizedClient
 			return
 		}
@@ -427,8 +434,7 @@ func (s *Server) GetAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRe
 			if err != nil {
 				ierr = err
 				return
-			}
-			if !allowed {
+			} else if !allowed {
 				rerr = errors.ErrInvalidScope
 				return
 			}
@@ -441,17 +447,23 @@ func (s *Server) GetAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRe
 			}
 		}
 	case oauth2.Refreshing:
-		if scope := tgr.Scope; scope != "" {
+		// check scope
+		if scope, scopeFn := tgr.Scope, s.RefreshingScopeHandler; scope != "" && scopeFn != nil {
 			rti, err := s.Manager.LoadRefreshToken(tgr.Refresh)
 			if err != nil {
-				if err == errors.ErrInvalidRefreshToken {
-					rerr = err
+				if err == errors.ErrInvalidRefreshToken || err == errors.ErrExpiredRefreshToken {
+					rerr = errors.ErrInvalidGrant
 					return
 				}
 				ierr = err
 				return
 			}
-			if fn := s.RefreshingScopeHandler; fn != nil && !fn(scope, rti.GetScope()) {
+
+			allowed, err := scopeFn(scope, rti.GetScope())
+			if err != nil {
+				ierr = err
+				return
+			} else if !allowed {
 				rerr = errors.ErrInvalidScope
 				return
 			}
@@ -461,8 +473,8 @@ func (s *Server) GetAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRe
 			if ierr == errors.ErrInvalidClient {
 				rerr = errors.ErrInvalidClient
 				ierr = nil
-			} else if ierr == errors.ErrInvalidRefreshToken {
-				rerr = errors.ErrInvalidRefreshToken
+			} else if ierr == errors.ErrInvalidRefreshToken || ierr == errors.ErrExpiredRefreshToken {
+				rerr = errors.ErrInvalidGrant
 				ierr = nil
 			}
 		}
@@ -484,6 +496,15 @@ func (s *Server) GetTokenData(ti oauth2.TokenInfo) (data map[string]interface{})
 	if refresh := ti.GetRefresh(); refresh != "" {
 		data["refresh_token"] = refresh
 	}
+	if fn := s.ExtensionFieldsHandler; fn != nil {
+		ext := fn(ti)
+		for k, v := range ext {
+			if _, ok := data[k]; ok {
+				continue
+			}
+			data[k] = v
+		}
+	}
 	return
 }
 
@@ -504,17 +525,7 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err
 		err = s.resTokenError(w, r, rerr, ierr)
 		return
 	}
-	tokenData := s.GetTokenData(ti)
-	if fn := s.ExtensionFieldsHandler; fn != nil {
-		ext := fn(w, r)
-		for k, v := range ext {
-			if _, ok := tokenData[k]; ok {
-				continue
-			}
-			tokenData[k] = v
-		}
-	}
-	err = s.resToken(w, tokenData)
+	err = s.resToken(w, s.GetTokenData(ti))
 	return
 }
 

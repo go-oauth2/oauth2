@@ -2,7 +2,6 @@ package server
 
 import (
 	"net/http"
-
 	"time"
 
 	"gopkg.in/oauth2.v3"
@@ -25,7 +24,7 @@ type UserAuthorizationHandler func(w http.ResponseWriter, r *http.Request) (user
 type PasswordAuthorizationHandler func(username, password string) (userID string, err error)
 
 // RefreshingScopeHandler Check the scope of the refreshing token
-type RefreshingScopeHandler func(newScope, oldScope string) (allowed bool)
+type RefreshingScopeHandler func(newScope, oldScope string) (allowed bool, err error)
 
 // ResponseErrorHandler Response error handing
 type ResponseErrorHandler func(re *errors.Response)
@@ -34,13 +33,13 @@ type ResponseErrorHandler func(re *errors.Response)
 type InternalErrorHandler func(r *http.Request, err error)
 
 // AuthorizeScopeHandler Set the authorized scope
-type AuthorizeScopeHandler func(w http.ResponseWriter, r *http.Request) (scope string)
+type AuthorizeScopeHandler func(w http.ResponseWriter, r *http.Request) (scope string, err error)
 
 // AccessTokenExpHandler Set expiration date for the access token
-type AccessTokenExpHandler func(w http.ResponseWriter, r *http.Request) (exp time.Duration)
+type AccessTokenExpHandler func(w http.ResponseWriter, r *http.Request) (exp time.Duration, err error)
 
 // ExtensionFieldsHandler In response to the access token with the extension of the field
-type ExtensionFieldsHandler func(w http.ResponseWriter, r *http.Request) (fieldsValue map[string]interface{})
+type ExtensionFieldsHandler func(ti oauth2.TokenInfo) (fieldsValue map[string]interface{})
 
 // ClientFormHandler Get client data from form
 func ClientFormHandler(r *http.Request) (clientID, clientSecret string, err error) {
