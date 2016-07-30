@@ -13,13 +13,25 @@ import (
 
 // NewServer Create to authorization server instance
 func NewServer(cfg *Config, manager oauth2.Manager) *Server {
+	if err := manager.CheckInterface(); err != nil {
+		panic(err)
+	}
 	srv := &Server{
-		Config:            cfg,
-		Manager:           manager,
-		ClientInfoHandler: ClientFormHandler,
-		ResponseErrorHandler: func(re *errors.Response) {
-			re.Description = ""
-		},
+		Config:  cfg,
+		Manager: manager,
+	}
+	// default handler
+	srv.ClientInfoHandler = ClientFormHandler
+	srv.ResponseErrorHandler = func(re *errors.Response) {
+		re.Description = ""
+	}
+	srv.UserAuthorizationHandler = func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+		err = errors.ErrAccessDenied
+		return
+	}
+	srv.PasswordAuthorizationHandler = func(username, password string) (userID string, err error) {
+		err = errors.ErrAccessDenied
+		return
 	}
 	return srv
 }

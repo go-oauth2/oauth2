@@ -6,7 +6,7 @@ import (
 	"gopkg.in/oauth2.v3"
 )
 
-// AuthorizeRequest The authorization request
+// AuthorizeRequest authorization request
 type AuthorizeRequest struct {
 	ResponseType   oauth2.ResponseType
 	ClientID       string

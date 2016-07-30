@@ -11,24 +11,10 @@ import (
 	"gopkg.in/oauth2.v3/models"
 )
 
-// Config Configuration parameters
-type Config struct {
-	AccessTokenExp    time.Duration // Access token expiration time (in seconds)
-	RefreshTokenExp   time.Duration // Refresh token expiration time
-	IsGenerateRefresh bool          // Whether to generate the refreshing token
-}
-
 // NewDefaultManager Create to default authorization management instance
 func NewDefaultManager() *Manager {
 	m := NewManager()
-
-	// default config
-	m.SetAuthorizeCodeExp(time.Minute * 10)
-	m.SetImplicitTokenCfg(&Config{AccessTokenExp: time.Hour * 1})
-	m.SetClientTokenCfg(&Config{AccessTokenExp: time.Hour * 2})
-	m.SetAuthorizeCodeTokenCfg(&Config{IsGenerateRefresh: true, AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 3})
-	m.SetPasswordTokenCfg(&Config{IsGenerateRefresh: true, AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 7})
-
+	// default implementation
 	m.MapTokenModel(models.NewToken())
 	m.MapAuthorizeGenerate(generates.NewAuthorizeGenerate())
 	m.MapAccessGenerate(generates.NewAccessGenerate())
@@ -46,9 +32,29 @@ func NewManager() *Manager {
 
 // Manager Provide authorization management
 type Manager struct {
-	injector inject.Injector              // Dependency injection
-	codeExp  time.Duration                // Authorize code expiration time
-	gtcfg    map[oauth2.GrantType]*Config // Authorization grant configuration
+	injector inject.Injector
+	codeExp  time.Duration
+	gtcfg    map[oauth2.GrantType]*Config
+}
+
+// get grant type config
+func (m *Manager) grantConfig(gt oauth2.GrantType) *Config {
+	if c, ok := m.gtcfg[gt]; ok && c != nil {
+		return c
+	}
+	switch gt {
+	case oauth2.AuthorizationCode:
+		return DefaultAuthorizeCodeTokenCfg
+	case oauth2.Implicit:
+		return DefaultImplicitTokenCfg
+	case oauth2.PasswordCredentials:
+		return DefaultPasswordTokenCfg
+	case oauth2.ClientCredentials:
+		return DefaultClientTokenCfg
+	case oauth2.Refreshing:
+		return DefaultRefreshTokenCfg
+	}
+	return &Config{}
 }
 
 func (m *Manager) newTokenInfo(ti oauth2.TokenInfo) oauth2.TokenInfo {
@@ -91,39 +97,27 @@ func (m *Manager) SetRefreshTokenCfg(cfg *Config) {
 }
 
 // MapTokenModel Mapping the token information model
-func (m *Manager) MapTokenModel(token oauth2.TokenInfo) error {
-	if token == nil {
-		return errors.ErrNilValue
-	}
+func (m *Manager) MapTokenModel(token oauth2.TokenInfo) {
 	m.injector.Map(token)
-	return nil
+	return
 }
 
 // MapAuthorizeGenerate Mapping the authorize code generate interface
-func (m *Manager) MapAuthorizeGenerate(gen oauth2.AuthorizeGenerate) error {
-	if gen == nil {
-		return errors.ErrNilValue
-	}
+func (m *Manager) MapAuthorizeGenerate(gen oauth2.AuthorizeGenerate) {
 	m.injector.Map(gen)
-	return nil
+	return
 }
 
 // MapAccessGenerate Mapping the access token generate interface
-func (m *Manager) MapAccessGenerate(gen oauth2.AccessGenerate) error {
-	if gen == nil {
-		return errors.ErrNilValue
-	}
+func (m *Manager) MapAccessGenerate(gen oauth2.AccessGenerate) {
 	m.injector.Map(gen)
-	return nil
+	return
 }
 
 // MapClientStorage Mapping the client store interface
-func (m *Manager) MapClientStorage(stor oauth2.ClientStore) error {
-	if stor == nil {
-		return errors.ErrNilValue
-	}
+func (m *Manager) MapClientStorage(stor oauth2.ClientStore) {
 	m.injector.Map(stor)
-	return nil
+	return
 }
 
 // MustClientStorage Mandatory mapping the client store interface
@@ -131,19 +125,13 @@ func (m *Manager) MustClientStorage(stor oauth2.ClientStore, err error) {
 	if err != nil {
 		panic(err.Error())
 	}
-	if stor == nil {
-		panic("client store can't be nil value")
-	}
 	m.injector.Map(stor)
 }
 
 // MapTokenStorage Mapping the token store interface
-func (m *Manager) MapTokenStorage(stor oauth2.TokenStore) error {
-	if stor == nil {
-		return errors.ErrNilValue
-	}
+func (m *Manager) MapTokenStorage(stor oauth2.TokenStore) {
 	m.injector.Map(stor)
-	return nil
+	return
 }
 
 // MustTokenStorage Mandatory mapping the token store interface
@@ -151,10 +139,17 @@ func (m *Manager) MustTokenStorage(stor oauth2.TokenStore, err error) {
 	if err != nil {
 		panic(err)
 	}
-	if stor == nil {
-		panic("token store can't be nil value")
-	}
 	m.injector.Map(stor)
+}
+
+// CheckInterface Check the interface implementation
+func (m *Manager) CheckInterface() error {
+	_, err := m.injector.Invoke(func(
+		oauth2.TokenInfo, oauth2.AccessGenerate, oauth2.TokenStore,
+		oauth2.ClientStore, oauth2.AuthorizeGenerate,
+	) {
+	})
+	return err
 }
 
 // GetClient Get the client information
@@ -198,28 +193,35 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 				return
 			}
 			ti.SetCode(tv)
-			ti.SetCodeExpiresIn(m.codeExp)
+			codeExp := m.codeExp
+			if codeExp == 0 {
+				codeExp = DefaultCodeExp
+			}
+			ti.SetCodeExpiresIn(codeExp)
 			ti.SetCodeCreateAt(td.CreateAt)
 			if exp := tgr.AccessTokenExp; exp > 0 {
 				ti.SetAccessExpiresIn(exp)
 			}
 		case oauth2.Token:
-			tv, rv, terr := tgen.Token(td, m.gtcfg[oauth2.Implicit].IsGenerateRefresh)
+			icfg := m.grantConfig(oauth2.Implicit)
+			tv, rv, terr := tgen.Token(td, icfg.IsGenerateRefresh)
 			if terr != nil {
 				err = terr
 				return
 			}
 			ti.SetAccess(tv)
 			ti.SetAccessCreateAt(td.CreateAt)
-			aexp := m.gtcfg[oauth2.Implicit].AccessTokenExp
+			// set access token expires
+			aexp := icfg.AccessTokenExp
 			if exp := tgr.AccessTokenExp; exp > 0 {
 				aexp = exp
 			}
 			ti.SetAccessExpiresIn(aexp)
-			if rv != "" && m.gtcfg[oauth2.Implicit].IsGenerateRefresh {
+
+			if rv != "" {
 				ti.SetRefresh(rv)
 				ti.SetRefreshCreateAt(td.CreateAt)
-				ti.SetRefreshExpiresIn(m.gtcfg[oauth2.Implicit].RefreshTokenExp)
+				ti.SetRefreshExpiresIn(icfg.RefreshTokenExp)
 			}
 		}
 		ti.SetClientID(tgr.ClientID)
@@ -245,10 +247,7 @@ func (m *Manager) getAuthorizationCode(code string) (info oauth2.TokenInfo, err 
 		if terr != nil {
 			err = terr
 			return
-		} else if ti == nil {
-			err = errors.ErrInvalidAuthorizeCode
-			return
-		} else if ti.GetCodeCreateAt().Add(ti.GetCodeExpiresIn()).Before(time.Now()) {
+		} else if ti == nil || ti.GetCodeCreateAt().Add(ti.GetCodeExpiresIn()).Before(time.Now()) {
 			err = errors.ErrInvalidAuthorizeCode
 			return
 		}
@@ -305,7 +304,8 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 			UserID:   tgr.UserID,
 			CreateAt: time.Now(),
 		}
-		av, rv, terr := gen.Token(td, m.gtcfg[gt].IsGenerateRefresh)
+		gcfg := m.grantConfig(gt)
+		av, rv, terr := gen.Token(td, gcfg.IsGenerateRefresh)
 		if terr != nil {
 			err = terr
 			return
@@ -316,16 +316,16 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 		ti.SetScope(tgr.Scope)
 		ti.SetAccessCreateAt(td.CreateAt)
 		ti.SetAccess(av)
-
-		aexp := m.gtcfg[gt].AccessTokenExp
+		// set access token expires
+		aexp := gcfg.AccessTokenExp
 		if exp := tgr.AccessTokenExp; exp > 0 {
 			aexp = exp
 		}
 		ti.SetAccessExpiresIn(aexp)
-		if rv != "" && m.gtcfg[gt].IsGenerateRefresh {
-			ti.SetRefreshCreateAt(td.CreateAt)
-			ti.SetRefreshExpiresIn(m.gtcfg[gt].RefreshTokenExp)
+		if rv != "" {
 			ti.SetRefresh(rv)
+			ti.SetRefreshCreateAt(td.CreateAt)
+			ti.SetRefreshExpiresIn(gcfg.RefreshTokenExp)
 		}
 
 		err = stor.Create(ti)
@@ -356,18 +356,15 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 		err = errors.ErrInvalidRefreshToken
 		return
 	}
-	oldAccess := ti.GetAccess()
+	oldAccess, oldRefresh := ti.GetAccess(), ti.GetRefresh()
 	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore, gen oauth2.AccessGenerate) {
 		td := &oauth2.GenerateBasic{
 			Client:   cli,
 			UserID:   ti.GetUserID(),
 			CreateAt: time.Now(),
 		}
-		isGenRefresh := false
-		if rcfg, ok := m.gtcfg[oauth2.Refreshing]; ok {
-			isGenRefresh = rcfg.IsGenerateRefresh
-		}
-		tv, rv, terr := gen.Token(td, isGenRefresh)
+		rcfg := m.grantConfig(oauth2.Refreshing)
+		tv, rv, terr := gen.Token(td, rcfg.IsGenerateRefresh)
 		if terr != nil {
 			err = terr
 			return
@@ -388,6 +385,13 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 		if verr := stor.RemoveByAccess(oldAccess); verr != nil {
 			err = verr
 			return
+		}
+		if rv != "" {
+			// remove the old refresh token
+			if verr := stor.RemoveByRefresh(oldRefresh); verr != nil {
+				err = verr
+				return
+			}
 		}
 		accessToken = ti
 	})

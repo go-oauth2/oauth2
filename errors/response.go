@@ -10,36 +10,18 @@ type Response struct {
 	StatusCode  int    `json:"-"`
 }
 
+// https://tools.ietf.org/html/rfc6749#section-5.2
 var (
-	// ErrInvalidRequest invalid request
-	ErrInvalidRequest = errors.New("invalid_request")
-
-	// ErrUnauthorizedClient unauthorized client
-	ErrUnauthorizedClient = errors.New("unauthorized_client")
-
-	// ErrAccessDenied access denied
-	ErrAccessDenied = errors.New("access_denied")
-
-	// ErrUnsupportedResponseType unsupported response type
+	ErrInvalidRequest          = errors.New("invalid_request")
+	ErrUnauthorizedClient      = errors.New("unauthorized_client")
+	ErrAccessDenied            = errors.New("access_denied")
 	ErrUnsupportedResponseType = errors.New("unsupported_response_type")
-
-	// ErrInvalidScope invalid scope
-	ErrInvalidScope = errors.New("invalid_scope")
-
-	// ErrServerError server error
-	ErrServerError = errors.New("server_error")
-
-	// ErrTemporarilyUnavailable temporarily unavailable
-	ErrTemporarilyUnavailable = errors.New("temporarily_unavailable")
-
-	// ErrInvalidClient invalid client
-	ErrInvalidClient = errors.New("invalid_client")
-
-	// ErrInvalidGrant invalid grant
-	ErrInvalidGrant = errors.New("invalid_grant")
-
-	// ErrUnsupportedGrantType unsupported grant type
-	ErrUnsupportedGrantType = errors.New("unsupported_grant_type")
+	ErrInvalidScope            = errors.New("invalid_scope")
+	ErrServerError             = errors.New("server_error")
+	ErrTemporarilyUnavailable  = errors.New("temporarily_unavailable")
+	ErrInvalidClient           = errors.New("invalid_client")
+	ErrInvalidGrant            = errors.New("invalid_grant")
+	ErrUnsupportedGrantType    = errors.New("unsupported_grant_type")
 )
 
 // Descriptions error description
