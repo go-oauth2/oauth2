@@ -8,40 +8,32 @@ import (
 	"gopkg.in/oauth2.v3/errors"
 )
 
-// ClientInfoHandler Get client info from request
-type ClientInfoHandler func(r *http.Request) (clientID, clientSecret string, err error)
+type (
+	// ClientInfoHandler get client info from request
+	ClientInfoHandler func(r *http.Request) (clientID, clientSecret string, err error)
+	// ClientAuthorizedHandler check the client allows to use this authorization grant type
+	ClientAuthorizedHandler func(clientID string, grant oauth2.GrantType) (allowed bool, err error)
+	// ClientScopeHandler check the client allows to use scope
+	ClientScopeHandler func(clientID, scope string) (allowed bool, err error)
+	// UserAuthorizationHandler get user id from request authorization
+	UserAuthorizationHandler func(w http.ResponseWriter, r *http.Request) (userID string, err error)
+	// PasswordAuthorizationHandler get user id from username and password
+	PasswordAuthorizationHandler func(username, password string) (userID string, err error)
+	// RefreshingScopeHandler check the scope of the refreshing token
+	RefreshingScopeHandler func(newScope, oldScope string) (allowed bool, err error)
+	// ResponseErrorHandler response error handing
+	ResponseErrorHandler func(re *errors.Response)
+	// InternalErrorHandler internal error handing
+	InternalErrorHandler func(r *http.Request, err error)
+	// AuthorizeScopeHandler set the authorized scope
+	AuthorizeScopeHandler func(w http.ResponseWriter, r *http.Request) (scope string, err error)
+	// AccessTokenExpHandler set expiration date for the access token
+	AccessTokenExpHandler func(w http.ResponseWriter, r *http.Request) (exp time.Duration, err error)
+	// ExtensionFieldsHandler in response to the access token with the extension of the field
+	ExtensionFieldsHandler func(ti oauth2.TokenInfo) (fieldsValue map[string]interface{})
+)
 
-// ClientAuthorizedHandler Check the client allows to use this authorization grant type
-type ClientAuthorizedHandler func(clientID string, grantType oauth2.GrantType) (allowed bool, err error)
-
-// ClientScopeHandler Check the client allows to use scope
-type ClientScopeHandler func(clientID, scope string) (allowed bool, err error)
-
-// UserAuthorizationHandler Get user id from request authorization
-type UserAuthorizationHandler func(w http.ResponseWriter, r *http.Request) (userID string, err error)
-
-// PasswordAuthorizationHandler Get user id from username and password
-type PasswordAuthorizationHandler func(username, password string) (userID string, err error)
-
-// RefreshingScopeHandler Check the scope of the refreshing token
-type RefreshingScopeHandler func(newScope, oldScope string) (allowed bool, err error)
-
-// ResponseErrorHandler Response error handing
-type ResponseErrorHandler func(re *errors.Response)
-
-// InternalErrorHandler Internal error handing
-type InternalErrorHandler func(r *http.Request, err error)
-
-// AuthorizeScopeHandler Set the authorized scope
-type AuthorizeScopeHandler func(w http.ResponseWriter, r *http.Request) (scope string, err error)
-
-// AccessTokenExpHandler Set expiration date for the access token
-type AccessTokenExpHandler func(w http.ResponseWriter, r *http.Request) (exp time.Duration, err error)
-
-// ExtensionFieldsHandler In response to the access token with the extension of the field
-type ExtensionFieldsHandler func(ti oauth2.TokenInfo) (fieldsValue map[string]interface{})
-
-// ClientFormHandler Get client data from form
+// ClientFormHandler get client data from form
 func ClientFormHandler(r *http.Request) (clientID, clientSecret string, err error) {
 	clientID = r.Form.Get("client_id")
 	clientSecret = r.Form.Get("client_secret")
@@ -51,7 +43,7 @@ func ClientFormHandler(r *http.Request) (clientID, clientSecret string, err erro
 	return
 }
 
-// ClientBasicHandler Get client data from basic authorization
+// ClientBasicHandler get client data from basic authorization
 func ClientBasicHandler(r *http.Request) (clientID, clientSecret string, err error) {
 	username, password, ok := r.BasicAuth()
 	if !ok {

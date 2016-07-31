@@ -14,6 +14,12 @@ func TestManager(t *testing.T) {
 	Convey("Manager test", t, func() {
 		manager := manage.NewDefaultManager()
 		manager.MapClientStorage(store.NewTestClientStore())
+		manager.MustTokenStorage(store.NewMemoryTokenStore())
+
+		Convey("CheckInterface test", func() {
+			err := manager.CheckInterface()
+			So(err, ShouldBeNil)
+		})
 
 		Convey("GetClient test", func() {
 			cli, err := manager.GetClient("1")
@@ -22,7 +28,6 @@ func TestManager(t *testing.T) {
 		})
 
 		Convey("Token test", func() {
-			manager.MustTokenStorage(store.NewMemoryTokenStore())
 			testManager(manager)
 		})
 	})

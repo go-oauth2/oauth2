@@ -6,7 +6,8 @@ Run Server
 
 ``` bash
 $ cd example/server
-$ go run main.go
+$ go build server.go
+$ ./server
 ```
 
 Run Client
@@ -14,7 +15,8 @@ Run Client
 
 ```
 $ cd example/client
-$ go run main.go
+$ go build client.go
+$ ./client
 ```
 
 Open the browser
