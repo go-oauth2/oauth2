@@ -26,3 +26,5 @@ _testmain.go
 # OSX
 *.DS_Store
 *.db
+/example/client/client
+/example/server/server
