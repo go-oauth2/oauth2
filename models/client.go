@@ -1,10 +1,10 @@
 package models
 
-// Client Client model
+// Client client model
 type Client struct {
-	ID     string // The client id
-	Secret string // The client secret
-	Domain string // The client domain
+	ID     string
+	Secret string
+	Domain string
 }
 
 // GetID The client id
