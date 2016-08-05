@@ -1,0 +1,9 @@
+package: gopkg.in/oauth2.v3
+import:
+- package: github.com/codegangsta/inject
+  version: v1.0-rc1
+- package: github.com/satori/go.uuid
+  version: v1.1.0
+- package: github.com/tidwall/buntdb
+- package: gopkg.in/session.v1
+  version: v1.0.1

@@ -1,13 +1,12 @@
-OAuth 2.0
-=========
+# OAuth 2.0
+
 >  An open protocol to allow secure authorization in a simple and standard method from web, mobile and desktop applications.
 
 [![GoDoc](https://godoc.org/gopkg.in/oauth2.v3?status.svg)](https://godoc.org/gopkg.in/oauth2.v3)
 [![Go Report Card](https://goreportcard.com/badge/gopkg.in/oauth2.v3)](https://goreportcard.com/report/gopkg.in/oauth2.v3)
 [![Build Status](https://travis-ci.org/go-oauth2/oauth2.svg?branch=master)](https://travis-ci.org/go-oauth2/oauth2)
 
-Protocol Flow
--------------
+## Protocol Flow
 
 ```
      +--------+                               +---------------+
@@ -29,14 +28,21 @@ Protocol Flow
      +--------+                               +---------------+
 ```
 
-
-Quick Start
------------
+## Quick Start
 
 ### Download and install
 
 ``` bash
-$ go get -u -v gopkg.in/oauth2.v3
+$ go get -u gopkg.in/oauth2.v3
+```
+
+#### Or use [glide](https://github.com/Masterminds/glide)
+
+``` bash
+$ cd $GOPATH/src
+$ git clone https://github.com/go-oauth2/oauth2 gopkg.in/oauth2.v3
+$ cd gopkg.in/oauth2.v3
+$ glide install
 ```
 
 ### Create file `server.go`
@@ -94,8 +100,7 @@ $ ./server
 http://localhost:9096/authorize?response_type=code&client_id=1&redirect_uri=http%253A%252F%252Flocalhost&scope=all&state=xyz
 ```
 
-Features
---------
+## Features
 
 * Easy to use
 * Based on the [RFC 6749](https://tools.ietf.org/html/rfc6749) implementation
@@ -104,21 +109,19 @@ Features
 * Support custom scope
 * Support custom expiration time of the access token
 
-Example
--------
+## Example
+
 > A complete example of simulation authorization code model
 
 Simulation examples of authorization code model, please check [example](/example)
 
-Storage implements
-------------------
+## Storage implements
 
 * [BuntDB](https://github.com/tidwall/buntdb)(The default storage)
 * [Redis](https://github.com/go-oauth2/redis)
 * [MongoDB](https://github.com/go-oauth2/mongo)
 
-License
--------
+## License
 
 ```
 Copyright (c) 2016, OAuth 2.0
