@@ -7,9 +7,14 @@ import (
 	"gopkg.in/oauth2.v3/errors"
 )
 
-// ValidateURI Validates that RedirectURI is contained in domain
-func ValidateURI(domain string, redirectURI string) (err error) {
-	base, err := url.Parse(domain)
+type (
+	// ValidateURIHandler Validates that RedirectURI is contained in baseURI
+	ValidateURIHandler func(baseURI, redirectURI string) (err error)
+)
+
+// DefaultValidateURI Validates that RedirectURI is contained in baseURI
+func DefaultValidateURI(baseURI string, redirectURI string) (err error) {
+	base, err := url.Parse(baseURI)
 	if err != nil {
 		return
 	}
