@@ -11,7 +11,12 @@ import (
 	"gopkg.in/oauth2.v3/errors"
 )
 
-// NewServer Create to authorization server instance
+// NewDefaultServer create a default authorization server
+func NewDefaultServer(manager oauth2.Manager) *Server {
+	return NewServer(NewConfig(), manager)
+}
+
+// NewServer create authorization server
 func NewServer(cfg *Config, manager oauth2.Manager) *Server {
 	if err := manager.CheckInterface(); err != nil {
 		panic(err)
@@ -53,72 +58,77 @@ type Server struct {
 	AuthorizeScopeHandler        AuthorizeScopeHandler
 }
 
-// SetAllowedResponseType Allow the authorization types
+// SetTokenType token type
+func (s *Server) SetTokenType(tokenType string) {
+	s.Config.TokenType = tokenType
+}
+
+// SetAllowedResponseType allow the authorization types
 func (s *Server) SetAllowedResponseType(types ...oauth2.ResponseType) {
 	s.Config.AllowedResponseTypes = types
 }
 
-// SetAllowedGrantType Allow the grant types
+// SetAllowedGrantType allow the grant types
 func (s *Server) SetAllowedGrantType(types ...oauth2.GrantType) {
 	s.Config.AllowedGrantTypes = types
 }
 
-// SetClientInfoHandler Get client info from request
+// SetClientInfoHandler get client info from request
 func (s *Server) SetClientInfoHandler(handler ClientInfoHandler) {
 	s.ClientInfoHandler = handler
 }
 
-// SetClientAuthorizedHandler Check the client allows to use this authorization grant type
+// SetClientAuthorizedHandler check the client allows to use this authorization grant type
 func (s *Server) SetClientAuthorizedHandler(handler ClientAuthorizedHandler) {
 	s.ClientAuthorizedHandler = handler
 }
 
-// SetClientScopeHandler Check the client allows to use scope
+// SetClientScopeHandler check the client allows to use scope
 func (s *Server) SetClientScopeHandler(handler ClientScopeHandler) {
 	s.ClientScopeHandler = handler
 }
 
-// SetUserAuthorizationHandler Get user id from request authorization
+// SetUserAuthorizationHandler get user id from request authorization
 func (s *Server) SetUserAuthorizationHandler(handler UserAuthorizationHandler) {
 	s.UserAuthorizationHandler = handler
 }
 
-// SetPasswordAuthorizationHandler Get user id from username and password
+// SetPasswordAuthorizationHandler get user id from username and password
 func (s *Server) SetPasswordAuthorizationHandler(handler PasswordAuthorizationHandler) {
 	s.PasswordAuthorizationHandler = handler
 }
 
-// SetRefreshingScopeHandler Check the scope of the refreshing token
+// SetRefreshingScopeHandler check the scope of the refreshing token
 func (s *Server) SetRefreshingScopeHandler(handler RefreshingScopeHandler) {
 	s.RefreshingScopeHandler = handler
 }
 
-// SetResponseErrorHandler Response error handling
+// SetResponseErrorHandler response error handling
 func (s *Server) SetResponseErrorHandler(handler ResponseErrorHandler) {
 	s.ResponseErrorHandler = handler
 }
 
-// SetInternalErrorHandler Internal error handling
+// SetInternalErrorHandler internal error handling
 func (s *Server) SetInternalErrorHandler(handler InternalErrorHandler) {
 	s.InternalErrorHandler = handler
 }
 
-// SetExtensionFieldsHandler In response to the access token with the extension of the field
+// SetExtensionFieldsHandler in response to the access token with the extension of the field
 func (s *Server) SetExtensionFieldsHandler(handler ExtensionFieldsHandler) {
 	s.ExtensionFieldsHandler = handler
 }
 
-// SetAccessTokenExpHandler Set expiration date for the access token
+// SetAccessTokenExpHandler set expiration date for the access token
 func (s *Server) SetAccessTokenExpHandler(handler AccessTokenExpHandler) {
 	s.AccessTokenExpHandler = handler
 }
 
-// SetAuthorizeScopeHandler Set scope for the access token
+// SetAuthorizeScopeHandler set scope for the access token
 func (s *Server) SetAuthorizeScopeHandler(handler AuthorizeScopeHandler) {
 	s.AuthorizeScopeHandler = handler
 }
 
-// CheckResponseType Check allows response type
+// CheckResponseType check allows response type
 func (s *Server) CheckResponseType(rt oauth2.ResponseType) bool {
 	for _, art := range s.Config.AllowedResponseTypes {
 		if art == rt {
@@ -128,7 +138,7 @@ func (s *Server) CheckResponseType(rt oauth2.ResponseType) bool {
 	return false
 }
 
-// CheckGrantType Check allows grant type
+// CheckGrantType check allows grant type
 func (s *Server) CheckGrantType(gt oauth2.GrantType) bool {
 	for _, agt := range s.Config.AllowedGrantTypes {
 		if agt == gt {
@@ -138,7 +148,7 @@ func (s *Server) CheckGrantType(gt oauth2.GrantType) bool {
 	return false
 }
 
-// ValidationAuthorizeRequest The authorization request validation
+// ValidationAuthorizeRequest the authorization request validation
 func (s *Server) ValidationAuthorizeRequest(r *http.Request) (req *AuthorizeRequest, rerr, ierr error) {
 	redirectURI, err := url.QueryUnescape(r.FormValue("redirect_uri"))
 	if err != nil {
@@ -158,7 +168,7 @@ func (s *Server) ValidationAuthorizeRequest(r *http.Request) (req *AuthorizeRequ
 	return
 }
 
-// GetAuthorizeToken Get authorization token(code)
+// GetAuthorizeToken get authorization token(code)
 func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (ti oauth2.TokenInfo, rerr, ierr error) {
 	if req.RedirectURI == "" ||
 		req.ClientID == "" {
@@ -218,7 +228,7 @@ func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (ti oauth2.TokenInfo, 
 	return
 }
 
-// GetRedirectURI Get redirect uri
+// GetRedirectURI get redirect uri
 func (s *Server) GetRedirectURI(req *AuthorizeRequest, data map[string]interface{}) (uri string, err error) {
 	u, err := url.Parse(req.RedirectURI)
 	if err != nil {
@@ -245,7 +255,7 @@ func (s *Server) GetRedirectURI(req *AuthorizeRequest, data map[string]interface
 	return
 }
 
-// GetAuthorizeData Get authorization response data
+// GetAuthorizeData get authorization response data
 func (s *Server) GetAuthorizeData(rt oauth2.ResponseType, ti oauth2.TokenInfo) (data map[string]interface{}) {
 	if rt == oauth2.Code {
 		data = map[string]interface{}{
@@ -257,7 +267,7 @@ func (s *Server) GetAuthorizeData(rt oauth2.ResponseType, ti oauth2.TokenInfo) (
 	return
 }
 
-// GetErrorData Get error response data
+// GetErrorData get error response data
 func (s *Server) GetErrorData(rerr, ierr error) (data map[string]interface{}, statusCode int) {
 	if ierr != nil {
 		rerr = errors.ErrServerError
@@ -311,7 +321,7 @@ func (s *Server) resRedirect(w http.ResponseWriter, req *AuthorizeRequest, data 
 	return
 }
 
-// HandleAuthorizeRequest The authorization request handling
+// HandleAuthorizeRequest the authorization request handling
 func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) (err error) {
 	defer func() {
 		if verr := recover(); verr != nil {
@@ -361,7 +371,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 	return
 }
 
-// ValidationTokenRequest The token request validation
+// ValidationTokenRequest the token request validation
 func (s *Server) ValidationTokenRequest(r *http.Request) (gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest, rerr, ierr error) {
 	if r.Method != "POST" {
 		rerr = errors.ErrInvalidRequest
@@ -412,7 +422,7 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (gt oauth2.GrantType, t
 	return
 }
 
-// GetAccessToken Get access token
+// GetAccessToken access token
 func (s *Server) GetAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (ti oauth2.TokenInfo, rerr, ierr error) {
 	if allowed := s.CheckGrantType(gt); !allowed {
 		rerr = errors.ErrUnauthorizedClient
@@ -495,7 +505,7 @@ func (s *Server) GetAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRe
 	return
 }
 
-// GetTokenData Get token data
+// GetTokenData token data
 func (s *Server) GetTokenData(ti oauth2.TokenInfo) (data map[string]interface{}) {
 	data = map[string]interface{}{
 		"access_token": ti.GetAccess(),
@@ -520,7 +530,7 @@ func (s *Server) GetTokenData(ti oauth2.TokenInfo) (data map[string]interface{})
 	return
 }
 
-// HandleTokenRequest The token request handling
+// HandleTokenRequest token request handling
 func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err error) {
 	defer func() {
 		if verr := recover(); verr != nil {
@@ -541,6 +551,7 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err
 	return
 }
 
+// response token error
 func (s *Server) resTokenError(w http.ResponseWriter, r *http.Request, rerr, ierr error) (err error) {
 	if fn := s.InternalErrorHandler; fn != nil {
 		verr := ierr
@@ -554,6 +565,7 @@ func (s *Server) resTokenError(w http.ResponseWriter, r *http.Request, rerr, ier
 	return
 }
 
+// response token
 func (s *Server) resToken(w http.ResponseWriter, data map[string]interface{}, statusCode ...int) (err error) {
 	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.Header().Set("Cache-Control", "no-store")

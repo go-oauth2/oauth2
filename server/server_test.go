@@ -85,7 +85,7 @@ func TestAuthorizeCode(t *testing.T) {
 	defer csrv.Close()
 
 	manager.MapClientStorage(clientStore(csrv.URL))
-	srv = server.NewServer(server.NewConfig(), manager)
+	srv = server.NewDefaultServer(manager)
 	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 		userID = "000000"
 		return
@@ -111,7 +111,7 @@ func TestImplicit(t *testing.T) {
 	defer csrv.Close()
 
 	manager.MapClientStorage(clientStore(csrv.URL))
-	srv = server.NewServer(server.NewConfig(), manager)
+	srv = server.NewDefaultServer(manager)
 	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 		userID = "000000"
 		return
@@ -134,7 +134,7 @@ func TestPasswordCredentials(t *testing.T) {
 	e := httpexpect.New(t, tsrv.URL)
 
 	manager.MapClientStorage(clientStore(""))
-	srv = server.NewServer(server.NewConfig(), manager)
+	srv = server.NewDefaultServer(manager)
 	srv.SetPasswordAuthorizationHandler(func(username, password string) (userID string, err error) {
 		if username == "admin" && password == "123456" {
 			userID = "000000"
@@ -166,7 +166,7 @@ func TestClientCredentials(t *testing.T) {
 	e := httpexpect.New(t, tsrv.URL)
 
 	manager.MapClientStorage(clientStore(""))
-	srv = server.NewServer(server.NewConfig(), manager)
+	srv = server.NewDefaultServer(manager)
 
 	val := e.POST("/token").
 		WithFormField("grant_type", "clientcredentials").
@@ -226,7 +226,7 @@ func TestRefreshing(t *testing.T) {
 
 	manager.MapClientStorage(clientStore(csrv.URL))
 	manager.SetRefreshTokenCfg(&manage.Config{IsGenerateRefresh: false})
-	srv = server.NewServer(server.NewConfig(), manager)
+	srv = server.NewDefaultServer(manager)
 	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 		userID = "000000"
 		return

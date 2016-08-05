@@ -2,14 +2,14 @@ package server
 
 import "gopkg.in/oauth2.v3"
 
-// Config Configuration parameters
+// Config configuration parameters
 type Config struct {
 	TokenType            string                // TokenType token type（Default is Bearer）
 	AllowedResponseTypes []oauth2.ResponseType // Allow the authorization type(Default is all)
 	AllowedGrantTypes    []oauth2.GrantType    // Allow the grant type(Default is all)
 }
 
-// NewConfig Create to configuration instance
+// NewConfig create to configuration instance
 func NewConfig() *Config {
 	return &Config{
 		TokenType:            "Bearer",

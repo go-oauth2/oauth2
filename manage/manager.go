@@ -11,7 +11,7 @@ import (
 	"gopkg.in/oauth2.v3/models"
 )
 
-// NewDefaultManager Create to default authorization management instance
+// NewDefaultManager create to default authorization management instance
 func NewDefaultManager() *Manager {
 	m := NewManager()
 	// default implementation
@@ -22,19 +22,21 @@ func NewDefaultManager() *Manager {
 	return m
 }
 
-// NewManager Create to authorization management instance
+// NewManager create to authorization management instance
 func NewManager() *Manager {
 	return &Manager{
-		injector: inject.New(),
-		gtcfg:    make(map[oauth2.GrantType]*Config),
+		injector:    inject.New(),
+		gtcfg:       make(map[oauth2.GrantType]*Config),
+		validateURI: DefaultValidateURI,
 	}
 }
 
-// Manager Provide authorization management
+// Manager provide authorization management
 type Manager struct {
-	injector inject.Injector
-	codeExp  time.Duration
-	gtcfg    map[oauth2.GrantType]*Config
+	injector    inject.Injector
+	codeExp     time.Duration
+	gtcfg       map[oauth2.GrantType]*Config
+	validateURI ValidateURIHandler
 }
 
 // get grant type config
@@ -66,61 +68,62 @@ func (m *Manager) newTokenInfo(ti oauth2.TokenInfo) oauth2.TokenInfo {
 	return out.Interface().(oauth2.TokenInfo)
 }
 
-// SetAuthorizeCodeExp Set the authorization code expiration time
+// SetAuthorizeCodeExp set the authorization code expiration time
 func (m *Manager) SetAuthorizeCodeExp(exp time.Duration) {
 	m.codeExp = exp
 }
 
-// SetAuthorizeCodeTokenCfg Set the authorization code grant token config
+// SetAuthorizeCodeTokenCfg set the authorization code grant token config
 func (m *Manager) SetAuthorizeCodeTokenCfg(cfg *Config) {
 	m.gtcfg[oauth2.AuthorizationCode] = cfg
 }
 
-// SetImplicitTokenCfg Set the implicit grant token config
+// SetImplicitTokenCfg set the implicit grant token config
 func (m *Manager) SetImplicitTokenCfg(cfg *Config) {
 	m.gtcfg[oauth2.Implicit] = cfg
 }
 
-// SetPasswordTokenCfg Set the password grant token config
+// SetPasswordTokenCfg set the password grant token config
 func (m *Manager) SetPasswordTokenCfg(cfg *Config) {
 	m.gtcfg[oauth2.PasswordCredentials] = cfg
 }
 
-// SetClientTokenCfg Set the client grant token config
+// SetClientTokenCfg set the client grant token config
 func (m *Manager) SetClientTokenCfg(cfg *Config) {
 	m.gtcfg[oauth2.ClientCredentials] = cfg
 }
 
-// SetRefreshTokenCfg Set the refreshing token config
+// SetRefreshTokenCfg set the refreshing token config
 func (m *Manager) SetRefreshTokenCfg(cfg *Config) {
 	m.gtcfg[oauth2.Refreshing] = cfg
 }
 
-// MapTokenModel Mapping the token information model
+// SetValidateURIHandler set the validates that RedirectURI is contained in baseURI
+func (m *Manager) SetValidateURIHandler(handler ValidateURIHandler) {
+	m.validateURI = handler
+}
+
+// MapTokenModel mapping the token information model
 func (m *Manager) MapTokenModel(token oauth2.TokenInfo) {
 	m.injector.Map(token)
-	return
 }
 
-// MapAuthorizeGenerate Mapping the authorize code generate interface
+// MapAuthorizeGenerate mapping the authorize code generate interface
 func (m *Manager) MapAuthorizeGenerate(gen oauth2.AuthorizeGenerate) {
 	m.injector.Map(gen)
-	return
 }
 
-// MapAccessGenerate Mapping the access token generate interface
+// MapAccessGenerate mapping the access token generate interface
 func (m *Manager) MapAccessGenerate(gen oauth2.AccessGenerate) {
 	m.injector.Map(gen)
-	return
 }
 
-// MapClientStorage Mapping the client store interface
+// MapClientStorage mapping the client store interface
 func (m *Manager) MapClientStorage(stor oauth2.ClientStore) {
 	m.injector.Map(stor)
-	return
 }
 
-// MustClientStorage Mandatory mapping the client store interface
+// MustClientStorage mandatory mapping the client store interface
 func (m *Manager) MustClientStorage(stor oauth2.ClientStore, err error) {
 	if err != nil {
 		panic(err.Error())
@@ -128,13 +131,12 @@ func (m *Manager) MustClientStorage(stor oauth2.ClientStore, err error) {
 	m.injector.Map(stor)
 }
 
-// MapTokenStorage Mapping the token store interface
+// MapTokenStorage mapping the token store interface
 func (m *Manager) MapTokenStorage(stor oauth2.TokenStore) {
 	m.injector.Map(stor)
-	return
 }
 
-// MustTokenStorage Mandatory mapping the token store interface
+// MustTokenStorage mandatory mapping the token store interface
 func (m *Manager) MustTokenStorage(stor oauth2.TokenStore, err error) {
 	if err != nil {
 		panic(err)
@@ -142,7 +144,7 @@ func (m *Manager) MustTokenStorage(stor oauth2.TokenStore, err error) {
 	m.injector.Map(stor)
 }
 
-// CheckInterface Check the interface implementation
+// CheckInterface check the interface implementation
 func (m *Manager) CheckInterface() error {
 	_, err := m.injector.Invoke(func(
 		oauth2.TokenInfo, oauth2.AccessGenerate, oauth2.TokenStore,
@@ -152,7 +154,7 @@ func (m *Manager) CheckInterface() error {
 	return err
 }
 
-// GetClient Get the client information
+// GetClient get the client information
 func (m *Manager) GetClient(clientID string) (cli oauth2.ClientInfo, err error) {
 	_, ierr := m.injector.Invoke(func(stor oauth2.ClientStore) {
 		cli, err = stor.GetByID(clientID)
@@ -168,12 +170,12 @@ func (m *Manager) GetClient(clientID string) (cli oauth2.ClientInfo, err error) 
 	return
 }
 
-// GenerateAuthToken Generate the authorization token(code)
+// GenerateAuthToken generate the authorization token(code)
 func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGenerateRequest) (authToken oauth2.TokenInfo, err error) {
 	cli, err := m.GetClient(tgr.ClientID)
 	if err != nil {
 		return
-	} else if verr := ValidateURI(cli.GetDomain(), tgr.RedirectURI); verr != nil {
+	} else if verr := m.validateURI(cli.GetDomain(), tgr.RedirectURI); verr != nil {
 		err = verr
 		return
 	}
@@ -270,7 +272,7 @@ func (m *Manager) delAuthorizationCode(code string) (err error) {
 	return
 }
 
-// GenerateAccessToken Generate the access token
+// GenerateAccessToken generate the access token
 func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (accessToken oauth2.TokenInfo, err error) {
 	if gt == oauth2.AuthorizationCode {
 		ti, terr := m.getAuthorizationCode(tgr.Code)
@@ -340,7 +342,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 	return
 }
 
-// RefreshAccessToken Refreshing an access token
+// RefreshAccessToken refreshing an access token
 func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessToken oauth2.TokenInfo, err error) {
 	cli, err := m.GetClient(tgr.ClientID)
 	if err != nil {
@@ -401,7 +403,7 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 	return
 }
 
-// RemoveAccessToken Use the access token to delete the token information
+// RemoveAccessToken use the access token to delete the token information
 func (m *Manager) RemoveAccessToken(access string) (err error) {
 	if access == "" {
 		err = errors.ErrInvalidAccessToken
@@ -416,7 +418,7 @@ func (m *Manager) RemoveAccessToken(access string) (err error) {
 	return
 }
 
-// RemoveRefreshToken Use the refresh token to delete the token information
+// RemoveRefreshToken use the refresh token to delete the token information
 func (m *Manager) RemoveRefreshToken(refresh string) (err error) {
 	if refresh == "" {
 		err = errors.ErrInvalidAccessToken
@@ -431,7 +433,7 @@ func (m *Manager) RemoveRefreshToken(refresh string) (err error) {
 	return
 }
 
-// LoadAccessToken According to the access token for corresponding token information
+// LoadAccessToken according to the access token for corresponding token information
 func (m *Manager) LoadAccessToken(access string) (info oauth2.TokenInfo, err error) {
 	if access == "" {
 		err = errors.ErrInvalidAccessToken
@@ -460,7 +462,7 @@ func (m *Manager) LoadAccessToken(access string) (info oauth2.TokenInfo, err err
 	return
 }
 
-// LoadRefreshToken According to the refresh token for corresponding token information
+// LoadRefreshToken according to the refresh token for corresponding token information
 func (m *Manager) LoadRefreshToken(refresh string) (info oauth2.TokenInfo, err error) {
 	if refresh == "" {
 		err = errors.ErrInvalidRefreshToken
