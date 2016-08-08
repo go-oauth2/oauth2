@@ -9,15 +9,15 @@ import (
 	"gopkg.in/oauth2.v3"
 )
 
-// NewAuthorizeGenerate Create to generate the authorize code instance
+// NewAuthorizeGenerate create to generate the authorize code instance
 func NewAuthorizeGenerate() *AuthorizeGenerate {
 	return &AuthorizeGenerate{}
 }
 
-// AuthorizeGenerate Generate the authorize code
+// AuthorizeGenerate generate the authorize code
 type AuthorizeGenerate struct{}
 
-// Token Based on the UUID generated token
+// Token based on the UUID generated token
 func (ag *AuthorizeGenerate) Token(data *oauth2.GenerateBasic) (code string, err error) {
 	buf := bytes.NewBufferString(data.Client.GetID())
 	buf.WriteString(data.UserID)

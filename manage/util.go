@@ -8,11 +8,11 @@ import (
 )
 
 type (
-	// ValidateURIHandler Validates that RedirectURI is contained in baseURI
+	// ValidateURIHandler validates that redirectURI is contained in baseURI
 	ValidateURIHandler func(baseURI, redirectURI string) (err error)
 )
 
-// DefaultValidateURI Validates that RedirectURI is contained in baseURI
+// DefaultValidateURI validates that redirectURI is contained in baseURI
 func DefaultValidateURI(baseURI string, redirectURI string) (err error) {
 	base, err := url.Parse(baseURI)
 	if err != nil {

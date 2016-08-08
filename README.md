@@ -65,24 +65,23 @@ func main() {
 	// client test store
 	manager.MapClientStorage(store.NewTestClientStore())
 
-	srv := server.NewServer(server.NewConfig(), manager)
-	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
-		// validation and to get the user id
-		userID = "000000"
-		return
-	})
+	srv := server.NewDefaultServer(manager)
+	srv.SetAllowGetAccessRequest(true)
+
 	http.HandleFunc("/authorize", func(w http.ResponseWriter, r *http.Request) {
 		err := srv.HandleAuthorizeRequest(w, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
 	})
+
 	http.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
 		err := srv.HandleTokenRequest(w, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
 	})
+
 	http.ListenAndServe(":9096", nil)
 }
 ```
@@ -97,7 +96,16 @@ $ ./server
 ### Open in your web browser
 
 ```
-http://localhost:9096/authorize?response_type=code&client_id=1&redirect_uri=http%253A%252F%252Flocalhost&scope=all&state=xyz
+http://localhost:9096/token?grant_type=clientcredentials&client_id=1&client_secret=11&scope=all
+```
+
+```
+{
+    "access_token": "ZGF4ARHJPT2Y_QAIOJVL-Q",
+    "expires_in": 7200,
+    "scope": "all",
+    "token_type": "Bearer"
+}
 ```
 
 ## Features

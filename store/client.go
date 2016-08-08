@@ -5,7 +5,7 @@ import (
 	"gopkg.in/oauth2.v3/models"
 )
 
-// NewTestClientStore Create to client information store instance
+// NewTestClientStore create to client information store instance
 func NewTestClientStore(clients ...*models.Client) oauth2.ClientStore {
 	data := map[string]*models.Client{
 		"1": &models.Client{
@@ -22,12 +22,12 @@ func NewTestClientStore(clients ...*models.Client) oauth2.ClientStore {
 	}
 }
 
-// TestClientStore Client information store
+// TestClientStore client information store
 type TestClientStore struct {
 	data map[string]*models.Client
 }
 
-// GetByID According to the ID for the client information
+// GetByID according to the ID for the client information
 func (ts *TestClientStore) GetByID(id string) (cli oauth2.ClientInfo, err error) {
 	if c, ok := ts.data[id]; ok {
 		cli = c

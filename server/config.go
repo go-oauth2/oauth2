@@ -1,12 +1,17 @@
 package server
 
-import "gopkg.in/oauth2.v3"
+import (
+	"time"
+
+	"gopkg.in/oauth2.v3"
+)
 
 // Config configuration parameters
 type Config struct {
-	TokenType            string                // TokenType token type（Default is Bearer）
-	AllowedResponseTypes []oauth2.ResponseType // Allow the authorization type(Default is all)
-	AllowedGrantTypes    []oauth2.GrantType    // Allow the grant type(Default is all)
+	TokenType             string                // token type
+	AllowGetAccessRequest bool                  // to allow GET requests for the token
+	AllowedResponseTypes  []oauth2.ResponseType // allow the authorization type
+	AllowedGrantTypes     []oauth2.GrantType    // allow the grant type
 }
 
 // NewConfig create to configuration instance
@@ -21,4 +26,15 @@ func NewConfig() *Config {
 			oauth2.Refreshing,
 		},
 	}
+}
+
+// AuthorizeRequest authorization request
+type AuthorizeRequest struct {
+	ResponseType   oauth2.ResponseType
+	ClientID       string
+	Scope          string
+	RedirectURI    string
+	State          string
+	UserID         string
+	AccessTokenExp time.Duration
 }

@@ -7,22 +7,22 @@ type Client struct {
 	Domain string
 }
 
-// GetID The client id
+// GetID client id
 func (c *Client) GetID() string {
 	return c.ID
 }
 
-// GetSecret The client domain
+// GetSecret client domain
 func (c *Client) GetSecret() string {
 	return c.Secret
 }
 
-// GetDomain The client domain
+// GetDomain client domain
 func (c *Client) GetDomain() string {
 	return c.Domain
 }
 
-// GetExtraData The extension data related to the client
+// GetExtraData extension data related to the client
 func (c *Client) GetExtraData() interface{} {
 	return nil
 }
