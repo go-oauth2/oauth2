@@ -10,16 +10,16 @@ import (
 	"gopkg.in/oauth2.v3"
 )
 
-// NewAccessGenerate Create to generate the access token instance
+// NewAccessGenerate create to generate the access token instance
 func NewAccessGenerate() *AccessGenerate {
 	return &AccessGenerate{}
 }
 
-// AccessGenerate Generate the access token
+// AccessGenerate generate the access token
 type AccessGenerate struct {
 }
 
-// Token Based on the UUID generated token
+// Token based on the UUID generated token
 func (ag *AccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool) (access, refresh string, err error) {
 	buf := bytes.NewBufferString(data.Client.GetID())
 	buf.WriteString(data.UserID)

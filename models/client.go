@@ -1,28 +1,28 @@
 package models
 
-// Client Client model
+// Client client model
 type Client struct {
-	ID     string // The client id
-	Secret string // The client secret
-	Domain string // The client domain
+	ID     string
+	Secret string
+	Domain string
 }
 
-// GetID The client id
+// GetID client id
 func (c *Client) GetID() string {
 	return c.ID
 }
 
-// GetSecret The client domain
+// GetSecret client domain
 func (c *Client) GetSecret() string {
 	return c.Secret
 }
 
-// GetDomain The client domain
+// GetDomain client domain
 func (c *Client) GetDomain() string {
 	return c.Domain
 }
 
-// GetExtraData The extension data related to the client
+// GetExtraData extension data related to the client
 func (c *Client) GetExtraData() interface{} {
 	return nil
 }

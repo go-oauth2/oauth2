@@ -4,9 +4,9 @@ import "time"
 
 // Config authorization configuration parameters
 type Config struct {
-	// access token expiration time (in seconds)
+	// access token expiration time
 	AccessTokenExp time.Duration
-	// refresh token expiration time(in seconds)
+	// refresh token expiration time
 	RefreshTokenExp time.Duration
 	// whether to generate the refreshing token
 	IsGenerateRefresh bool
