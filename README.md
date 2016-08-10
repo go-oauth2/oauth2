@@ -36,15 +36,6 @@
 $ go get -u gopkg.in/oauth2.v3
 ```
 
-#### Or use [glide](https://github.com/Masterminds/glide)
-
-``` bash
-$ cd $GOPATH/src
-$ git clone https://github.com/go-oauth2/oauth2 gopkg.in/oauth2.v3
-$ cd gopkg.in/oauth2.v3
-$ glide install
-```
-
 ### Create file `server.go`
 
 ``` go

@@ -21,8 +21,3 @@ func (c *Client) GetSecret() string {
 func (c *Client) GetDomain() string {
 	return c.Domain
 }
-
-// GetExtraData extension data related to the client
-func (c *Client) GetExtraData() interface{} {
-	return nil
-}

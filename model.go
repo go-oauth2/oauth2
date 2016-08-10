@@ -8,7 +8,6 @@ type (
 		GetID() string
 		GetSecret() string
 		GetDomain() string
-		GetExtraData() interface{}
 	}
 
 	// TokenInfo the token information model interface
