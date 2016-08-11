@@ -219,16 +219,16 @@ func (s *Server) GetAuthorizeData(rt oauth2.ResponseType, ti oauth2.TokenInfo) (
 }
 
 // HandleAuthorizeRequest the authorization request handling
-func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) (uerr error) {
-	req, err := s.ValidationAuthorizeRequest(r)
-	if err != nil {
-		uerr = s.resRedirectError(w, req, err)
+func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) (err error) {
+	req, verr := s.ValidationAuthorizeRequest(r)
+	if verr != nil {
+		err = s.resRedirectError(w, req, verr)
 		return
 	}
 	// user authorization
-	userID, err := s.UserAuthorizationHandler(w, r)
-	if err != nil {
-		uerr = s.resRedirectError(w, req, err)
+	userID, verr := s.UserAuthorizationHandler(w, r)
+	if verr != nil {
+		err = s.resRedirectError(w, req, verr)
 		return
 	} else if userID == "" {
 		return
@@ -254,12 +254,12 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 			req.AccessTokenExp = exp
 		}
 	}
-	ti, err := s.GetAuthorizeToken(req)
-	if err != nil {
-		uerr = s.resRedirectError(w, req, err)
+	ti, verr := s.GetAuthorizeToken(req)
+	if verr != nil {
+		err = s.resRedirectError(w, req, verr)
 		return
 	}
-	uerr = s.resRedirect(w, req, s.GetAuthorizeData(req.ResponseType, ti))
+	err = s.resRedirect(w, req, s.GetAuthorizeData(req.ResponseType, ti))
 	return
 }
 
@@ -430,15 +430,15 @@ func (s *Server) GetTokenData(ti oauth2.TokenInfo) (data map[string]interface{})
 }
 
 // HandleTokenRequest token request handling
-func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (uerr error) {
-	gt, tgr, err := s.ValidationTokenRequest(r)
-	if err != nil {
-		err = s.resTokenError(w, err)
+func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err error) {
+	gt, tgr, verr := s.ValidationTokenRequest(r)
+	if verr != nil {
+		err = s.resTokenError(w, verr)
 		return
 	}
-	ti, err := s.GetAccessToken(gt, tgr)
-	if err != nil {
-		err = s.resTokenError(w, err)
+	ti, verr := s.GetAccessToken(gt, tgr)
+	if verr != nil {
+		err = s.resTokenError(w, verr)
 		return
 	}
 	err = s.resToken(w, s.GetTokenData(ti))
