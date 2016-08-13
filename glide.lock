@@ -1,14 +1,16 @@
 hash: e73aa666c6eab403aa888c237084d226d2e9175278a40230044277fc2e72aef2
-updated: 2016-08-05T09:52:18.431660138+08:00
+updated: 2016-08-13T18:21:17.412720223+08:00
 imports:
 - name: github.com/codegangsta/inject
   version: 37d7f8432a3e684eef9b2edece76bdfa6ac85b39
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/tidwall/btree
-  version: 7ebb98011b36ffcdcf7a5d8062d6e6c651a49560
+  version: a0522fc1895a8e98d6b61a3b80aafda6e1434903
 - name: github.com/tidwall/buntdb
-  version: 8a270a15341d07288e99e88f07d702e9e19b815e
+  version: 3e58c89ec608287ec9e1f24120b0200fb284d9c5
+- name: github.com/tidwall/gjson
+  version: e865d89fc77021ef6ecfdd34df1b546a87d58799
 - name: github.com/tidwall/rtree
   version: 1737a7bdeb7e5f8303905c5b385f1eeb0f7272ab
   subpackages:
