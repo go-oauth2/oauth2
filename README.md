@@ -33,7 +33,7 @@
 ### Download and install
 
 ``` bash
-$ go get -u gopkg.in/oauth2.v3
+$ go get -u gopkg.in/oauth2.v3/...
 ```
 
 ### Create file `server.go`
