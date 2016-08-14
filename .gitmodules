@@ -1,0 +1,18 @@
+[submodule "vendor/github.com/codegangsta/inject"]
+	path = vendor/github.com/codegangsta/inject
+	url = git@github.com:codegangsta/inject.git
+[submodule "vendor/github.com/satori/go.uuid"]
+	path = vendor/github.com/satori/go.uuid
+	url = git@github.com:satori/go.uuid.git
+[submodule "vendor/github.com/tidwall/btree"]
+	path = vendor/github.com/tidwall/btree
+	url = git@github.com:tidwall/btree.git
+[submodule "vendor/github.com/tidwall/buntdb"]
+	path = vendor/github.com/tidwall/buntdb
+	url = git@github.com:tidwall/buntdb.git
+[submodule "vendor/github.com/tidwall/rtree"]
+	path = vendor/github.com/tidwall/rtree
+	url = git@github.com:tidwall/rtree.git
+[submodule "vendor/gopkg.in/session.v1"]
+	path = vendor/gopkg.in/session.v1
+	url = https://gopkg.in/session.v1
