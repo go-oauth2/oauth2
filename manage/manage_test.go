@@ -42,7 +42,6 @@ func testManager(manager oauth2.Manager) {
 	}
 	cti, err := manager.GenerateAuthToken(oauth2.Code, reqParams)
 	So(err, ShouldBeNil)
-	Println(cti.GetCode())
 
 	code := cti.GetCode()
 	So(code, ShouldNotBeEmpty)
