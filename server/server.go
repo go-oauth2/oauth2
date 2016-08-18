@@ -55,21 +55,19 @@ type Server struct {
 	AuthorizeScopeHandler        AuthorizeScopeHandler
 }
 
-// response redirect error
-func (s *Server) resRedirectError(w http.ResponseWriter, req *AuthorizeRequest, err error) (uerr error) {
+func (s *Server) redirectError(w http.ResponseWriter, req *AuthorizeRequest, err error) (uerr error) {
 	if req == nil {
 		uerr = err
 		return
 	}
 	data, _ := s.GetErrorData(err)
-	err = s.resRedirect(w, req, data)
+	err = s.redirect(w, req, data)
 	return
 }
 
-func (s *Server) resRedirect(w http.ResponseWriter, req *AuthorizeRequest, data map[string]interface{}) (err error) {
-	uri, verr := s.GetRedirectURI(req, data)
-	if verr != nil {
-		err = verr
+func (s *Server) redirect(w http.ResponseWriter, req *AuthorizeRequest, data map[string]interface{}) (err error) {
+	uri, err := s.GetRedirectURI(req, data)
+	if err != nil {
 		return
 	}
 	w.Header().Set("Location", uri)
@@ -77,15 +75,13 @@ func (s *Server) resRedirect(w http.ResponseWriter, req *AuthorizeRequest, data 
 	return
 }
 
-// response token error
-func (s *Server) resTokenError(w http.ResponseWriter, err error) (uerr error) {
+func (s *Server) tokenError(w http.ResponseWriter, err error) (uerr error) {
 	data, statusCode := s.GetErrorData(err)
-	uerr = s.resToken(w, data, statusCode)
+	uerr = s.token(w, data, statusCode)
 	return
 }
 
-// response token
-func (s *Server) resToken(w http.ResponseWriter, data map[string]interface{}, statusCode ...int) (err error) {
+func (s *Server) token(w http.ResponseWriter, data map[string]interface{}, statusCode ...int) (err error) {
 	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
@@ -157,18 +153,19 @@ func (s *Server) CheckResponseType(rt oauth2.ResponseType) bool {
 
 // GetAuthorizeToken get authorization token(code)
 func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (ti oauth2.TokenInfo, err error) {
-	if req.RedirectURI == "" ||
+	if req.ResponseType == "" {
+		err = errors.ErrUnsupportedResponseType
+		return
+	} else if req.RedirectURI == "" ||
 		req.ClientID == "" {
 		err = errors.ErrInvalidRequest
-		return
-	} else if req.ResponseType == "" {
-		err = errors.ErrUnsupportedResponseType
 		return
 	}
 	if allowed := s.CheckResponseType(req.ResponseType); !allowed {
 		err = errors.ErrUnauthorizedClient
 		return
 	}
+	// check the client allows the grant type
 	if fn := s.ClientAuthorizedHandler; fn != nil {
 		gt := oauth2.AuthorizationCode
 		if req.ResponseType == oauth2.Token {
@@ -183,6 +180,7 @@ func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (ti oauth2.TokenInfo, 
 			return
 		}
 	}
+	// check the client allows the authorized scope
 	if fn := s.ClientScopeHandler; fn != nil {
 		allowed, verr := fn(req.ClientID, req.Scope)
 		if verr != nil {
@@ -194,13 +192,11 @@ func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (ti oauth2.TokenInfo, 
 		}
 	}
 	tgr := &oauth2.TokenGenerateRequest{
-		ClientID:    req.ClientID,
-		UserID:      req.UserID,
-		RedirectURI: req.RedirectURI,
-		Scope:       req.Scope,
-	}
-	if exp := req.AccessTokenExp; exp > 0 {
-		tgr.AccessTokenExp = exp
+		ClientID:       req.ClientID,
+		UserID:         req.UserID,
+		RedirectURI:    req.RedirectURI,
+		Scope:          req.Scope,
+		AccessTokenExp: req.AccessTokenExp,
 	}
 	ti, err = s.Manager.GenerateAuthToken(req.ResponseType, tgr)
 	return
@@ -222,13 +218,13 @@ func (s *Server) GetAuthorizeData(rt oauth2.ResponseType, ti oauth2.TokenInfo) (
 func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) (err error) {
 	req, verr := s.ValidationAuthorizeRequest(r)
 	if verr != nil {
-		err = s.resRedirectError(w, req, verr)
+		err = s.redirectError(w, req, verr)
 		return
 	}
 	// user authorization
 	userID, verr := s.UserAuthorizationHandler(w, r)
 	if verr != nil {
-		err = s.resRedirectError(w, req, verr)
+		err = s.redirectError(w, req, verr)
 		return
 	} else if userID == "" {
 		return
@@ -250,16 +246,15 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 		if verr != nil {
 			err = verr
 			return
-		} else if exp > 0 {
-			req.AccessTokenExp = exp
 		}
+		req.AccessTokenExp = exp
 	}
 	ti, verr := s.GetAuthorizeToken(req)
 	if verr != nil {
-		err = s.resRedirectError(w, req, verr)
+		err = s.redirectError(w, req, verr)
 		return
 	}
-	err = s.resRedirect(w, req, s.GetAuthorizeData(req.ResponseType, ti))
+	err = s.redirect(w, req, s.GetAuthorizeData(req.ResponseType, ti))
 	return
 }
 
@@ -433,15 +428,15 @@ func (s *Server) GetTokenData(ti oauth2.TokenInfo) (data map[string]interface{})
 func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err error) {
 	gt, tgr, verr := s.ValidationTokenRequest(r)
 	if verr != nil {
-		err = s.resTokenError(w, verr)
+		err = s.tokenError(w, verr)
 		return
 	}
 	ti, verr := s.GetAccessToken(gt, tgr)
 	if verr != nil {
-		err = s.resTokenError(w, verr)
+		err = s.tokenError(w, verr)
 		return
 	}
-	err = s.resToken(w, s.GetTokenData(ti))
+	err = s.token(w, s.GetTokenData(ti))
 	return
 }
 
@@ -453,17 +448,21 @@ func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCod
 		}
 		err = errors.ErrServerError
 	}
-	var re *errors.Response
+	re := &errors.Response{
+		Error:       err,
+		Description: errors.Descriptions[err],
+		StatusCode:  errors.StatusCodes[err],
+	}
 	if fn := s.ResponseErrorHandler; fn != nil {
-		re = fn(err)
-	} else {
-		re = &errors.Response{
-			Error:       err,
-			Description: errors.Descriptions[err],
+		if vre := fn(err); vre != nil {
+			re = vre
 		}
 	}
 	data = map[string]interface{}{
 		"error": re.Error.Error(),
+	}
+	if v := re.ErrorCode; v != 0 {
+		data["error_code"] = v
 	}
 	if v := re.Description; v != "" {
 		data["error_description"] = v
@@ -471,6 +470,9 @@ func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCod
 	if v := re.URI; v != "" {
 		data["error_uri"] = v
 	}
-	statusCode = re.StatusCode
+	statusCode = 400
+	if v := re.StatusCode; v > 0 {
+		statusCode = v
+	}
 	return
 }

@@ -2,9 +2,11 @@
 
 >  An open protocol to allow secure authorization in a simple and standard method from web, mobile and desktop applications.
 
-[![GoDoc](https://godoc.org/gopkg.in/oauth2.v3?status.svg)](https://godoc.org/gopkg.in/oauth2.v3)
-[![Go Report Card](https://goreportcard.com/badge/gopkg.in/oauth2.v3)](https://goreportcard.com/report/gopkg.in/oauth2.v3)
-[![Build Status](https://travis-ci.org/go-oauth2/oauth2.svg?branch=master)](https://travis-ci.org/go-oauth2/oauth2)
+[![License][License-Image]][License-Url] 
+[![ReportCard][ReportCard-Image]][ReportCard-Url] 
+[![Build][Build-Status-Image]][Build-Status-Url] 
+[![GoDoc][GoDoc-Image]][GoDoc-Url]
+[![Release][Release-Image]][Release-Url] 
 
 ## Protocol Flow
 
@@ -42,6 +44,7 @@ $ go get -u gopkg.in/oauth2.v3/...
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"gopkg.in/oauth2.v3/manage"
@@ -59,6 +62,10 @@ func main() {
 	srv := server.NewDefaultServer(manager)
 	srv.SetAllowGetAccessRequest(true)
 
+	srv.SetInternalErrorHandler(func(err error) {
+		fmt.Println("OAuth2 Error:",err.Error())
+	})
+
 	http.HandleFunc("/authorize", func(w http.ResponseWriter, r *http.Request) {
 		err := srv.HandleAuthorizeRequest(w, r)
 		if err != nil {
@@ -69,7 +76,7 @@ func main() {
 	http.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
 		err := srv.HandleTokenRequest(w, r)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	})
 
@@ -114,15 +121,25 @@ http://localhost:9096/token?grant_type=clientcredentials&client_id=1&client_secr
 
 Simulation examples of authorization code model, please check [example](/example)
 
-## Storage implements
+## Storage Implements
 
 * [BuntDB](https://github.com/tidwall/buntdb)(The default storage)
 * [Redis](https://github.com/go-oauth2/redis)
 * [MongoDB](https://github.com/go-oauth2/mongo)
 
-## License
+## MIT License
 
 ```
-Copyright (c) 2016, OAuth 2.0
-All rights reserved.
+Copyright (c) 2016 Lyric
 ```
+
+[License-Url]: http://opensource.org/licenses/MIT
+[License-Image]: https://img.shields.io/npm/l/express.svg
+[Build-Status-Url]: https://travis-ci.org/go-oauth2/oauth2
+[Build-Status-Image]: https://travis-ci.org/go-oauth2/oauth2.svg?branch=master
+[Release-Url]: https://github.com/go-oauth2/oauth2/releases/tag/v3.4.8
+[Release-image]: http://img.shields.io/badge/release-v3.4.8-1eb0fc.svg
+[ReportCard-Url]: https://goreportcard.com/report/gopkg.in/oauth2.v3
+[ReportCard-Image]: https://goreportcard.com/badge/gopkg.in/oauth2.v3
+[GoDoc-Url]: https://godoc.org/gopkg.in/oauth2.v3
+[GoDoc-Image]: https://godoc.org/gopkg.in/oauth2.v3?status.svg

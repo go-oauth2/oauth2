@@ -4,10 +4,11 @@ import "errors"
 
 // Response error response
 type Response struct {
-	Error       error  `json:"error"`
-	Description string `json:"error_description,omitempty"`
-	URI         string `json:"error_uri,omitempty"`
-	StatusCode  int    `json:"-"`
+	Error       error
+	ErrorCode   int
+	Description string
+	URI         string
+	StatusCode  int
 }
 
 // https://tools.ietf.org/html/rfc6749#section-5.2
@@ -36,4 +37,11 @@ var Descriptions = map[error]string{
 	ErrInvalidClient:           "Client authentication failed",
 	ErrInvalidGrant:            "The provided authorization grant (e.g., authorization code, resource owner credentials) or refresh token is invalid, expired, revoked, does not match the redirection URI used in the authorization request, or was issued to another client",
 	ErrUnsupportedGrantType:    "The authorization grant type is not supported by the authorization server",
+}
+
+// StatusCodes response error HTTP status code
+var StatusCodes = map[error]int{
+	ErrInvalidClient:          401,
+	ErrServerError:            500,
+	ErrTemporarilyUnavailable: 503,
 }
