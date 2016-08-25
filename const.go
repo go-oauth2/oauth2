@@ -10,7 +10,11 @@ const (
 )
 
 func (rt ResponseType) String() string {
-	return string(rt)
+	if rt == Code ||
+		rt == Token {
+		return string(rt)
+	}
+	return ""
 }
 
 // GrantType authorization model
@@ -20,11 +24,17 @@ type GrantType string
 const (
 	AuthorizationCode   GrantType = "authorization_code"
 	PasswordCredentials GrantType = "password"
-	ClientCredentials   GrantType = "clientcredentials"
-	Refreshing          GrantType = "refreshtoken"
+	ClientCredentials   GrantType = "client_credentials"
+	Refreshing          GrantType = "refresh_token"
 	Implicit            GrantType = "__implicit"
 )
 
 func (gt GrantType) String() string {
-	return string(gt)
+	if gt == AuthorizationCode ||
+		gt == PasswordCredentials ||
+		gt == ClientCredentials ||
+		gt == Refreshing {
+		return string(gt)
+	}
+	return ""
 }

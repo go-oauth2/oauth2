@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/gavv/httpexpect"
-
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/manage"
 	"gopkg.in/oauth2.v3/models"
@@ -169,7 +168,7 @@ func TestClientCredentials(t *testing.T) {
 	srv = server.NewDefaultServer(manager)
 
 	val := e.POST("/token").
-		WithFormField("grant_type", "clientcredentials").
+		WithFormField("grant_type", "client_credentials").
 		WithFormField("client_id", clientID).
 		WithFormField("client_secret", clientSecret).
 		WithFormField("scope", "all").
@@ -210,7 +209,7 @@ func TestRefreshing(t *testing.T) {
 
 			refresh := jval.Object().Value("refresh_token").String().Raw()
 			rval := e.POST("/token").
-				WithFormField("grant_type", "refreshtoken").
+				WithFormField("grant_type", "refresh_token").
 				WithFormField("client_id", clientID).
 				WithFormField("client_secret", clientSecret).
 				WithFormField("scope", "one").

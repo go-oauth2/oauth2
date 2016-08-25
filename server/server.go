@@ -121,26 +121,6 @@ func (s *Server) GetRedirectURI(req *AuthorizeRequest, data map[string]interface
 	return
 }
 
-// ValidationAuthorizeRequest the authorization request validation
-func (s *Server) ValidationAuthorizeRequest(r *http.Request) (req *AuthorizeRequest, err error) {
-	if r.Method != "GET" {
-		err = errors.ErrInvalidRequest
-		return
-	}
-	redirectURI, err := url.QueryUnescape(r.FormValue("redirect_uri"))
-	if err != nil {
-		return
-	}
-	req = &AuthorizeRequest{
-		RedirectURI:  redirectURI,
-		ResponseType: oauth2.ResponseType(r.FormValue("response_type")),
-		ClientID:     r.FormValue("client_id"),
-		State:        r.FormValue("state"),
-		Scope:        r.FormValue("scope"),
-	}
-	return
-}
-
 // CheckResponseType check allows response type
 func (s *Server) CheckResponseType(rt oauth2.ResponseType) bool {
 	for _, art := range s.Config.AllowedResponseTypes {
@@ -151,20 +131,41 @@ func (s *Server) CheckResponseType(rt oauth2.ResponseType) bool {
 	return false
 }
 
-// GetAuthorizeToken get authorization token(code)
-func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (ti oauth2.TokenInfo, err error) {
-	if req.ResponseType == "" {
-		err = errors.ErrUnsupportedResponseType
+// ValidationAuthorizeRequest the authorization request validation
+func (s *Server) ValidationAuthorizeRequest(r *http.Request) (req *AuthorizeRequest, err error) {
+	redirectURI, err := url.QueryUnescape(r.FormValue("redirect_uri"))
+	if err != nil {
 		return
-	} else if req.RedirectURI == "" ||
-		req.ClientID == "" {
+	}
+	clientID := r.FormValue("client_id")
+	if r.Method != "GET" ||
+		clientID == "" ||
+		redirectURI == "" {
 		err = errors.ErrInvalidRequest
 		return
 	}
-	if allowed := s.CheckResponseType(req.ResponseType); !allowed {
+
+	resType := oauth2.ResponseType(r.FormValue("response_type"))
+	if resType.String() == "" {
+		err = errors.ErrUnsupportedResponseType
+		return
+	} else if allowed := s.CheckResponseType(resType); !allowed {
 		err = errors.ErrUnauthorizedClient
 		return
 	}
+
+	req = &AuthorizeRequest{
+		RedirectURI:  redirectURI,
+		ResponseType: resType,
+		ClientID:     clientID,
+		State:        r.FormValue("state"),
+		Scope:        r.FormValue("scope"),
+	}
+	return
+}
+
+// GetAuthorizeToken get authorization token(code)
+func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (ti oauth2.TokenInfo, err error) {
 	// check the client allows the grant type
 	if fn := s.ClientAuthorizedHandler; fn != nil {
 		gt := oauth2.AuthorizationCode
@@ -180,6 +181,7 @@ func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (ti oauth2.TokenInfo, 
 			return
 		}
 	}
+
 	// check the client allows the authorized scope
 	if fn := s.ClientScopeHandler; fn != nil {
 		allowed, verr := fn(req.ClientID, req.Scope)
@@ -191,6 +193,7 @@ func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (ti oauth2.TokenInfo, 
 			return
 		}
 	}
+
 	tgr := &oauth2.TokenGenerateRequest{
 		ClientID:       req.ClientID,
 		UserID:         req.UserID,
@@ -221,6 +224,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 		err = s.redirectError(w, req, verr)
 		return
 	}
+
 	// user authorization
 	userID, verr := s.UserAuthorizationHandler(w, r)
 	if verr != nil {
@@ -230,6 +234,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	req.UserID = userID
+
 	// specify the scope of authorization
 	if fn := s.AuthorizeScopeHandler; fn != nil {
 		scope, verr := fn(w, r)
@@ -240,6 +245,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 			req.Scope = scope
 		}
 	}
+
 	// specify the expiration time of access token
 	if fn := s.AccessTokenExpHandler; fn != nil {
 		exp, verr := fn(w, r)
@@ -249,6 +255,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 		}
 		req.AccessTokenExp = exp
 	}
+
 	ti, verr := s.GetAuthorizeToken(req)
 	if verr != nil {
 		err = s.redirectError(w, req, verr)
@@ -260,12 +267,13 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 
 // ValidationTokenRequest the token request validation
 func (s *Server) ValidationTokenRequest(r *http.Request) (gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest, err error) {
-	if v := r.Method; !(v == "POST" || (s.Config.AllowGetAccessRequest && v == "GET")) {
+	if v := r.Method; !(v == "POST" ||
+		(s.Config.AllowGetAccessRequest && v == "GET")) {
 		err = errors.ErrInvalidRequest
 		return
 	}
 	gt = oauth2.GrantType(r.FormValue("grant_type"))
-	if gt == "" {
+	if gt.String() == "" {
 		err = errors.ErrUnsupportedGrantType
 		return
 	}

@@ -2,11 +2,7 @@
 
 >  An open protocol to allow secure authorization in a simple and standard method from web, mobile and desktop applications.
 
-[![License][License-Image]][License-Url] 
-[![ReportCard][ReportCard-Image]][ReportCard-Url] 
-[![Build][Build-Status-Image]][Build-Status-Url] 
-[![GoDoc][GoDoc-Image]][GoDoc-Url]
-[![Release][Release-Image]][Release-Url] 
+[![License][License-Image]][License-Url] [![ReportCard][ReportCard-Image]][ReportCard-Url] [![Build][Build-Status-Image]][Build-Status-Url] [![GoDoc][GoDoc-Image]][GoDoc-Url] [![Release][Release-Image]][Release-Url] 
 
 ## Protocol Flow
 
@@ -44,7 +40,7 @@ $ go get -u gopkg.in/oauth2.v3/...
 package main
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 
 	"gopkg.in/oauth2.v3/manage"
@@ -63,7 +59,7 @@ func main() {
 	srv.SetAllowGetAccessRequest(true)
 
 	srv.SetInternalErrorHandler(func(err error) {
-		fmt.Println("OAuth2 Error:",err.Error())
+		log.Println("OAuth2 Error:", err.Error())
 	})
 
 	http.HandleFunc("/authorize", func(w http.ResponseWriter, r *http.Request) {
@@ -74,10 +70,7 @@ func main() {
 	})
 
 	http.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
-		err := srv.HandleTokenRequest(w, r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		srv.HandleTokenRequest(w, r)
 	})
 
 	http.ListenAndServe(":9096", nil)
@@ -94,14 +87,14 @@ $ ./server
 ### Open in your web browser
 
 ```
-http://localhost:9096/token?grant_type=clientcredentials&client_id=1&client_secret=11&scope=all
+http://localhost:9096/token?grant_type=client_credentials&client_id=1&client_secret=11&scope=read
 ```
 
-```
+``` json
 {
-    "access_token": "ZGF4ARHJPT2Y_QAIOJVL-Q",
+    "access_token": "ACPT7UYYNVWS2OAPFOHVUW",
     "expires_in": 7200,
-    "scope": "all",
+    "scope": "read",
     "token_type": "Bearer"
 }
 ```
