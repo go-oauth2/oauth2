@@ -41,7 +41,14 @@ var Descriptions = map[error]string{
 
 // StatusCodes response error HTTP status code
 var StatusCodes = map[error]int{
-	ErrInvalidClient:          401,
-	ErrServerError:            500,
-	ErrTemporarilyUnavailable: 503,
+	ErrInvalidRequest:          400,
+	ErrUnauthorizedClient:      401,
+	ErrAccessDenied:            403,
+	ErrUnsupportedResponseType: 401,
+	ErrInvalidScope:            400,
+	ErrServerError:             500,
+	ErrTemporarilyUnavailable:  503,
+	ErrInvalidClient:           401,
+	ErrInvalidGrant:            401,
+	ErrUnsupportedGrantType:    401,
 }
