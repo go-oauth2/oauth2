@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"gopkg.in/oauth2.v3"
+)
 
 // NewToken create to token model instance
 func NewToken() *Token {
@@ -22,6 +26,11 @@ type Token struct {
 	Refresh          string        `bson:"Refresh"`
 	RefreshCreateAt  time.Time     `bson:"RefreshCreateAt"`
 	RefreshExpiresIn time.Duration `bson:"RefreshExpiresIn"`
+}
+
+// New create to token model instance
+func (t *Token) New() oauth2.TokenInfo {
+	return NewToken()
 }
 
 // GetClientID the client id

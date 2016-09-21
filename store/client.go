@@ -12,6 +12,7 @@ func NewTestClientStore(clients ...*models.Client) oauth2.ClientStore {
 			ID:     "1",
 			Secret: "11",
 			Domain: "http://localhost",
+			UserID: "000000",
 		},
 	}
 	for _, cli := range clients {

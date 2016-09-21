@@ -1,6 +1,8 @@
 package oauth2
 
-import "time"
+import (
+	"time"
+)
 
 type (
 	// ClientInfo the client information model interface
@@ -8,10 +10,13 @@ type (
 		GetID() string
 		GetSecret() string
 		GetDomain() string
+		GetUserID() string
 	}
 
 	// TokenInfo the token information model interface
 	TokenInfo interface {
+		New() TokenInfo
+
 		GetClientID() string
 		SetClientID(string)
 		GetUserID() string

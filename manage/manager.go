@@ -1,7 +1,6 @@
 package manage
 
 import (
-	"reflect"
 	"time"
 
 	"github.com/codegangsta/inject"
@@ -57,15 +56,6 @@ func (m *Manager) grantConfig(gt oauth2.GrantType) *Config {
 		return DefaultRefreshTokenCfg
 	}
 	return &Config{}
-}
-
-func (m *Manager) newTokenInfo(ti oauth2.TokenInfo) oauth2.TokenInfo {
-	in := reflect.ValueOf(ti)
-	if in.IsNil() {
-		return ti
-	}
-	out := reflect.New(in.Type().Elem())
-	return out.Interface().(oauth2.TokenInfo)
 }
 
 // SetAuthorizeCodeExp set the authorization code expiration time
@@ -180,7 +170,7 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 		return
 	}
 	_, ierr := m.injector.Invoke(func(ti oauth2.TokenInfo, gen oauth2.AuthorizeGenerate, tgen oauth2.AccessGenerate, stor oauth2.TokenStore) {
-		ti = m.newTokenInfo(ti)
+		ti = ti.New()
 
 		td := &oauth2.GenerateBasic{
 			Client:   cli,
@@ -300,7 +290,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 		return
 	}
 	_, ierr := m.injector.Invoke(func(ti oauth2.TokenInfo, gen oauth2.AccessGenerate, stor oauth2.TokenStore) {
-		ti = m.newTokenInfo(ti)
+		ti = ti.New()
 		td := &oauth2.GenerateBasic{
 			Client:   cli,
 			UserID:   tgr.UserID,
