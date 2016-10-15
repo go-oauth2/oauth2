@@ -1,2 +1,9 @@
 language: go
+sudo: false
 go_import_path: gopkg.in/oauth2.v3
+go:
+  - 1.6
+before_install:
+  - go get github.com/mattn/goveralls
+script:
+  - $HOME/gopath/bin/goveralls -service=travis-ci
