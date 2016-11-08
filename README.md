@@ -2,7 +2,7 @@
 
 >  An open protocol to allow secure authorization in a simple and standard method from web, mobile and desktop applications.
 
-[![License][License-Image]][License-Url] [![ReportCard][ReportCard-Image]][ReportCard-Url] [![Build][Build-Status-Image]][Build-Status-Url] [![GoDoc][GoDoc-Image]][GoDoc-Url] [![Release][Release-Image]][Release-Url] 
+[![License][License-Image]][License-Url] [![ReportCard][ReportCard-Image]][ReportCard-Url] [![Build][Build-Status-Image]][Build-Status-Url] [![Coverage][Coverage-Image]][Coverage-Url] [![GoDoc][GoDoc-Image]][GoDoc-Url] [![Release][Release-Image]][Release-Url] 
 
 ## Protocol Flow
 
@@ -138,3 +138,5 @@ Copyright (c) 2016 Lyric
 [ReportCard-Image]: https://goreportcard.com/badge/gopkg.in/oauth2.v3
 [GoDoc-Url]: https://godoc.org/gopkg.in/oauth2.v3
 [GoDoc-Image]: https://godoc.org/gopkg.in/oauth2.v3?status.svg
+[Coverage-Url]: https://coveralls.io/github/go-oauth2/oauth2?branch=master
+[Coverage-Image]: https://coveralls.io/repos/github/go-oauth2/oauth2/badge.svg?branch=master
