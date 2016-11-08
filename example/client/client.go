@@ -5,11 +5,13 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 const (
 	redirectURI = "http://localhost:9094/oauth2"
 	serverURI   = "http://localhost:9096"
+	clientID    = "222222"
 )
 
 func main() {
@@ -20,7 +22,7 @@ func main() {
 		}
 		q := u.Query()
 		q.Add("response_type", "code")
-		q.Add("client_id", "222222")
+		q.Add("client_id", clientID)
 		q.Add("scope", "all")
 		q.Add("state", "xyz")
 		q.Add("redirect_uri", url.QueryEscape(redirectURI))
@@ -44,9 +46,15 @@ func main() {
 		uv.Add("code", code)
 		uv.Add("redirect_uri", redirectURI)
 		uv.Add("grant_type", "authorization_code")
-		uv.Add("client_id", "222222")
-		uv.Add("client_secret", "22222222")
-		resp, err := http.PostForm(serverURI+"/token", uv)
+		uv.Add("client_id", clientID)
+		req, err := http.NewRequest(http.MethodPost, serverURI+"/token", strings.NewReader(uv.Encode()))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.SetBasicAuth(clientID, "22222222")
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

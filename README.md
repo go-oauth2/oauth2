@@ -57,6 +57,7 @@ func main() {
 
 	srv := server.NewDefaultServer(manager)
 	srv.SetAllowGetAccessRequest(true)
+	srv.SetClientInfoHandler(server.ClientFormHandler)
 
 	srv.SetInternalErrorHandler(func(err error) {
 		log.Println("OAuth2 Error:", err.Error())
@@ -75,6 +76,7 @@ func main() {
 
 	http.ListenAndServe(":9096", nil)
 }
+
 ```
 
 ### Build and run

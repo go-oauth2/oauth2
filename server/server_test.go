@@ -73,7 +73,7 @@ func TestAuthorizeCode(t *testing.T) {
 				WithFormField("code", code).
 				WithFormField("grant_type", "authorization_code").
 				WithFormField("client_id", clientID).
-				WithFormField("client_secret", clientSecret).
+				WithBasicAuth(clientID, clientSecret).
 				Expect().
 				Status(http.StatusOK).
 				JSON().Raw()
@@ -145,11 +145,10 @@ func TestPasswordCredentials(t *testing.T) {
 
 	val := e.POST("/token").
 		WithFormField("grant_type", "password").
-		WithFormField("client_id", clientID).
-		WithFormField("client_secret", clientSecret).
 		WithFormField("username", "admin").
 		WithFormField("password", "123456").
 		WithFormField("scope", "all").
+		WithBasicAuth(clientID, clientSecret).
 		Expect().
 		Status(http.StatusOK).
 		JSON().Raw()
@@ -169,9 +168,8 @@ func TestClientCredentials(t *testing.T) {
 
 	val := e.POST("/token").
 		WithFormField("grant_type", "client_credentials").
-		WithFormField("client_id", clientID).
-		WithFormField("client_secret", clientSecret).
 		WithFormField("scope", "all").
+		WithBasicAuth(clientID, clientSecret).
 		Expect().
 		Status(http.StatusOK).
 		JSON().Raw()
@@ -200,7 +198,7 @@ func TestRefreshing(t *testing.T) {
 				WithFormField("code", code).
 				WithFormField("grant_type", "authorization_code").
 				WithFormField("client_id", clientID).
-				WithFormField("client_secret", clientSecret).
+				WithBasicAuth(clientID, clientSecret).
 				Expect().
 				Status(http.StatusOK).
 				JSON()
@@ -210,10 +208,9 @@ func TestRefreshing(t *testing.T) {
 			refresh := jval.Object().Value("refresh_token").String().Raw()
 			rval := e.POST("/token").
 				WithFormField("grant_type", "refresh_token").
-				WithFormField("client_id", clientID).
-				WithFormField("client_secret", clientSecret).
 				WithFormField("scope", "one").
 				WithFormField("refresh_token", refresh).
+				WithBasicAuth(clientID, clientSecret).
 				Expect().
 				Status(http.StatusOK).
 				JSON().Raw()

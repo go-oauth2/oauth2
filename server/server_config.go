@@ -1,6 +1,8 @@
 package server
 
-import oauth2 "gopkg.in/oauth2.v3"
+import (
+	"gopkg.in/oauth2.v3"
+)
 
 // SetTokenType token type
 func (s *Server) SetTokenType(tokenType string) {
