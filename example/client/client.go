@@ -1,33 +1,31 @@
 package main
 
 import (
-	"io"
+	"context"
+	"encoding/json"
 	"log"
 	"net/http"
-	"net/url"
-	"strings"
+
+	"golang.org/x/oauth2"
 )
 
-const (
-	redirectURI = "http://localhost:9094/oauth2"
-	serverURI   = "http://localhost:9096"
-	clientID    = "222222"
+var (
+	config = oauth2.Config{
+		ClientID:     "222222",
+		ClientSecret: "22222222",
+		Scopes:       []string{"all"},
+		RedirectURL:  "http://localhost:9094/oauth2",
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "http://localhost:9096/authorize",
+			TokenURL: "http://localhost:9096/token",
+		},
+	}
 )
 
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		u, err := url.Parse(serverURI + "/authorize")
-		if err != nil {
-			panic(err)
-		}
-		q := u.Query()
-		q.Add("response_type", "code")
-		q.Add("client_id", clientID)
-		q.Add("scope", "all")
-		q.Add("state", "xyz")
-		q.Add("redirect_uri", url.QueryEscape(redirectURI))
-		u.RawQuery = q.Encode()
-		http.Redirect(w, r, u.String(), http.StatusFound)
+		u := config.AuthCodeURL("xyz")
+		http.Redirect(w, r, u, http.StatusFound)
 	})
 
 	http.HandleFunc("/oauth2", func(w http.ResponseWriter, r *http.Request) {
@@ -42,24 +40,14 @@ func main() {
 			http.Error(w, "Code not found", http.StatusBadRequest)
 			return
 		}
-		uv := url.Values{}
-		uv.Add("code", code)
-		uv.Add("redirect_uri", redirectURI)
-		uv.Add("grant_type", "authorization_code")
-		uv.Add("client_id", clientID)
-		req, err := http.NewRequest(http.MethodPost, serverURI+"/token", strings.NewReader(uv.Encode()))
+		token, err := config.Exchange(context.Background(), code)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		req.SetBasicAuth(clientID, "22222222")
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		io.Copy(w, resp.Body)
+		e := json.NewEncoder(w)
+		e.SetIndent("", "  ")
+		e.Encode(*token)
 	})
 
 	log.Println("Client is running at 9094 port.")
