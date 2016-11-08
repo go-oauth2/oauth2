@@ -26,7 +26,7 @@ func NewServer(cfg *Config, manager oauth2.Manager) *Server {
 		Manager: manager,
 	}
 	// default handler
-	srv.ClientInfoHandler = ClientFormHandler
+	srv.ClientInfoHandler = ClientBasicHandler
 	srv.UserAuthorizationHandler = func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 		err = errors.ErrAccessDenied
 		return
@@ -292,6 +292,9 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (gt oauth2.GrantType, t
 		if tgr.RedirectURI == "" ||
 			tgr.Code == "" {
 			err = errors.ErrInvalidRequest
+			return
+		} else if cid := r.FormValue("client_id"); cid == "" || cid != clientID {
+			err = errors.ErrInvalidClient
 		}
 	case oauth2.PasswordCredentials:
 		tgr.Scope = r.FormValue("scope")

@@ -57,6 +57,7 @@ func main() {
 
 	srv := server.NewDefaultServer(manager)
 	srv.SetAllowGetAccessRequest(true)
+	srv.SetClientInfoHandler(server.ClientFormHandler)
 
 	srv.SetInternalErrorHandler(func(err error) {
 		log.Println("OAuth2 Error:", err.Error())
@@ -75,6 +76,7 @@ func main() {
 
 	http.ListenAndServe(":9096", nil)
 }
+
 ```
 
 ### Build and run
@@ -130,8 +132,8 @@ Copyright (c) 2016 Lyric
 [License-Image]: https://img.shields.io/npm/l/express.svg
 [Build-Status-Url]: https://travis-ci.org/go-oauth2/oauth2
 [Build-Status-Image]: https://travis-ci.org/go-oauth2/oauth2.svg?branch=master
-[Release-Url]: https://github.com/go-oauth2/oauth2/releases/tag/v3.5.0
-[Release-image]: http://img.shields.io/badge/release-v3.5.0-1eb0fc.svg
+[Release-Url]: https://github.com/go-oauth2/oauth2/releases/tag/v3.5.1
+[Release-image]: http://img.shields.io/badge/release-v3.5.1-1eb0fc.svg
 [ReportCard-Url]: https://goreportcard.com/report/gopkg.in/oauth2.v3
 [ReportCard-Image]: https://goreportcard.com/badge/gopkg.in/oauth2.v3
 [GoDoc-Url]: https://godoc.org/gopkg.in/oauth2.v3
