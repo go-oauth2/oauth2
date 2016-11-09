@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	oauth2 "gopkg.in/oauth2.v3"
+	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/errors"
 )
 
