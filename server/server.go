@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	"gopkg.in/oauth2.v3"
+	oauth2 "gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/errors"
 )
 
@@ -293,8 +293,6 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (gt oauth2.GrantType, t
 			tgr.Code == "" {
 			err = errors.ErrInvalidRequest
 			return
-		} else if cid := r.FormValue("client_id"); cid == "" || cid != clientID {
-			err = errors.ErrInvalidClient
 		}
 	case oauth2.PasswordCredentials:
 		tgr.Scope = r.FormValue("scope")
