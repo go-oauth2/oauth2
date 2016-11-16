@@ -341,6 +341,7 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 		err = errors.ErrInvalidClient
 		return
 	}
+
 	ti, err := m.LoadRefreshToken(tgr.Refresh)
 	if err != nil {
 		return
@@ -348,6 +349,7 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 		err = errors.ErrInvalidRefreshToken
 		return
 	}
+
 	oldAccess, oldRefresh := ti.GetAccess(), ti.GetRefresh()
 	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore, gen oauth2.AccessGenerate) {
 		td := &oauth2.GenerateBasic{
@@ -355,14 +357,20 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 			UserID:   ti.GetUserID(),
 			CreateAt: time.Now(),
 		}
+
 		rcfg := m.grantConfig(oauth2.Refreshing)
+
 		tv, rv, terr := gen.Token(td, rcfg.IsGenerateRefresh)
 		if terr != nil {
 			err = terr
 			return
 		}
+
 		ti.SetAccess(tv)
 		ti.SetAccessCreateAt(td.CreateAt)
+		if rcfg.IsResetRefreshTime {
+			ti.SetRefreshCreateAt(td.CreateAt)
+		}
 		if scope := tgr.Scope; scope != "" {
 			ti.SetScope(scope)
 		}
@@ -373,6 +381,7 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 			err = verr
 			return
 		}
+
 		// remove the old access token
 		if verr := stor.RemoveByAccess(oldAccess); verr != nil {
 			err = verr

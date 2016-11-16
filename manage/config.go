@@ -10,6 +10,8 @@ type Config struct {
 	RefreshTokenExp time.Duration
 	// whether to generate the refreshing token
 	IsGenerateRefresh bool
+	// whether to reset the refreshing expiration time
+	IsResetRefreshTime bool
 }
 
 // default configs
