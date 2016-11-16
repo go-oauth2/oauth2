@@ -1,37 +1,40 @@
 package store
 
 import (
+	"errors"
+	"sync"
+
 	"gopkg.in/oauth2.v3"
-	"gopkg.in/oauth2.v3/models"
 )
 
-// NewTestClientStore create to client information store instance
-func NewTestClientStore(clients ...*models.Client) oauth2.ClientStore {
-	data := map[string]*models.Client{
-		"1": &models.Client{
-			ID:     "1",
-			Secret: "11",
-			Domain: "http://localhost",
-			UserID: "000000",
-		},
-	}
-	for _, cli := range clients {
-		data[cli.ID] = cli
-	}
-	return &TestClientStore{
-		data: data,
+func NewClientStore() *ClientStore {
+	return &ClientStore{
+		data: make(map[string]oauth2.ClientInfo),
 	}
 }
 
-// TestClientStore client information store
-type TestClientStore struct {
-	data map[string]*models.Client
+// ClientStore client information store
+type ClientStore struct {
+	sync.RWMutex
+	data map[string]oauth2.ClientInfo
 }
 
 // GetByID according to the ID for the client information
-func (ts *TestClientStore) GetByID(id string) (cli oauth2.ClientInfo, err error) {
-	if c, ok := ts.data[id]; ok {
+func (cs *ClientStore) GetByID(id string) (cli oauth2.ClientInfo, err error) {
+	cs.RLock()
+	defer cs.RUnlock()
+	if c, ok := cs.data[id]; ok {
 		cli = c
+		return
 	}
+	err = errors.New("not found")
+	return
+}
+
+// Set set client information
+func (cs *ClientStore) Set(id string, cli oauth2.ClientInfo) (err error) {
+	cs.Lock()
+	defer cs.Unlock()
+	cs.data[id] = cli
 	return
 }

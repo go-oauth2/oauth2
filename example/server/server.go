@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -11,7 +10,6 @@ import (
 	"gopkg.in/oauth2.v3/models"
 	"gopkg.in/oauth2.v3/server"
 	"gopkg.in/oauth2.v3/store"
-
 	"gopkg.in/session.v1"
 )
 
@@ -28,17 +26,19 @@ func main() {
 	manager := manage.NewDefaultManager()
 	// token store
 	manager.MustTokenStorage(store.NewMemoryTokenStore())
-	// client store
-	manager.MapClientStorage(store.NewTestClientStore(&models.Client{
+
+	clientStore := store.NewClientStore()
+	clientStore.Set("222222", &models.Client{
 		ID:     "222222",
 		Secret: "22222222",
 		Domain: "http://localhost:9094",
-	}))
+	})
+	manager.MapClientStorage(clientStore)
 
 	srv := server.NewServer(server.NewConfig(), manager)
 	srv.SetUserAuthorizationHandler(userAuthorizeHandler)
 	srv.SetInternalErrorHandler(func(err error) {
-		fmt.Println("internal error:", err.Error())
+		log.Println("[oauth2] error:", err.Error())
 	})
 
 	http.HandleFunc("/login", loginHandler)
