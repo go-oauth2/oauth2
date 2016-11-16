@@ -86,7 +86,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		us.Set("UserID", "000000")
+		us.Set("LoggedInUserID", "000000")
 		w.Header().Set("Location", "/auth")
 		w.WriteHeader(http.StatusFound)
 		return
@@ -100,7 +100,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if us.Get("UserID") == nil {
+	if us.Get("LoggedInUserID") == nil {
 		w.Header().Set("Location", "/login")
 		w.WriteHeader(http.StatusFound)
 		return
@@ -113,6 +113,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Location", u.String())
 		w.WriteHeader(http.StatusFound)
 		us.Delete("Form")
+		us.Set("UserID", us.Get("LoggedInUserID"))
 		return
 	}
 	outputHTML(w, r, "static/auth.html")
