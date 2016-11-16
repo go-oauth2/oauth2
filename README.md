@@ -44,6 +44,7 @@ import (
 	"net/http"
 
 	"gopkg.in/oauth2.v3/manage"
+	"gopkg.in/oauth2.v3/models"
 	"gopkg.in/oauth2.v3/server"
 	"gopkg.in/oauth2.v3/store"
 )
@@ -52,8 +53,15 @@ func main() {
 	manager := manage.NewDefaultManager()
 	// token memory store
 	manager.MustTokenStorage(store.NewMemoryTokenStore())
-	// client test store
-	manager.MapClientStorage(store.NewTestClientStore())
+
+	// client memory store
+	clientStore := store.NewClientStore()
+	clientStore.Set("000000", &models.Client{
+		ID:     "000000",
+		Secret: "999999",
+		Domain: "http://localhost",
+	})
+	manager.MapClientStorage(clientStore)
 
 	srv := server.NewDefaultServer(manager)
 	srv.SetAllowGetAccessRequest(true)
@@ -76,7 +84,6 @@ func main() {
 
 	http.ListenAndServe(":9096", nil)
 }
-
 ```
 
 ### Build and run
@@ -89,12 +96,12 @@ $ ./server
 ### Open in your web browser
 
 ```
-http://localhost:9096/token?grant_type=client_credentials&client_id=1&client_secret=11&scope=read
+http://localhost:9096/token?grant_type=client_credentials&client_id=000000&client_secret=999999&scope=read
 ```
 
 ``` json
 {
-    "access_token": "ACPT7UYYNVWS2OAPFOHVUW",
+    "access_token": "J86XVRYSNFCFI233KXDL0Q",
     "expires_in": 7200,
     "scope": "read",
     "token_type": "Bearer"
@@ -103,12 +110,12 @@ http://localhost:9096/token?grant_type=client_credentials&client_id=1&client_sec
 
 ## Features
 
-* Easy to use
-* Based on the [RFC 6749](https://tools.ietf.org/html/rfc6749) implementation
-* Token storage support TTL
-* Support custom extension field
-* Support custom scope
-* Support custom expiration time of the access token
+* easy to use
+* based on the [RFC 6749](https://tools.ietf.org/html/rfc6749) implementation
+* token storage support TTL
+* support custom expiration time of the access token
+* support custom extension field
+* support custom scope
 
 ## Example
 
@@ -132,8 +139,8 @@ Copyright (c) 2016 Lyric
 [License-Image]: https://img.shields.io/npm/l/express.svg
 [Build-Status-Url]: https://travis-ci.org/go-oauth2/oauth2
 [Build-Status-Image]: https://travis-ci.org/go-oauth2/oauth2.svg?branch=master
-[Release-Url]: https://github.com/go-oauth2/oauth2/releases/tag/v3.5.3
-[Release-image]: http://img.shields.io/badge/release-v3.5.3-1eb0fc.svg
+[Release-Url]: https://github.com/go-oauth2/oauth2/releases/tag/v3.6.0
+[Release-image]: http://img.shields.io/badge/release-v3.6.0-1eb0fc.svg
 [ReportCard-Url]: https://goreportcard.com/report/gopkg.in/oauth2.v3
 [ReportCard-Image]: https://goreportcard.com/badge/gopkg.in/oauth2.v3
 [GoDoc-Url]: https://godoc.org/gopkg.in/oauth2.v3

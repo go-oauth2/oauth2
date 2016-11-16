@@ -35,6 +35,7 @@ type Manager struct {
 	injector    inject.Injector
 	codeExp     time.Duration
 	gtcfg       map[oauth2.GrantType]*Config
+	rcfg        *RefreshingConfig
 	validateURI ValidateURIHandler
 }
 
@@ -52,8 +53,6 @@ func (m *Manager) grantConfig(gt oauth2.GrantType) *Config {
 		return DefaultPasswordTokenCfg
 	case oauth2.ClientCredentials:
 		return DefaultClientTokenCfg
-	case oauth2.Refreshing:
-		return DefaultRefreshTokenCfg
 	}
 	return &Config{}
 }
@@ -84,8 +83,8 @@ func (m *Manager) SetClientTokenCfg(cfg *Config) {
 }
 
 // SetRefreshTokenCfg set the refreshing token config
-func (m *Manager) SetRefreshTokenCfg(cfg *Config) {
-	m.gtcfg[oauth2.Refreshing] = cfg
+func (m *Manager) SetRefreshTokenCfg(cfg *RefreshingConfig) {
+	m.rcfg = cfg
 }
 
 // SetValidateURIHandler set the validates that RedirectURI is contained in baseURI
@@ -282,6 +281,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 			tgr.AccessTokenExp = exp
 		}
 	}
+
 	cli, err := m.GetClient(tgr.ClientID)
 	if err != nil {
 		return
@@ -297,6 +297,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 			CreateAt: time.Now(),
 		}
 		gcfg := m.grantConfig(gt)
+
 		av, rv, terr := gen.Token(td, gcfg.IsGenerateRefresh)
 		if terr != nil {
 			err = terr
@@ -358,7 +359,10 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 			CreateAt: time.Now(),
 		}
 
-		rcfg := m.grantConfig(oauth2.Refreshing)
+		rcfg := DefaultRefreshTokenCfg
+		if v := m.rcfg; v != nil {
+			rcfg = v
+		}
 
 		tv, rv, terr := gen.Token(td, rcfg.IsGenerateRefresh)
 		if terr != nil {
@@ -368,26 +372,33 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 
 		ti.SetAccess(tv)
 		ti.SetAccessCreateAt(td.CreateAt)
+
 		if rcfg.IsResetRefreshTime {
 			ti.SetRefreshCreateAt(td.CreateAt)
 		}
+
 		if scope := tgr.Scope; scope != "" {
 			ti.SetScope(scope)
 		}
+
 		if rv != "" {
 			ti.SetRefresh(rv)
 		}
+
 		if verr := stor.Create(ti); verr != nil {
 			err = verr
 			return
 		}
 
-		// remove the old access token
-		if verr := stor.RemoveByAccess(oldAccess); verr != nil {
-			err = verr
-			return
+		if rcfg.IsRemoveAccess {
+			// remove the old access token
+			if verr := stor.RemoveByAccess(oldAccess); verr != nil {
+				err = verr
+				return
+			}
 		}
-		if rv != "" {
+
+		if rcfg.IsRemoveRefreshing && rv != "" {
 			// remove the old refresh token
 			if verr := stor.RemoveByRefresh(oldRefresh); verr != nil {
 				err = verr

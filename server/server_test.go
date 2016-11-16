@@ -30,11 +30,13 @@ func init() {
 }
 
 func clientStore(domain string) oauth2.ClientStore {
-	return store.NewTestClientStore(&models.Client{
+	clientStore := store.NewClientStore()
+	clientStore.Set(clientID, &models.Client{
 		ID:     clientID,
 		Secret: clientSecret,
 		Domain: domain,
 	})
+	return clientStore
 }
 
 func testServer(t *testing.T, w http.ResponseWriter, r *http.Request) {
@@ -221,7 +223,6 @@ func TestRefreshing(t *testing.T) {
 	defer csrv.Close()
 
 	manager.MapClientStorage(clientStore(csrv.URL))
-	manager.SetRefreshTokenCfg(&manage.Config{IsGenerateRefresh: false})
 	srv = server.NewDefaultServer(manager)
 	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 		userID = "000000"

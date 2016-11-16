@@ -10,8 +10,18 @@ type Config struct {
 	RefreshTokenExp time.Duration
 	// whether to generate the refreshing token
 	IsGenerateRefresh bool
-	// whether to reset the refreshing expiration time
+}
+
+// RefreshingConfig refreshing token config
+type RefreshingConfig struct {
+	// whether to generate the refreshing token
+	IsGenerateRefresh bool
+	// whether to reset the refreshing create time
 	IsResetRefreshTime bool
+	// whether to remove access token
+	IsRemoveAccess bool
+	// whether to remove refreshing token
+	IsRemoveRefreshing bool
 }
 
 // default configs
@@ -21,5 +31,5 @@ var (
 	DefaultImplicitTokenCfg      = &Config{AccessTokenExp: time.Hour * 1}
 	DefaultPasswordTokenCfg      = &Config{AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 7, IsGenerateRefresh: true}
 	DefaultClientTokenCfg        = &Config{AccessTokenExp: time.Hour * 2}
-	DefaultRefreshTokenCfg       = &Config{}
+	DefaultRefreshTokenCfg       = &RefreshingConfig{IsRemoveAccess: true, IsRemoveRefreshing: true}
 )

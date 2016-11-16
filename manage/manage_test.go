@@ -5,6 +5,7 @@ import (
 
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/manage"
+	"gopkg.in/oauth2.v3/models"
 	"gopkg.in/oauth2.v3/store"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -13,8 +14,23 @@ import (
 func TestManager(t *testing.T) {
 	Convey("Manager test", t, func() {
 		manager := manage.NewDefaultManager()
-		manager.MapClientStorage(store.NewTestClientStore())
+
 		manager.MustTokenStorage(store.NewMemoryTokenStore())
+
+		clientStore := store.NewClientStore()
+		clientStore.Set("1", &models.Client{
+			ID:     "1",
+			Secret: "11",
+			Domain: "http://localhost",
+		})
+		manager.MapClientStorage(clientStore)
+
+		tgr := &oauth2.TokenGenerateRequest{
+			ClientID:    "1",
+			UserID:      "123456",
+			RedirectURI: "http://localhost/oauth2",
+			Scope:       "all",
+		}
 
 		Convey("CheckInterface test", func() {
 			err := manager.CheckInterface()
@@ -28,28 +44,22 @@ func TestManager(t *testing.T) {
 		})
 
 		Convey("Token test", func() {
-			testManager(manager)
+			testManager(tgr, manager)
 		})
 	})
 }
 
-func testManager(manager oauth2.Manager) {
-	reqParams := &oauth2.TokenGenerateRequest{
-		ClientID:    "1",
-		UserID:      "123456",
-		RedirectURI: "http://localhost/oauth2",
-		Scope:       "all",
-	}
-	cti, err := manager.GenerateAuthToken(oauth2.Code, reqParams)
+func testManager(tgr *oauth2.TokenGenerateRequest, manager oauth2.Manager) {
+	cti, err := manager.GenerateAuthToken(oauth2.Code, tgr)
 	So(err, ShouldBeNil)
 
 	code := cti.GetCode()
 	So(code, ShouldNotBeEmpty)
 
 	atParams := &oauth2.TokenGenerateRequest{
-		ClientID:     reqParams.ClientID,
+		ClientID:     tgr.ClientID,
 		ClientSecret: "11",
-		RedirectURI:  reqParams.RedirectURI,
+		RedirectURI:  tgr.RedirectURI,
 		Code:         code,
 	}
 	ati, err := manager.GenerateAccessToken(oauth2.AuthorizationCode, atParams)
