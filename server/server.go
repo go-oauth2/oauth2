@@ -510,9 +510,9 @@ func (s *Server) BearerAuth(r *http.Request) (accessToken string, ok bool) {
 func (s *Server) ValidationBearerToken(r *http.Request) (ti oauth2.TokenInfo, err error) {
 	accessToken, ok := s.BearerAuth(r)
 	if !ok {
+		err = errors.ErrInvalidAccessToken
 		return
 	}
-
 	ti, err = s.Manager.LoadAccessToken(accessToken)
 
 	return
