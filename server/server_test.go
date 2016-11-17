@@ -59,6 +59,7 @@ func TestAuthorizeCode(t *testing.T) {
 		testServer(t, w, r)
 	}))
 	defer tsrv.Close()
+
 	e := httpexpect.New(t, tsrv.URL)
 
 	csrv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +71,7 @@ func TestAuthorizeCode(t *testing.T) {
 				t.Error("unrecognized state:", state)
 				return
 			}
-			val := e.POST("/token").
+			resObj := e.POST("/token").
 				WithFormField("redirect_uri", csrv.URL+"/oauth2").
 				WithFormField("code", code).
 				WithFormField("grant_type", "authorization_code").
@@ -78,9 +79,11 @@ func TestAuthorizeCode(t *testing.T) {
 				WithBasicAuth(clientID, clientSecret).
 				Expect().
 				Status(http.StatusOK).
-				JSON().Raw()
+				JSON().Object()
 
-			t.Log(val)
+			t.Logf("%#v\n", resObj.Raw())
+
+			validationAccessToken(t, resObj.Value("access_token").String().Raw())
 		}
 	}))
 	defer csrv.Close()
@@ -145,7 +148,7 @@ func TestPasswordCredentials(t *testing.T) {
 		return
 	})
 
-	val := e.POST("/token").
+	resObj := e.POST("/token").
 		WithFormField("grant_type", "password").
 		WithFormField("username", "admin").
 		WithFormField("password", "123456").
@@ -153,9 +156,11 @@ func TestPasswordCredentials(t *testing.T) {
 		WithBasicAuth(clientID, clientSecret).
 		Expect().
 		Status(http.StatusOK).
-		JSON().Raw()
+		JSON().Object()
 
-	t.Log(val)
+	t.Logf("%#v\n", resObj.Raw())
+
+	validationAccessToken(t, resObj.Value("access_token").String().Raw())
 }
 
 func TestClientCredentials(t *testing.T) {
@@ -166,17 +171,40 @@ func TestClientCredentials(t *testing.T) {
 	e := httpexpect.New(t, tsrv.URL)
 
 	manager.MapClientStorage(clientStore(""))
-	srv = server.NewDefaultServer(manager)
 
-	val := e.POST("/token").
+	srv = server.NewDefaultServer(manager)
+	srv.SetClientInfoHandler(server.ClientFormHandler)
+	srv.SetInternalErrorHandler(func(err error) {
+		t.Log("OAuth 2.0 Error:", err.Error())
+	})
+	srv.SetAllowedGrantType(oauth2.ClientCredentials)
+	srv.SetAllowGetAccessRequest(false)
+	srv.SetExtensionFieldsHandler(func(ti oauth2.TokenInfo) (fieldsValue map[string]interface{}) {
+		fieldsValue = map[string]interface{}{
+			"extension": "param",
+		}
+		return
+	})
+	srv.SetAuthorizeScopeHandler(func(w http.ResponseWriter, r *http.Request) (scope string, err error) {
+		return
+	})
+	srv.SetClientScopeHandler(func(clientID, scope string) (allowed bool, err error) {
+		allowed = true
+		return
+	})
+
+	resObj := e.POST("/token").
 		WithFormField("grant_type", "client_credentials").
 		WithFormField("scope", "all").
-		WithBasicAuth(clientID, clientSecret).
+		WithFormField("client_id", clientID).
+		WithFormField("client_secret", clientSecret).
 		Expect().
 		Status(http.StatusOK).
-		JSON().Raw()
+		JSON().Object()
 
-	t.Log(val)
+	t.Logf("%#v\n", resObj.Raw())
+
+	validationAccessToken(t, resObj.Value("access_token").String().Raw())
 }
 
 func TestRefreshing(t *testing.T) {
@@ -195,7 +223,7 @@ func TestRefreshing(t *testing.T) {
 				t.Error("unrecognized state:", state)
 				return
 			}
-			jval := e.POST("/token").
+			jresObj := e.POST("/token").
 				WithFormField("redirect_uri", csrv.URL+"/oauth2").
 				WithFormField("code", code).
 				WithFormField("grant_type", "authorization_code").
@@ -203,21 +231,24 @@ func TestRefreshing(t *testing.T) {
 				WithBasicAuth(clientID, clientSecret).
 				Expect().
 				Status(http.StatusOK).
-				JSON()
+				JSON().Object()
 
-			t.Log(jval.Object().Raw())
+			t.Logf("%#v\n", jresObj.Raw())
 
-			refresh := jval.Object().Value("refresh_token").String().Raw()
-			rval := e.POST("/token").
+			validationAccessToken(t, jresObj.Value("access_token").String().Raw())
+
+			resObj := e.POST("/token").
 				WithFormField("grant_type", "refresh_token").
 				WithFormField("scope", "one").
-				WithFormField("refresh_token", refresh).
+				WithFormField("refresh_token", jresObj.Value("refresh_token").String().Raw()).
 				WithBasicAuth(clientID, clientSecret).
 				Expect().
 				Status(http.StatusOK).
-				JSON().Raw()
+				JSON().Object()
 
-			t.Log(rval)
+			t.Logf("%#v\n", resObj.Raw())
+
+			validationAccessToken(t, resObj.Value("access_token").String().Raw())
 		}
 	}))
 	defer csrv.Close()
@@ -236,4 +267,20 @@ func TestRefreshing(t *testing.T) {
 		WithQuery("state", "123").
 		WithQuery("redirect_uri", url.QueryEscape(csrv.URL+"/oauth2")).
 		Expect().Status(http.StatusOK)
+}
+
+// validation access token
+func validationAccessToken(t *testing.T, accessToken string) {
+	req := httptest.NewRequest("GET", "http://example.com", nil)
+
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	ti, err := srv.ValidationBearerToken(req)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if ti.GetClientID() != clientID {
+		t.Error("invalid access token")
+	}
 }

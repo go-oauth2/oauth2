@@ -405,7 +405,14 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 				return
 			}
 		}
+
 		accessToken = ti
+
+		if rv == "" {
+			accessToken.SetRefresh("")
+			accessToken.SetRefreshCreateAt(time.Now())
+			accessToken.SetRefreshExpiresIn(0)
+		}
 	})
 	if ierr != nil && err == nil {
 		err = ierr

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"gopkg.in/oauth2.v3"
@@ -483,5 +484,36 @@ func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCod
 	if v := re.StatusCode; v > 0 {
 		statusCode = v
 	}
+	return
+}
+
+// BearerAuth parse bearer token
+func (s *Server) BearerAuth(r *http.Request) (accessToken string, ok bool) {
+	auth := r.Header.Get("Authorization")
+	prefix := "Bearer "
+
+	if auth != "" && strings.HasPrefix(auth, prefix) {
+		accessToken = auth[len(prefix):]
+	} else {
+		accessToken = r.FormValue("access_token")
+	}
+
+	if accessToken != "" {
+		ok = true
+	}
+
+	return
+}
+
+// ValidationBearerToken validation the bearer tokens
+// https://tools.ietf.org/html/rfc6750
+func (s *Server) ValidationBearerToken(r *http.Request) (ti oauth2.TokenInfo, err error) {
+	accessToken, ok := s.BearerAuth(r)
+	if !ok {
+		return
+	}
+
+	ti, err = s.Manager.LoadAccessToken(accessToken)
+
 	return
 }
