@@ -452,22 +452,30 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err
 
 // GetErrorData get error response data
 func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCode int) {
-	if _, ok := errors.Descriptions[err]; !ok {
+	re := &errors.Response{}
+
+	if v, ok := errors.Descriptions[err]; ok {
+		re.Error = err
+		re.Description = v
+		re.StatusCode = errors.StatusCodes[err]
+	} else {
 		if fn := s.InternalErrorHandler; fn != nil {
 			fn(err)
 		}
-		err = errors.ErrServerError
 	}
-	re := &errors.Response{
-		Error:       err,
-		Description: errors.Descriptions[err],
-		StatusCode:  errors.StatusCodes[err],
-	}
+
 	if fn := s.ResponseErrorHandler; fn != nil {
 		if vre := fn(err); vre != nil {
 			re = vre
 		}
 	}
+
+	if re.Error == nil {
+		re.Error = errors.ErrServerError
+		re.Description = errors.Descriptions[errors.ErrServerError]
+		re.StatusCode = errors.StatusCodes[errors.ErrServerError]
+	}
+
 	data = map[string]interface{}{
 		"error": re.Error.Error(),
 	}
