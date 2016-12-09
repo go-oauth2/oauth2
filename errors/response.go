@@ -1,6 +1,9 @@
 package errors
 
-import "errors"
+import (
+	"errors"
+	"net/http"
+)
 
 // Response error response
 type Response struct {
@@ -9,6 +12,24 @@ type Response struct {
 	Description string
 	URI         string
 	StatusCode  int
+	Header      http.Header
+}
+
+// NewResponse create the response pointer
+func NewResponse(err error, statusCode int) *Response {
+	return &Response{
+		Error:      err,
+		StatusCode: statusCode,
+	}
+}
+
+// SetHeader sets the header entries associated with key to
+// the single element value.
+func (r *Response) SetHeader(key, value string) {
+	if r.Header == nil {
+		r.Header = make(http.Header)
+	}
+	r.Header.Set(key, value)
 }
 
 // https://tools.ietf.org/html/rfc6749#section-5.2

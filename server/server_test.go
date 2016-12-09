@@ -1,7 +1,7 @@
 package server_test
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/gavv/httpexpect"
 	"gopkg.in/oauth2.v3"
+	"gopkg.in/oauth2.v3/errors"
 	"gopkg.in/oauth2.v3/manage"
 	"gopkg.in/oauth2.v3/models"
 	"gopkg.in/oauth2.v3/server"
@@ -144,7 +145,7 @@ func TestPasswordCredentials(t *testing.T) {
 			userID = "000000"
 			return
 		}
-		err = errors.New("user not found")
+		err = fmt.Errorf("user not found")
 		return
 	})
 
@@ -174,9 +175,16 @@ func TestClientCredentials(t *testing.T) {
 
 	srv = server.NewDefaultServer(manager)
 	srv.SetClientInfoHandler(server.ClientFormHandler)
-	srv.SetInternalErrorHandler(func(err error) {
+
+	srv.SetInternalErrorHandler(func(err error) (re *errors.Response) {
 		t.Log("OAuth 2.0 Error:", err.Error())
+		return
 	})
+
+	srv.SetResponseErrorHandler(func(re *errors.Response) {
+		t.Log("Response Error:", re.Error)
+	})
+
 	srv.SetAllowedGrantType(oauth2.ClientCredentials)
 	srv.SetAllowGetAccessRequest(false)
 	srv.SetExtensionFieldsHandler(func(ti oauth2.TokenInfo) (fieldsValue map[string]interface{}) {

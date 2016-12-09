@@ -65,7 +65,7 @@ func (s *Server) redirectError(w http.ResponseWriter, req *AuthorizeRequest, err
 		uerr = err
 		return
 	}
-	data, _ := s.GetErrorData(err)
+	data, _, _ := s.GetErrorData(err)
 	err = s.redirect(w, req, data)
 	return
 }
@@ -81,15 +81,20 @@ func (s *Server) redirect(w http.ResponseWriter, req *AuthorizeRequest, data map
 }
 
 func (s *Server) tokenError(w http.ResponseWriter, err error) (uerr error) {
-	data, statusCode := s.GetErrorData(err)
-	uerr = s.token(w, data, statusCode)
+	data, statusCode, header := s.GetErrorData(err)
+
+	uerr = s.token(w, data, header, statusCode)
 	return
 }
 
-func (s *Server) token(w http.ResponseWriter, data map[string]interface{}, statusCode ...int) (err error) {
+func (s *Server) token(w http.ResponseWriter, data map[string]interface{}, header http.Header, statusCode ...int) (err error) {
 	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
+
+	for key := range header {
+		w.Header().Set(key, header.Get(key))
+	}
 
 	status := http.StatusOK
 	if len(statusCode) > 0 && statusCode[0] > 0 {
@@ -490,13 +495,14 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err
 		err = s.tokenError(w, verr)
 		return
 	}
-	err = s.token(w, s.GetTokenData(ti))
+
+	err = s.token(w, s.GetTokenData(ti), nil)
 	return
 }
 
 // GetErrorData get error response data
-func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCode int) {
-	re := &errors.Response{}
+func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCode int, header http.Header) {
+	re := new(errors.Response)
 
 	if v, ok := errors.Descriptions[err]; ok {
 		re.Error = err
@@ -504,24 +510,30 @@ func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCod
 		re.StatusCode = errors.StatusCodes[err]
 	} else {
 		if fn := s.InternalErrorHandler; fn != nil {
-			fn(err)
+			if vre := fn(err); vre != nil {
+				re = vre
+			}
+		}
+
+		if re.Error == nil {
+			re.Error = errors.ErrServerError
+			re.Description = errors.Descriptions[errors.ErrServerError]
+			re.StatusCode = errors.StatusCodes[errors.ErrServerError]
 		}
 	}
 
 	if fn := s.ResponseErrorHandler; fn != nil {
-		if vre := fn(err); vre != nil {
-			re = vre
+		fn(re)
+
+		if re == nil {
+			re = new(errors.Response)
 		}
 	}
 
-	if re.Error == nil {
-		re.Error = errors.ErrServerError
-		re.Description = errors.Descriptions[errors.ErrServerError]
-		re.StatusCode = errors.StatusCodes[errors.ErrServerError]
-	}
+	data = make(map[string]interface{})
 
-	data = map[string]interface{}{
-		"error": re.Error.Error(),
+	if err := re.Error; err != nil {
+		data["error"] = err.Error()
 	}
 
 	if v := re.ErrorCode; v != 0 {
@@ -536,11 +548,13 @@ func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCod
 		data["error_uri"] = v
 	}
 
-	statusCode = 400
+	header = re.Header
 
+	statusCode = http.StatusInternalServerError
 	if v := re.StatusCode; v > 0 {
 		statusCode = v
 	}
+
 	return
 }
 

@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 
+	"gopkg.in/oauth2.v3/errors"
 	"gopkg.in/oauth2.v3/manage"
 	"gopkg.in/oauth2.v3/models"
 	"gopkg.in/oauth2.v3/server"
@@ -37,8 +38,14 @@ func main() {
 
 	srv := server.NewServer(server.NewConfig(), manager)
 	srv.SetUserAuthorizationHandler(userAuthorizeHandler)
-	srv.SetInternalErrorHandler(func(err error) {
-		log.Println("[oauth2] error:", err.Error())
+
+	srv.SetInternalErrorHandler(func(err error) (re *errors.Response) {
+		log.Println("Internal Error:", err.Error())
+		return
+	})
+
+	srv.SetResponseErrorHandler(func(re *errors.Response) {
+		log.Println("Response Error:", re.Error.Error())
 	})
 
 	http.HandleFunc("/login", loginHandler)

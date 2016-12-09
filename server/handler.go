@@ -28,10 +28,10 @@ type (
 	RefreshingScopeHandler func(newScope, oldScope string) (allowed bool, err error)
 
 	// ResponseErrorHandler response error handing
-	ResponseErrorHandler func(err error) (re *errors.Response)
+	ResponseErrorHandler func(re *errors.Response)
 
 	// InternalErrorHandler internal error handing
-	InternalErrorHandler func(err error)
+	InternalErrorHandler func(err error) (re *errors.Response)
 
 	// AuthorizeScopeHandler set the authorized scope
 	AuthorizeScopeHandler func(w http.ResponseWriter, r *http.Request) (scope string, err error)

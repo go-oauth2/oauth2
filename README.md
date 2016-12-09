@@ -43,6 +43,7 @@ import (
 	"log"
 	"net/http"
 
+	"gopkg.in/oauth2.v3/errors"
 	"gopkg.in/oauth2.v3/manage"
 	"gopkg.in/oauth2.v3/models"
 	"gopkg.in/oauth2.v3/server"
@@ -67,8 +68,13 @@ func main() {
 	srv.SetAllowGetAccessRequest(true)
 	srv.SetClientInfoHandler(server.ClientFormHandler)
 
-	srv.SetInternalErrorHandler(func(err error) {
-		log.Println("OAuth2 Error:", err.Error())
+	srv.SetInternalErrorHandler(func(err error) (re *errors.Response) {
+		log.Println("Internal Error:", err.Error())
+		return
+	})
+
+	srv.SetResponseErrorHandler(func(re *errors.Response) {
+		log.Println("Response Error:", re.Error.Error())
 	})
 
 	http.HandleFunc("/authorize", func(w http.ResponseWriter, r *http.Request) {
@@ -82,8 +88,9 @@ func main() {
 		srv.HandleTokenRequest(w, r)
 	})
 
-	http.ListenAndServe(":9096", nil)
+	log.Fatal(http.ListenAndServe(":9096", nil))
 }
+
 ```
 
 ### Build and run
@@ -139,8 +146,8 @@ Copyright (c) 2016 Lyric
 [License-Image]: https://img.shields.io/npm/l/express.svg
 [Build-Status-Url]: https://travis-ci.org/go-oauth2/oauth2
 [Build-Status-Image]: https://travis-ci.org/go-oauth2/oauth2.svg?branch=master
-[Release-Url]: https://github.com/go-oauth2/oauth2/releases/tag/v3.6.3
-[Release-image]: http://img.shields.io/badge/release-v3.6.3-1eb0fc.svg
+[Release-Url]: https://github.com/go-oauth2/oauth2/releases/tag/v3.7.0
+[Release-image]: http://img.shields.io/badge/release-v3.7.0-1eb0fc.svg
 [ReportCard-Url]: https://goreportcard.com/report/gopkg.in/oauth2.v3
 [ReportCard-Image]: https://goreportcard.com/badge/gopkg.in/oauth2.v3
 [GoDoc-Url]: https://godoc.org/gopkg.in/oauth2.v3
