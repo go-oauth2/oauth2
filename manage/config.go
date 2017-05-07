@@ -14,6 +14,10 @@ type Config struct {
 
 // RefreshingConfig refreshing token config
 type RefreshingConfig struct {
+	// access token expiration time
+	AccessTokenExp time.Duration
+	// refresh token expiration time
+	RefreshTokenExp time.Duration
 	// whether to generate the refreshing token
 	IsGenerateRefresh bool
 	// whether to reset the refreshing create time
