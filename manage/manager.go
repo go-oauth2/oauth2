@@ -373,6 +373,14 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 		ti.SetAccess(tv)
 		ti.SetAccessCreateAt(td.CreateAt)
 
+		if v := rcfg.AccessTokenExp; v > 0 {
+			ti.SetAccessExpiresIn(v)
+		}
+
+		if v := rcfg.RefreshTokenExp; v > 0 {
+			ti.SetRefreshExpiresIn(v)
+		}
+
 		if rcfg.IsResetRefreshTime {
 			ti.SetRefreshCreateAt(td.CreateAt)
 		}
