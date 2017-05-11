@@ -98,12 +98,14 @@ func main() {
 ``` bash
 $ go build server.go
 $ ./server
+$ go build ../client/client.go 
+$ ./client
 ```
 
 ### Open in your web browser
 
 ```
-http://localhost:9096/token?grant_type=client_credentials&client_id=000000&client_secret=999999&scope=read
+http://localhost:9094
 ```
 
 ``` json
