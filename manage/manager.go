@@ -172,9 +172,10 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 		ti = ti.New()
 
 		td := &oauth2.GenerateBasic{
-			Client:   cli,
-			UserID:   tgr.UserID,
-			CreateAt: time.Now(),
+			Client:    cli,
+			UserID:    tgr.UserID,
+			CreateAt:  time.Now(),
+			TokenInfo: ti,
 		}
 		switch rt {
 		case oauth2.Code:
@@ -292,9 +293,10 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 	_, ierr := m.injector.Invoke(func(ti oauth2.TokenInfo, gen oauth2.AccessGenerate, stor oauth2.TokenStore) {
 		ti = ti.New()
 		td := &oauth2.GenerateBasic{
-			Client:   cli,
-			UserID:   tgr.UserID,
-			CreateAt: time.Now(),
+			Client:    cli,
+			UserID:    tgr.UserID,
+			CreateAt:  time.Now(),
+			TokenInfo: ti,
 		}
 		gcfg := m.grantConfig(gt)
 
@@ -354,9 +356,10 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 	oldAccess, oldRefresh := ti.GetAccess(), ti.GetRefresh()
 	_, ierr := m.injector.Invoke(func(stor oauth2.TokenStore, gen oauth2.AccessGenerate) {
 		td := &oauth2.GenerateBasic{
-			Client:   cli,
-			UserID:   ti.GetUserID(),
-			CreateAt: time.Now(),
+			Client:    cli,
+			UserID:    ti.GetUserID(),
+			CreateAt:  time.Now(),
+			TokenInfo: ti,
 		}
 
 		rcfg := DefaultRefreshTokenCfg
