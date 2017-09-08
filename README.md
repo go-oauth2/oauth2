@@ -1,12 +1,12 @@
 # Golang OAuth 2.0
 
->  An open protocol to allow secure authorization in a simple and standard method from web, mobile and desktop applications.
+> An open protocol to allow secure authorization in a simple and standard method from web, mobile and desktop applications.
 
-[![License][License-Image]][License-Url] [![ReportCard][ReportCard-Image]][ReportCard-Url] [![Build][Build-Status-Image]][Build-Status-Url] [![Coverage][Coverage-Image]][Coverage-Url] [![GoDoc][GoDoc-Image]][GoDoc-Url] [![Release][Release-Image]][Release-Url] 
+[![License][License-Image]][License-Url] [![ReportCard][ReportCard-Image]][ReportCard-Url] [![Build][Build-Status-Image]][Build-Status-Url] [![Coverage][Coverage-Image]][Coverage-Url] [![GoDoc][GoDoc-Image]][GoDoc-Url]
 
 ## Protocol Flow
 
-```
+``` text
      +--------+                               +---------------+
      |        |--(A)- Authorization Request ->|   Resource    |
      |        |                               |     Owner     |
@@ -31,7 +31,7 @@
 ### Download and install
 
 ``` bash
-$ go get -u gopkg.in/oauth2.v3/...
+go get -u -v gopkg.in/oauth2.v3/...
 ```
 
 ### Create file `server.go`
@@ -96,15 +96,14 @@ func main() {
 ### Build and run
 
 ``` bash
-$ go build server.go
-$ ./server
+go build server.go
+
+./server
 ```
 
 ### Open in your web browser
 
-```
-http://localhost:9096/token?grant_type=client_credentials&client_id=000000&client_secret=999999&scope=read
-```
+[http://localhost:9096/token?grant_type=client_credentials&client_id=000000&client_secret=999999&scope=read](http://localhost:9096/token?grant_type=client_credentials&client_id=000000&client_secret=999999&scope=read)
 
 ``` json
 {
@@ -138,16 +137,12 @@ Simulation examples of authorization code model, please check [example](/example
 
 ## MIT License
 
-```
-Copyright (c) 2016 Lyric
-```
+  Copyright (c) 2016 Lyric
 
 [License-Url]: http://opensource.org/licenses/MIT
 [License-Image]: https://img.shields.io/npm/l/express.svg
 [Build-Status-Url]: https://travis-ci.org/go-oauth2/oauth2
 [Build-Status-Image]: https://travis-ci.org/go-oauth2/oauth2.svg?branch=master
-[Release-Url]: https://github.com/go-oauth2/oauth2/releases/tag/v3.7.0
-[Release-image]: http://img.shields.io/badge/release-v3.7.0-1eb0fc.svg
 [ReportCard-Url]: https://goreportcard.com/report/gopkg.in/oauth2.v3
 [ReportCard-Image]: https://goreportcard.com/badge/gopkg.in/oauth2.v3
 [GoDoc-Url]: https://godoc.org/gopkg.in/oauth2.v3

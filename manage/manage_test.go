@@ -73,6 +73,14 @@ func testManager(tgr *oauth2.TokenGenerateRequest, manager oauth2.Manager) {
 	So(err, ShouldBeNil)
 	So(ainfo.GetClientID(), ShouldEqual, atParams.ClientID)
 
+	arinfo, err := manager.LoadRefreshToken(accessToken)
+	So(err, ShouldNotBeNil)
+	So(arinfo, ShouldBeNil)
+
+	rainfo, err := manager.LoadAccessToken(refreshToken)
+	So(err, ShouldNotBeNil)
+	So(rainfo, ShouldBeNil)
+
 	rinfo, err := manager.LoadRefreshToken(refreshToken)
 	So(err, ShouldBeNil)
 	So(rinfo.GetClientID(), ShouldEqual, atParams.ClientID)
