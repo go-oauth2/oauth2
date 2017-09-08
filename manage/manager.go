@@ -170,6 +170,10 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 	}
 	_, ierr := m.injector.Invoke(func(ti oauth2.TokenInfo, gen oauth2.AuthorizeGenerate, tgen oauth2.AccessGenerate, stor oauth2.TokenStore) {
 		ti = ti.New()
+		ti.SetClientID(tgr.ClientID)
+		ti.SetUserID(tgr.UserID)
+		ti.SetRedirectURI(tgr.RedirectURI)
+		ti.SetScope(tgr.Scope)
 
 		td := &oauth2.GenerateBasic{
 			Client:    cli,
@@ -216,10 +220,7 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 				ti.SetRefreshExpiresIn(icfg.RefreshTokenExp)
 			}
 		}
-		ti.SetClientID(tgr.ClientID)
-		ti.SetUserID(tgr.UserID)
-		ti.SetRedirectURI(tgr.RedirectURI)
-		ti.SetScope(tgr.Scope)
+		
 		err = stor.Create(ti)
 		if err != nil {
 			return
