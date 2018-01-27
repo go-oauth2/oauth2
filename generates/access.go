@@ -25,10 +25,12 @@ func (ag *AccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool) (
 	buf.WriteString(data.UserID)
 	buf.WriteString(strconv.FormatInt(data.CreateAt.UnixNano(), 10))
 
-	access = base64.URLEncoding.EncodeToString(uuid.NewV3(uuid.Must(uuid.NewV4()), buf.String()).Bytes())
+	u4, u4err := uuid.NewV4()
+	access = base64.URLEncoding.EncodeToString(uuid.NewV3(uuid.Must(u4, u4err), buf.String()).Bytes())
 	access = strings.ToUpper(strings.TrimRight(access, "="))
 	if isGenRefresh {
-		refresh = base64.URLEncoding.EncodeToString(uuid.NewV5(uuid.Must(uuid.NewV4()), buf.String()).Bytes())
+		ru4, ru4err := uuid.NewV4()
+		refresh = base64.URLEncoding.EncodeToString(uuid.NewV5(uuid.Must(ru4, ru4err), buf.String()).Bytes())
 		refresh = strings.ToUpper(strings.TrimRight(refresh, "="))
 	}
 
