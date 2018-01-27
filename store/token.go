@@ -43,7 +43,8 @@ func (ts *TokenStore) Create(info oauth2.TokenInfo) (err error) {
 			_, _, err = tx.Set(code, string(jv), &buntdb.SetOptions{Expires: true, TTL: info.GetCodeExpiresIn()})
 			return
 		}
-		basicID := uuid.Must(uuid.NewV4()).String()
+		u4, u4err := uuid.NewV4()
+		basicID := uuid.Must(u4, u4err).String()
 		aexp := info.GetAccessExpiresIn()
 		rexp := aexp
 		if refresh := info.GetRefresh(); refresh != "" {
