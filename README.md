@@ -134,6 +134,7 @@ Simulation examples of authorization code model, please check [example](/example
 * [BuntDB](https://github.com/tidwall/buntdb)(The default storage)
 * [Redis](https://github.com/go-oauth2/redis)
 * [MongoDB](https://github.com/go-oauth2/mongo)
+* [DynamoDB](https://github.com/contamobi/go-oauth2-dynamodb)
 
 ## MIT License
 
