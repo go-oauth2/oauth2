@@ -76,7 +76,7 @@ func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string
 		if r.Form == nil {
 			r.ParseForm()
 		}
-		us.Set("Form", r.Form)
+		us.Set("ReturnUri", r.Form)
 		w.Header().Set("Location", "/login")
 		w.WriteHeader(http.StatusFound)
 		return
@@ -113,7 +113,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method == "POST" {
-		form := us.Get("Form").(url.Values)
+		form := us.Get("ReturnUri").(url.Values)
 		u := new(url.URL)
 		u.Path = "/authorize"
 		u.RawQuery = form.Encode()
