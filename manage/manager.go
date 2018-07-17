@@ -479,6 +479,7 @@ func (m *Manager) LoadAccessToken(access string) (info oauth2.TokenInfo, err err
 			return
 		} else if ti.GetRefresh() != "" && ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(ct) {
 			err = errors.ErrExpiredRefreshToken
+			return
 		} else if ti.GetAccessCreateAt().Add(ti.GetAccessExpiresIn()).Before(ct) {
 			err = errors.ErrExpiredAccessToken
 			return
