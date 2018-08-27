@@ -311,10 +311,6 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 			err = terr
 			return
 		}
-		ti.SetClientID(tgr.ClientID)
-		ti.SetUserID(tgr.UserID)
-		ti.SetRedirectURI(tgr.RedirectURI)
-		ti.SetScope(tgr.Scope)
 		ti.SetAccessCreateAt(td.CreateAt)
 		ti.SetAccess(av)
 		// set access token expires
