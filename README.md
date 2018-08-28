@@ -2,7 +2,7 @@
 
 > An open protocol to allow secure authorization in a simple and standard method from web, mobile and desktop applications.
 
-[![License][License-Image]][License-Url] [![ReportCard][ReportCard-Image]][ReportCard-Url] [![Build][Build-Status-Image]][Build-Status-Url] [![Coverage][Coverage-Image]][Coverage-Url] [![GoDoc][GoDoc-Image]][GoDoc-Url]
+[![Build][Build-Status-Image]][Build-Status-Url] [![Codecov][codecov-image]][codecov-url] [![ReportCard][reportcard-image]][reportcard-url] [![GoDoc][godoc-image]][godoc-url] [![License][license-image]][license-url]
 
 ## Protocol Flow
 
@@ -140,13 +140,13 @@ Simulation examples of authorization code model, please check [example](/example
 
   Copyright (c) 2016 Lyric
 
-[License-Url]: http://opensource.org/licenses/MIT
-[License-Image]: https://img.shields.io/npm/l/express.svg
 [Build-Status-Url]: https://travis-ci.org/go-oauth2/oauth2
 [Build-Status-Image]: https://travis-ci.org/go-oauth2/oauth2.svg?branch=master
-[ReportCard-Url]: https://goreportcard.com/report/gopkg.in/oauth2.v3
-[ReportCard-Image]: https://goreportcard.com/badge/gopkg.in/oauth2.v3
-[GoDoc-Url]: https://godoc.org/gopkg.in/oauth2.v3
-[GoDoc-Image]: https://godoc.org/gopkg.in/oauth2.v3?status.svg
-[Coverage-Url]: https://coveralls.io/github/go-oauth2/oauth2?branch=master
-[Coverage-Image]: https://coveralls.io/repos/github/go-oauth2/oauth2/badge.svg?branch=master
+[codecov-url]: https://codecov.io/gh/go-oauth2/oauth2
+[codecov-image]: https://codecov.io/gh/go-oauth2/oauth2/branch/master/graph/badge.svg
+[reportcard-url]: https://goreportcard.com/report/gopkg.in/oauth2.v3
+[reportcard-image]: https://goreportcard.com/badge/gopkg.in/oauth2.v3
+[godoc-url]: https://godoc.org/gopkg.in/oauth2.v3
+[godoc-image]: https://godoc.org/gopkg.in/oauth2.v3?status.svg
+[license-url]: http://opensource.org/licenses/MIT
+[license-image]: https://img.shields.io/npm/l/express.svg

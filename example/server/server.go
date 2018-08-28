@@ -6,22 +6,13 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/go-session/session"
 	"gopkg.in/oauth2.v3/errors"
 	"gopkg.in/oauth2.v3/manage"
 	"gopkg.in/oauth2.v3/models"
 	"gopkg.in/oauth2.v3/server"
 	"gopkg.in/oauth2.v3/store"
-	"gopkg.in/session.v1"
 )
-
-var (
-	globalSessions *session.Manager
-)
-
-func init() {
-	globalSessions, _ = session.NewManager("memory", `{"cookieName":"gosessionid","gclifetime":3600}`)
-	go globalSessions.GC()
-}
 
 func main() {
 	manager := manage.NewDefaultManager()
@@ -70,30 +61,40 @@ func main() {
 }
 
 func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string, err error) {
-	us, err := globalSessions.SessionStart(w, r)
-	uid := us.Get("UserID")
-	if uid == nil {
+	store, err := session.Start(nil, w, r)
+	if err != nil {
+		return
+	}
+
+	uid, ok := store.Get("UserID")
+	if !ok {
 		if r.Form == nil {
 			r.ParseForm()
 		}
-		us.Set("ReturnUri", r.Form)
+		store.Set("ReturnUri", r.Form)
+		store.Save()
+
 		w.Header().Set("Location", "/login")
 		w.WriteHeader(http.StatusFound)
 		return
 	}
 	userID = uid.(string)
-	us.Delete("UserID")
+	store.Delete("UserID")
+	store.Save()
 	return
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
+	store, err := session.Start(nil, w, r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	if r.Method == "POST" {
-		us, err := globalSessions.SessionStart(w, r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		us.Set("LoggedInUserID", "000000")
+		store.Set("LoggedInUserID", "000000")
+		store.Save()
+
 		w.Header().Set("Location", "/auth")
 		w.WriteHeader(http.StatusFound)
 		return
@@ -102,25 +103,35 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func authHandler(w http.ResponseWriter, r *http.Request) {
-	us, err := globalSessions.SessionStart(w, r)
+	store, err := session.Start(nil, w, r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if us.Get("LoggedInUserID") == nil {
+
+	if _, ok := store.Get("LoggedInUserID"); !ok {
 		w.Header().Set("Location", "/login")
 		w.WriteHeader(http.StatusFound)
 		return
 	}
+
 	if r.Method == "POST" {
-		form := us.Get("ReturnUri").(url.Values)
+		var form url.Values
+		if v, ok := store.Get("ReturnUri"); ok {
+			form = v.(url.Values)
+		}
 		u := new(url.URL)
 		u.Path = "/authorize"
 		u.RawQuery = form.Encode()
 		w.Header().Set("Location", u.String())
 		w.WriteHeader(http.StatusFound)
-		us.Delete("Form")
-		us.Set("UserID", us.Get("LoggedInUserID"))
+		store.Delete("Form")
+
+		if v, ok := store.Get("LoggedInUserID"); ok {
+			store.Set("UserID", v)
+		}
+		store.Save()
+
 		return
 	}
 	outputHTML(w, r, "static/auth.html")
