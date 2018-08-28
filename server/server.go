@@ -511,12 +511,13 @@ func (s *Server) HandleTokenRequestWithDuration(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	tgr.AccessTokenExp = duration
+
 	ti, verr := s.GetAccessToken(gt, tgr)
 	if verr != nil {
 		err = s.tokenError(w, verr)
 		return
 	}
-	ti.SetAccessExpiresIn(duration)
 
 	err = s.token(w, s.GetTokenData(ti), nil)
 	return
