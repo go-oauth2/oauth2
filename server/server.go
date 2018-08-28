@@ -503,6 +503,25 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err
 	return
 }
 
+// HandleTokenRequest token request handling with personal time.Duration
+func (s *Server) HandleTokenRequestWithDuration(w http.ResponseWriter, r *http.Request,duration time.Duration) (err error) {
+	gt, tgr, verr := s.ValidationTokenRequest(r)
+	if verr != nil {
+		err = s.tokenError(w, verr)
+		return
+	}
+
+	ti, verr := s.GetAccessToken(gt, tgr)
+	if verr != nil {
+		err = s.tokenError(w, verr)
+		return
+	}
+	ti.SetAccessExpiresIn(duration)
+
+	err = s.token(w, s.GetTokenData(ti), nil)
+	return
+}
+
 // GetErrorData get error response data
 func (s *Server) GetErrorData(err error) (data map[string]interface{}, statusCode int, header http.Header) {
 	re := new(errors.Response)
