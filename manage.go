@@ -1,6 +1,7 @@
 package oauth2
 
 import (
+	"net/http"
 	"time"
 )
 
@@ -14,6 +15,7 @@ type TokenGenerateRequest struct {
 	Code           string
 	Refresh        string
 	AccessTokenExp time.Duration
+	Request        *http.Request
 }
 
 // Manager authorization management interface

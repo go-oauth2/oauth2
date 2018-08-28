@@ -1,6 +1,9 @@
 package oauth2
 
-import "time"
+import (
+	"net/http"
+	"time"
+)
 
 type (
 	// GenerateBasic provide the basis of the generated token data
@@ -9,6 +12,7 @@ type (
 		UserID    string
 		CreateAt  time.Time
 		TokenInfo TokenInfo
+		Request   *http.Request
 	}
 
 	// AuthorizeGenerate generate the authorization code interface

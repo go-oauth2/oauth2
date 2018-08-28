@@ -178,6 +178,7 @@ func (s *Server) ValidationAuthorizeRequest(r *http.Request) (req *AuthorizeRequ
 		ClientID:     clientID,
 		State:        r.FormValue("state"),
 		Scope:        r.FormValue("scope"),
+		Request:      r,
 	}
 	return
 }
@@ -221,6 +222,7 @@ func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (ti oauth2.TokenInfo, 
 		RedirectURI:    req.RedirectURI,
 		Scope:          req.Scope,
 		AccessTokenExp: req.AccessTokenExp,
+		Request:        req.Request,
 	}
 
 	ti, err = s.Manager.GenerateAuthToken(req.ResponseType, tgr)
@@ -315,6 +317,7 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (gt oauth2.GrantType, t
 	tgr = &oauth2.TokenGenerateRequest{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
+		Request:      r,
 	}
 
 	switch gt {

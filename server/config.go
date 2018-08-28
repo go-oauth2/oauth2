@@ -1,6 +1,7 @@
 package server
 
 import (
+	"net/http"
 	"time"
 
 	"gopkg.in/oauth2.v3"
@@ -37,4 +38,5 @@ type AuthorizeRequest struct {
 	State          string
 	UserID         string
 	AccessTokenExp time.Duration
+	Request        *http.Request
 }

@@ -175,49 +175,56 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 		ti.SetRedirectURI(tgr.RedirectURI)
 		ti.SetScope(tgr.Scope)
 
+		createAt := time.Now()
 		td := &oauth2.GenerateBasic{
 			Client:    cli,
 			UserID:    tgr.UserID,
-			CreateAt:  time.Now(),
+			CreateAt:  createAt,
 			TokenInfo: ti,
+			Request:   tgr.Request,
 		}
 		switch rt {
 		case oauth2.Code:
+			codeExp := m.codeExp
+			if codeExp == 0 {
+				codeExp = DefaultCodeExp
+			}
+			ti.SetCodeCreateAt(createAt)
+			ti.SetCodeExpiresIn(codeExp)
+			if exp := tgr.AccessTokenExp; exp > 0 {
+				ti.SetAccessExpiresIn(exp)
+			}
+
 			tv, terr := gen.Token(td)
 			if terr != nil {
 				err = terr
 				return
 			}
 			ti.SetCode(tv)
-			codeExp := m.codeExp
-			if codeExp == 0 {
-				codeExp = DefaultCodeExp
-			}
-			ti.SetCodeExpiresIn(codeExp)
-			ti.SetCodeCreateAt(td.CreateAt)
-			if exp := tgr.AccessTokenExp; exp > 0 {
-				ti.SetAccessExpiresIn(exp)
-			}
 		case oauth2.Token:
+			// set access token expires
 			icfg := m.grantConfig(oauth2.Implicit)
+			aexp := icfg.AccessTokenExp
+			if exp := tgr.AccessTokenExp; exp > 0 {
+				aexp = exp
+			}
+			ti.SetAccessCreateAt(createAt)
+			ti.SetAccessExpiresIn(aexp)
+
+			if icfg.IsGenerateRefresh {
+				ti.SetRefreshCreateAt(createAt)
+				ti.SetRefreshExpiresIn(icfg.RefreshTokenExp)
+			}
+
 			tv, rv, terr := tgen.Token(td, icfg.IsGenerateRefresh)
 			if terr != nil {
 				err = terr
 				return
 			}
 			ti.SetAccess(tv)
-			ti.SetAccessCreateAt(td.CreateAt)
-			// set access token expires
-			aexp := icfg.AccessTokenExp
-			if exp := tgr.AccessTokenExp; exp > 0 {
-				aexp = exp
-			}
-			ti.SetAccessExpiresIn(aexp)
 
 			if rv != "" {
 				ti.SetRefresh(rv)
-				ti.SetRefreshCreateAt(td.CreateAt)
-				ti.SetRefreshExpiresIn(icfg.RefreshTokenExp)
 			}
 		}
 
@@ -298,31 +305,38 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 		ti.SetRedirectURI(tgr.RedirectURI)
 		ti.SetScope(tgr.Scope)
 
+		createAt := time.Now()
+		ti.SetAccessCreateAt(createAt)
+
+		// set access token expires
+		gcfg := m.grantConfig(gt)
+		aexp := gcfg.AccessTokenExp
+		if exp := tgr.AccessTokenExp; exp > 0 {
+			aexp = exp
+		}
+		ti.SetAccessExpiresIn(aexp)
+		if gcfg.IsGenerateRefresh {
+			ti.SetRefreshCreateAt(createAt)
+			ti.SetRefreshExpiresIn(gcfg.RefreshTokenExp)
+		}
+
 		td := &oauth2.GenerateBasic{
 			Client:    cli,
 			UserID:    tgr.UserID,
-			CreateAt:  time.Now(),
+			CreateAt:  createAt,
 			TokenInfo: ti,
+			Request:   tgr.Request,
 		}
-		gcfg := m.grantConfig(gt)
 
 		av, rv, terr := gen.Token(td, gcfg.IsGenerateRefresh)
 		if terr != nil {
 			err = terr
 			return
 		}
-		ti.SetAccessCreateAt(td.CreateAt)
 		ti.SetAccess(av)
-		// set access token expires
-		aexp := gcfg.AccessTokenExp
-		if exp := tgr.AccessTokenExp; exp > 0 {
-			aexp = exp
-		}
-		ti.SetAccessExpiresIn(aexp)
+
 		if rv != "" {
 			ti.SetRefresh(rv)
-			ti.SetRefreshCreateAt(td.CreateAt)
-			ti.SetRefreshExpiresIn(gcfg.RefreshTokenExp)
 		}
 
 		err = stor.Create(ti)
@@ -362,6 +376,7 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 			UserID:    ti.GetUserID(),
 			CreateAt:  time.Now(),
 			TokenInfo: ti,
+			Request:   tgr.Request,
 		}
 
 		rcfg := DefaultRefreshTokenCfg
