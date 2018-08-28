@@ -503,8 +503,8 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err
 	return
 }
 
-// HandleTokenRequest token request handling with personal time.Duration
-func (s *Server) HandleTokenRequestWithDuration(w http.ResponseWriter, r *http.Request,duration time.Duration) (err error) {
+// HandleTokenRequestWithDuration token request handling with personal time.Duration
+func (s *Server) HandleTokenRequestWithDuration(w http.ResponseWriter, r *http.Request, duration time.Duration) (err error) {
 	gt, tgr, verr := s.ValidationTokenRequest(r)
 	if verr != nil {
 		err = s.tokenError(w, verr)
