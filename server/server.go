@@ -503,12 +503,12 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err
 	return
 }
 
-// HandleTokenRequestWithDuration token request handling with personal time.Duration
-func (s *Server) HandleTokenRequestWithDuration(w http.ResponseWriter, r *http.Request, duration time.Duration) (err error) {
+// HandleTokenRequestWithDuration token request handling with personal time.Duration and personalAccessToken,add the return parameter:data
+func (s *Server) HandleTokenRequestWithDuration(w http.ResponseWriter, r *http.Request, duration time.Duration, personalAccessToken string) (data interface{}, err error) {
 	gt, tgr, verr := s.ValidationTokenRequest(r)
 	if verr != nil {
 		err = s.tokenError(w, verr)
-		return
+		return nil, err
 	}
 
 	tgr.AccessTokenExp = duration
@@ -516,11 +516,16 @@ func (s *Server) HandleTokenRequestWithDuration(w http.ResponseWriter, r *http.R
 	ti, verr := s.GetAccessToken(gt, tgr)
 	if verr != nil {
 		err = s.tokenError(w, verr)
-		return
+		return nil, err
 	}
 
-	err = s.token(w, s.GetTokenData(ti), nil)
-	return
+	if personalAccessToken != "" {
+		ti.SetAccess(personalAccessToken)
+	}
+
+	tokenData := s.GetTokenData(ti)
+	err = s.token(w, tokenData, nil)
+	return tokenData, err
 }
 
 // GetErrorData get error response data
