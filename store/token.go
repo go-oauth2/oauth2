@@ -22,17 +22,35 @@ func NewFileTokenStore(filename string) (store oauth2.TokenStore, err error) {
 	if err != nil {
 		return
 	}
-	store = &TokenStore{db: db}
+	store = &tokenStore{db: db}
 	return
 }
 
-// TokenStore token storage based on buntdb(https://github.com/tidwall/buntdb)
-type TokenStore struct {
+// TokenStore token storage service
+type TokenStore interface {
+	// Create create and store the new token information
+	Create(info oauth2.TokenInfo) (err error)
+	// RemoveByCode use the authorization code to delete the token information
+	RemoveByCode(code string) (err error)
+	// RemoveByAccess use the access token to delete the token information
+	RemoveByAccess(access string) (err error)
+	// RemoveByRefresh use the refresh token to delete the token information
+	RemoveByRefresh(refresh string) (err error)
+	// GetByCode use the authorization code for token information data
+	GetByCode(code string) (ti oauth2.TokenInfo, err error)
+	// GetByAccess use the access token for token information data
+	GetByAccess(access string) (ti oauth2.TokenInfo, err error)
+	// GetByRefresh use the refresh token for token information data
+	GetByRefresh(refresh string) (ti oauth2.TokenInfo, err error)
+}
+
+// tokenStore token storage based on buntdb(https://github.com/tidwall/buntdb)
+type tokenStore struct {
 	db *buntdb.DB
 }
 
 // Create create and store the new token information
-func (ts *TokenStore) Create(info oauth2.TokenInfo) (err error) {
+func (ts *tokenStore) Create(info oauth2.TokenInfo) (err error) {
 	ct := time.Now()
 	jv, err := json.Marshal(info)
 	if err != nil {
@@ -67,7 +85,7 @@ func (ts *TokenStore) Create(info oauth2.TokenInfo) (err error) {
 }
 
 // remove key
-func (ts *TokenStore) remove(key string) (err error) {
+func (ts *tokenStore) remove(key string) (err error) {
 	verr := ts.db.Update(func(tx *buntdb.Tx) (err error) {
 		_, err = tx.Delete(key)
 		return
@@ -80,24 +98,24 @@ func (ts *TokenStore) remove(key string) (err error) {
 }
 
 // RemoveByCode use the authorization code to delete the token information
-func (ts *TokenStore) RemoveByCode(code string) (err error) {
+func (ts *tokenStore) RemoveByCode(code string) (err error) {
 	err = ts.remove(code)
 	return
 }
 
 // RemoveByAccess use the access token to delete the token information
-func (ts *TokenStore) RemoveByAccess(access string) (err error) {
+func (ts *tokenStore) RemoveByAccess(access string) (err error) {
 	err = ts.remove(access)
 	return
 }
 
 // RemoveByRefresh use the refresh token to delete the token information
-func (ts *TokenStore) RemoveByRefresh(refresh string) (err error) {
+func (ts *tokenStore) RemoveByRefresh(refresh string) (err error) {
 	err = ts.remove(refresh)
 	return
 }
 
-func (ts *TokenStore) getData(key string) (ti oauth2.TokenInfo, err error) {
+func (ts *tokenStore) getData(key string) (ti oauth2.TokenInfo, err error) {
 	verr := ts.db.View(func(tx *buntdb.Tx) (err error) {
 		jv, err := tx.Get(key)
 		if err != nil {
@@ -120,7 +138,7 @@ func (ts *TokenStore) getData(key string) (ti oauth2.TokenInfo, err error) {
 	return
 }
 
-func (ts *TokenStore) getBasicID(key string) (basicID string, err error) {
+func (ts *tokenStore) getBasicID(key string) (basicID string, err error) {
 	verr := ts.db.View(func(tx *buntdb.Tx) (err error) {
 		v, err := tx.Get(key)
 		if err != nil {
@@ -139,13 +157,13 @@ func (ts *TokenStore) getBasicID(key string) (basicID string, err error) {
 }
 
 // GetByCode use the authorization code for token information data
-func (ts *TokenStore) GetByCode(code string) (ti oauth2.TokenInfo, err error) {
+func (ts *tokenStore) GetByCode(code string) (ti oauth2.TokenInfo, err error) {
 	ti, err = ts.getData(code)
 	return
 }
 
 // GetByAccess use the access token for token information data
-func (ts *TokenStore) GetByAccess(access string) (ti oauth2.TokenInfo, err error) {
+func (ts *tokenStore) GetByAccess(access string) (ti oauth2.TokenInfo, err error) {
 	basicID, err := ts.getBasicID(access)
 	if err != nil {
 		return
@@ -155,7 +173,7 @@ func (ts *TokenStore) GetByAccess(access string) (ti oauth2.TokenInfo, err error
 }
 
 // GetByRefresh use the refresh token for token information data
-func (ts *TokenStore) GetByRefresh(refresh string) (ti oauth2.TokenInfo, err error) {
+func (ts *tokenStore) GetByRefresh(refresh string) (ti oauth2.TokenInfo, err error) {
 	basicID, err := ts.getBasicID(refresh)
 	if err != nil {
 		return
