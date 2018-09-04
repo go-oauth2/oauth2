@@ -130,6 +130,33 @@ go build server.go
 
 Simulation examples of authorization code model, please check [example](/example)
 
+### Use jwt to generate access tokens
+
+```go
+
+import "gopkg.in/oauth2.v3/generates"
+import "github.com/dgrijalva/jwt-go"
+
+// ...
+manager.MapAccessGenerate(generates.NewJWTAccessGenerate([]byte("00000000"), jwt.SigningMethodHS512))
+
+// Verify jwt access token
+token, err := jwt.ParseWithClaims(access, &generates.JWTAccessClaims{}, func(t *jwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("parse error")
+			}
+			return []byte("00000000"), nil
+		})
+if err != nil {
+	panic(err)
+}
+
+claims, ok := token.Claims.(*generates.JWTAccessClaims)
+if !ok || !token.Valid {
+	panic("invalid token")
+}
+```
+
 ## Storage Implements
 
 * [BuntDB](https://github.com/tidwall/buntdb)(The default storage)

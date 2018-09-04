@@ -32,11 +32,6 @@ func TestManager(t *testing.T) {
 			Scope:       "all",
 		}
 
-		Convey("CheckInterface test", func() {
-			err := manager.CheckInterface()
-			So(err, ShouldBeNil)
-		})
-
 		Convey("GetClient test", func() {
 			cli, err := manager.GetClient("1")
 			So(err, ShouldBeNil)

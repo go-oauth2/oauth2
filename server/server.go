@@ -19,10 +19,6 @@ func NewDefaultServer(manager oauth2.Manager) *Server {
 
 // NewServer create authorization server
 func NewServer(cfg *Config, manager oauth2.Manager) *Server {
-	if err := manager.CheckInterface(); err != nil {
-		panic(err)
-	}
-
 	srv := &Server{
 		Config:  cfg,
 		Manager: manager,

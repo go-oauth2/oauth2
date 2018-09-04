@@ -20,9 +20,6 @@ type TokenGenerateRequest struct {
 
 // Manager authorization management interface
 type Manager interface {
-	// check the interface implementation
-	CheckInterface() (err error)
-
 	// get the client information
 	GetClient(clientID string) (cli ClientInfo, err error)
 
