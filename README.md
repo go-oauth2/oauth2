@@ -1,4 +1,4 @@
-# Golang OAuth 2.0
+# Golang OAuth 2.0 Server
 
 > An open protocol to allow secure authorization in a simple and standard method from web, mobile and desktop applications.
 
@@ -116,12 +116,13 @@ go build server.go
 
 ## Features
 
-* easy to use
-* based on the [RFC 6749](https://tools.ietf.org/html/rfc6749) implementation
-* token storage support TTL
-* support custom expiration time of the access token
-* support custom extension field
-* support custom scope
+* Easy to use
+* Based on the [RFC 6749](https://tools.ietf.org/html/rfc6749) implementation
+* Token storage support TTL
+* Support custom expiration time of the access token
+* Support custom extension field
+* Support custom scope
+* Support jwt to generate access tokens
 
 ## Example
 
