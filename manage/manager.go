@@ -347,15 +347,7 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 		rcfg = v
 	}
 
-	tv, rv, terr := m.accessGenerate.Token(td, rcfg.IsGenerateRefresh)
-	if terr != nil {
-		err = terr
-		return
-	}
-
-	ti.SetAccess(tv)
 	ti.SetAccessCreateAt(td.CreateAt)
-
 	if v := rcfg.AccessTokenExp; v > 0 {
 		ti.SetAccessExpiresIn(v)
 	}
@@ -372,6 +364,13 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 		ti.SetScope(scope)
 	}
 
+	tv, rv, terr := m.accessGenerate.Token(td, rcfg.IsGenerateRefresh)
+	if terr != nil {
+		err = terr
+		return
+	}
+
+	ti.SetAccess(tv)
 	if rv != "" {
 		ti.SetRefresh(rv)
 	}
@@ -398,7 +397,6 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 	}
 
 	accessToken = ti
-
 	if rv == "" {
 		accessToken.SetRefresh("")
 		accessToken.SetRefreshCreateAt(time.Now())
