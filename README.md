@@ -142,11 +142,11 @@ manager.MapAccessGenerate(generates.NewJWTAccessGenerate([]byte("00000000"), jwt
 
 // Verify jwt access token
 token, err := jwt.ParseWithClaims(access, &generates.JWTAccessClaims{}, func(t *jwt.Token) (interface{}, error) {
-			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("parse error")
-			}
-			return []byte("00000000"), nil
-		})
+	if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+		return nil, fmt.Errorf("parse error")
+	}
+	return []byte("00000000"), nil
+})
 if err != nil {
 	panic(err)
 }
