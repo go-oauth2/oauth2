@@ -7,7 +7,7 @@ before_install:
   - go get -t -v ./...
 
 script:
-  - ./go.test.sh
+  - chmod +x ./go.test.sh && ./go.test.sh
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
