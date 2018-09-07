@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/satori/go.uuid"
 	"gopkg.in/oauth2.v3"
+	"gopkg.in/oauth2.v3/utils/uuid"
 )
 
 // NewAccessGenerate create to generate the access token instance
@@ -25,10 +25,10 @@ func (ag *AccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool) (
 	buf.WriteString(data.UserID)
 	buf.WriteString(strconv.FormatInt(data.CreateAt.UnixNano(), 10))
 
-	access = base64.URLEncoding.EncodeToString(uuid.NewV3(uuid.Must(uuid.NewV4()), buf.String()).Bytes())
+	access = base64.URLEncoding.EncodeToString(uuid.NewMD5(uuid.Must(uuid.NewRandom()), buf.Bytes()).Bytes())
 	access = strings.ToUpper(strings.TrimRight(access, "="))
 	if isGenRefresh {
-		refresh = base64.URLEncoding.EncodeToString(uuid.NewV5(uuid.Must(uuid.NewV4()), buf.String()).Bytes())
+		refresh = base64.URLEncoding.EncodeToString(uuid.NewSHA1(uuid.Must(uuid.NewRandom()), buf.Bytes()).Bytes())
 		refresh = strings.ToUpper(strings.TrimRight(refresh, "="))
 	}
 

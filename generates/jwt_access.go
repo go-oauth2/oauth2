@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	uuid "github.com/satori/go.uuid"
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/errors"
+	"gopkg.in/oauth2.v3/utils/uuid"
 )
 
 // JWTAccessClaims jwt claims
@@ -55,7 +55,7 @@ func (a *JWTAccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool)
 	}
 
 	if isGenRefresh {
-		refresh = base64.URLEncoding.EncodeToString(uuid.NewV5(uuid.Must(uuid.NewV4()), access).Bytes())
+		refresh = base64.URLEncoding.EncodeToString(uuid.NewSHA1(uuid.Must(uuid.NewRandom()), []byte(access)).Bytes())
 		refresh = strings.ToUpper(strings.TrimRight(refresh, "="))
 	}
 

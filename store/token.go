@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/satori/go.uuid"
 	"github.com/tidwall/buntdb"
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/models"
+	"gopkg.in/oauth2.v3/utils/uuid"
 )
 
 // NewMemoryTokenStore create a token store instance based on memory
@@ -43,7 +43,8 @@ func (ts *TokenStore) Create(info oauth2.TokenInfo) (err error) {
 			_, _, err = tx.Set(code, string(jv), &buntdb.SetOptions{Expires: true, TTL: info.GetCodeExpiresIn()})
 			return
 		}
-		basicID := uuid.Must(uuid.NewV4()).String()
+
+		basicID := uuid.Must(uuid.NewRandom()).String()
 		aexp := info.GetAccessExpiresIn()
 		rexp := aexp
 		if refresh := info.GetRefresh(); refresh != "" {

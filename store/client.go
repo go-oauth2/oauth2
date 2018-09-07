@@ -7,6 +7,7 @@ import (
 	"gopkg.in/oauth2.v3"
 )
 
+// NewClientStore create client store
 func NewClientStore() *ClientStore {
 	return &ClientStore{
 		data: make(map[string]oauth2.ClientInfo),
