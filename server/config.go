@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/develm/oauth2"
+	"github.com/go-oauth2/oauth2"
 )
 
 // Config configuration parameters

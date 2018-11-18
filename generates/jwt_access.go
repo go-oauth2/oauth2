@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/develm/oauth2"
-	"github.com/develm/oauth2/errors"
-	"github.com/develm/oauth2/utils/uuid"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/go-oauth2/oauth2"
+	"github.com/go-oauth2/oauth2/errors"
+	"github.com/go-oauth2/oauth2/utils/uuid"
 )
 
 // JWTAccessClaims jwt claims

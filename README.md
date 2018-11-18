@@ -31,7 +31,7 @@
 ### Download and install
 
 ``` bash
-go get -u -v github.com/develm/oauth2/...
+go get -u -v github.com/go-oauth2/oauth2/...
 ```
 
 ### Create file `server.go`
@@ -43,11 +43,11 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/develm/oauth2/errors"
-	"github.com/develm/oauth2/manage"
-	"github.com/develm/oauth2/models"
-	"github.com/develm/oauth2/server"
-	"github.com/develm/oauth2/store"
+	"github.com/go-oauth2/oauth2/errors"
+	"github.com/go-oauth2/oauth2/manage"
+	"github.com/go-oauth2/oauth2/models"
+	"github.com/go-oauth2/oauth2/server"
+	"github.com/go-oauth2/oauth2/store"
 )
 
 func main() {
@@ -134,7 +134,7 @@ Simulation examples of authorization code model, please check [example](/example
 
 ```go
 
-import "github.com/develm/oauth2/generates"
+import "github.com/go-oauth2/oauth2/generates"
 import "github.com/dgrijalva/jwt-go"
 
 // ...

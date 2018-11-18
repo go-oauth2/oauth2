@@ -1,6 +1,6 @@
 language: go
 sudo: false
-go_import_path: github.com/develm/oauth2
+go_import_path: github.com/go-oauth2/oauth2
 go:
   - 1.9
 before_install:

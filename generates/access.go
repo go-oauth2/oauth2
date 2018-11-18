@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/develm/oauth2"
-	"github.com/develm/oauth2/utils/uuid"
+	"github.com/go-oauth2/oauth2"
+	"github.com/go-oauth2/oauth2/utils/uuid"
 )
 
 // NewAccessGenerate create to generate the access token instance

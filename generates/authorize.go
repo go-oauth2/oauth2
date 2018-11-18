@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 	"strings"
 
-	"github.com/develm/oauth2"
-	"github.com/develm/oauth2/utils/uuid"
+	"github.com/go-oauth2/oauth2"
+	"github.com/go-oauth2/oauth2/utils/uuid"
 )
 
 // NewAuthorizeGenerate create to generate the authorize code instance

@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/develm/oauth2/errors"
+	"github.com/go-oauth2/oauth2/errors"
 )
 
 type (

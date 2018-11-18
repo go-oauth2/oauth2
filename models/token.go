@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/develm/oauth2"
+	"github.com/go-oauth2/oauth2"
 )
 
 // NewToken create to token model instance

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/develm/oauth2"
-	"github.com/develm/oauth2/errors"
+	"github.com/go-oauth2/oauth2"
+	"github.com/go-oauth2/oauth2/errors"
 )
 
 type (

@@ -7,13 +7,13 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/develm/oauth2"
-	"github.com/develm/oauth2/errors"
-	"github.com/develm/oauth2/manage"
-	"github.com/develm/oauth2/models"
-	"github.com/develm/oauth2/server"
-	"github.com/develm/oauth2/store"
 	"github.com/gavv/httpexpect"
+	"github.com/go-oauth2/oauth2"
+	"github.com/go-oauth2/oauth2/errors"
+	"github.com/go-oauth2/oauth2/manage"
+	"github.com/go-oauth2/oauth2/models"
+	"github.com/go-oauth2/oauth2/server"
+	"github.com/go-oauth2/oauth2/store"
 )
 
 var (

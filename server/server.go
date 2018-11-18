@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/develm/oauth2"
-	"github.com/develm/oauth2/errors"
+	"github.com/go-oauth2/oauth2"
+	"github.com/go-oauth2/oauth2/errors"
 )
 
 // NewDefaultServer create a default authorization server
