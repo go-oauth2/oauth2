@@ -6,12 +6,12 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/develm/oauth2/errors"
+	"github.com/develm/oauth2/manage"
+	"github.com/develm/oauth2/models"
+	"github.com/develm/oauth2/server"
+	"github.com/develm/oauth2/store"
 	"github.com/go-session/session"
-	"gopkg.in/oauth2.v3/errors"
-	"gopkg.in/oauth2.v3/manage"
-	"gopkg.in/oauth2.v3/models"
-	"gopkg.in/oauth2.v3/server"
-	"gopkg.in/oauth2.v3/store"
 )
 
 func main() {

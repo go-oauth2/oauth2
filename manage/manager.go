@@ -3,10 +3,10 @@ package manage
 import (
 	"time"
 
-	"gopkg.in/oauth2.v3"
-	"gopkg.in/oauth2.v3/errors"
-	"gopkg.in/oauth2.v3/generates"
-	"gopkg.in/oauth2.v3/models"
+	"github.com/develm/oauth2"
+	"github.com/develm/oauth2/errors"
+	"github.com/develm/oauth2/generates"
+	"github.com/develm/oauth2/models"
 )
 
 // NewDefaultManager create to default authorization management instance
