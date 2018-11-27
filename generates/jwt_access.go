@@ -49,7 +49,19 @@ func (a *JWTAccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool)
 	}
 
 	token := jwt.NewWithClaims(a.SignedMethod, claims)
-	access, err = token.SignedString(a.SignedKey)
+	var key interface{}
+	if a.isEs() {
+		key, err = jwt.ParseECPrivateKeyFromPEM(a.SignedKey)
+		if err != nil {
+			return "", "", err
+		}
+	} else if a.isRs() {
+		key, err = jwt.ParseRSAPrivateKeyFromPEM(a.SignedKey)
+		if err != nil {
+			return "", "", err
+		}
+	}
+	access, err = token.SignedString(key)
 	if err != nil {
 		return
 	}
@@ -60,4 +72,12 @@ func (a *JWTAccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool)
 	}
 
 	return
+}
+
+func (a *JWTAccessGenerate) isEs() bool {
+	return strings.HasPrefix(a.SignedMethod.Alg(), "ES")
+}
+
+func (a *JWTAccessGenerate) isRs() bool {
+	return strings.HasPrefix(a.SignedMethod.Alg(), "RS")
 }
