@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	errs "errors"
 	"github.com/dgrijalva/jwt-go"
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/errors"
@@ -60,6 +61,8 @@ func (a *JWTAccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool)
 		if err != nil {
 			return "", "", err
 		}
+	} else {
+		return "", "", errs.New("unsupported sign method")
 	}
 	access, err = token.SignedString(key)
 	if err != nil {
