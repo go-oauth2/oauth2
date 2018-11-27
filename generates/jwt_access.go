@@ -56,11 +56,13 @@ func (a *JWTAccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool)
 		if err != nil {
 			return "", "", err
 		}
-	} else if a.isRs() {
+	} else if a.isRsOrPS() {
 		key, err = jwt.ParseRSAPrivateKeyFromPEM(a.SignedKey)
 		if err != nil {
 			return "", "", err
 		}
+	} else if a.isHs() {
+		key = a.SignedKey
 	} else {
 		return "", "", errs.New("unsupported sign method")
 	}
@@ -81,6 +83,12 @@ func (a *JWTAccessGenerate) isEs() bool {
 	return strings.HasPrefix(a.SignedMethod.Alg(), "ES")
 }
 
-func (a *JWTAccessGenerate) isRs() bool {
-	return strings.HasPrefix(a.SignedMethod.Alg(), "RS")
+func (a *JWTAccessGenerate) isRsOrPS() bool {
+	isRs := strings.HasPrefix(a.SignedMethod.Alg(), "RS")
+	isPs := strings.HasPrefix(a.SignedMethod.Alg(), "PS")
+	return isRs || isPs
+}
+
+func (a *JWTAccessGenerate) isHs() bool {
+	return strings.HasPrefix(a.SignedMethod.Alg(), "HS")
 }
