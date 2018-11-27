@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	errs "errors"
 	"github.com/dgrijalva/jwt-go"
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/errors"
@@ -49,7 +50,23 @@ func (a *JWTAccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool)
 	}
 
 	token := jwt.NewWithClaims(a.SignedMethod, claims)
-	access, err = token.SignedString(a.SignedKey)
+	var key interface{}
+	if a.isEs() {
+		key, err = jwt.ParseECPrivateKeyFromPEM(a.SignedKey)
+		if err != nil {
+			return "", "", err
+		}
+	} else if a.isRsOrPS() {
+		key, err = jwt.ParseRSAPrivateKeyFromPEM(a.SignedKey)
+		if err != nil {
+			return "", "", err
+		}
+	} else if a.isHs() {
+		key = a.SignedKey
+	} else {
+		return "", "", errs.New("unsupported sign method")
+	}
+	access, err = token.SignedString(key)
 	if err != nil {
 		return
 	}
@@ -60,4 +77,18 @@ func (a *JWTAccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool)
 	}
 
 	return
+}
+
+func (a *JWTAccessGenerate) isEs() bool {
+	return strings.HasPrefix(a.SignedMethod.Alg(), "ES")
+}
+
+func (a *JWTAccessGenerate) isRsOrPS() bool {
+	isRs := strings.HasPrefix(a.SignedMethod.Alg(), "RS")
+	isPs := strings.HasPrefix(a.SignedMethod.Alg(), "PS")
+	return isRs || isPs
+}
+
+func (a *JWTAccessGenerate) isHs() bool {
+	return strings.HasPrefix(a.SignedMethod.Alg(), "HS")
 }
