@@ -43,7 +43,22 @@ func main() {
 	http.HandleFunc("/auth", authHandler)
 
 	http.HandleFunc("/authorize", func(w http.ResponseWriter, r *http.Request) {
-		err := srv.HandleAuthorizeRequest(w, r)
+		store, err := session.Start(nil, w, r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var form url.Values
+		if v, ok := store.Get("ReturnUri"); ok {
+			form = v.(url.Values)
+		}
+		r.Form = form
+
+		store.Delete("ReturnUri")
+		store.Save()
+
+		err = srv.HandleAuthorizeRequest(w, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
@@ -66,11 +81,12 @@ func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string
 		return
 	}
 
-	uid, ok := store.Get("UserID")
+	uid, ok := store.Get("LoggedInUserID")
 	if !ok {
 		if r.Form == nil {
 			r.ParseForm()
 		}
+
 		store.Set("ReturnUri", r.Form)
 		store.Save()
 
@@ -78,8 +94,9 @@ func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string
 		w.WriteHeader(http.StatusFound)
 		return
 	}
+
 	userID = uid.(string)
-	store.Delete("UserID")
+	store.Delete("LoggedInUserID")
 	store.Save()
 	return
 }
@@ -115,25 +132,6 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Method == "POST" {
-		var form url.Values
-		if v, ok := store.Get("ReturnUri"); ok {
-			form = v.(url.Values)
-		}
-		u := new(url.URL)
-		u.Path = "/authorize"
-		u.RawQuery = form.Encode()
-		w.Header().Set("Location", u.String())
-		w.WriteHeader(http.StatusFound)
-		store.Delete("Form")
-
-		if v, ok := store.Get("LoggedInUserID"); ok {
-			store.Set("UserID", v)
-		}
-		store.Save()
-
-		return
-	}
 	outputHTML(w, r, "static/auth.html")
 }
 
