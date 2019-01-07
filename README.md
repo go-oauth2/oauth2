@@ -165,6 +165,7 @@ if !ok || !token.Valid {
 * [MySQL](https://github.com/go-oauth2/mysql)
 * [DynamoDB](https://github.com/contamobi/go-oauth2-dynamodb)
 * [XORM](https://github.com/techknowlogick/go-oauth2-xorm)
+* [GORM](https://github.com/techknowlogick/go-oauth2-gorm)
 
 ## MIT License
 
