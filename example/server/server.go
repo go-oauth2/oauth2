@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/go-session/session"
 	"gopkg.in/oauth2.v3/errors"
@@ -16,6 +18,8 @@ import (
 
 func main() {
 	manager := manage.NewDefaultManager()
+	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
+
 	// token store
 	manager.MustTokenStorage(store.NewMemoryTokenStore())
 
@@ -69,6 +73,23 @@ func main() {
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
+	})
+
+	http.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+		token, err := srv.ValidationBearerToken(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		data := map[string]interface{}{
+			"expires_in": int64(token.GetAccessCreateAt().Add(token.GetAccessExpiresIn()).Sub(time.Now()).Seconds()),
+			"client_id":  token.GetClientID(),
+			"user_id":    token.GetUserID(),
+		}
+		e := json.NewEncoder(w)
+		e.SetIndent("", "  ")
+		e.Encode(data)
 	})
 
 	log.Println("Server is running at 9096 port.")
