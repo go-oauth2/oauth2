@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"golang.org/x/oauth2"
 )
@@ -54,6 +55,25 @@ func main() {
 		}
 		globalToken = token
 
+		e := json.NewEncoder(w)
+		e.SetIndent("", "  ")
+		e.Encode(token)
+	})
+
+	http.HandleFunc("/refresh", func(w http.ResponseWriter, r *http.Request) {
+		if globalToken == nil {
+			http.Redirect(w, r, "/", http.StatusFound)
+			return
+		}
+
+		globalToken.Expiry = time.Now()
+		token, err := config.TokenSource(context.Background(), globalToken).Token()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		globalToken = token
 		e := json.NewEncoder(w)
 		e.SetIndent("", "  ")
 		e.Encode(token)

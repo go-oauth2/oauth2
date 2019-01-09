@@ -45,3 +45,16 @@ Open the browser [http://localhost:9094/try](http://localhost:9094/try)
   "user_id": "000000"
 }
 ```
+
+## Refresh token
+
+Open the browser [http://localhost:9094/refresh](http://localhost:9094/refresh)
+
+```
+{
+  "access_token": "0IIL4_AJN2-SR0JEYZVQWG",
+  "token_type": "Bearer",
+  "refresh_token": "AG6-63MLXUEFUV2Q_BLYIW",
+  "expiry": "2019-01-09T23:03:16.374062+08:00"
+}
+```

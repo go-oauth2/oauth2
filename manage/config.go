@@ -35,5 +35,5 @@ var (
 	DefaultImplicitTokenCfg      = &Config{AccessTokenExp: time.Hour * 1}
 	DefaultPasswordTokenCfg      = &Config{AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 7, IsGenerateRefresh: true}
 	DefaultClientTokenCfg        = &Config{AccessTokenExp: time.Hour * 2}
-	DefaultRefreshTokenCfg       = &RefreshingConfig{IsRemoveAccess: true, IsRemoveRefreshing: true}
+	DefaultRefreshTokenCfg       = &RefreshingConfig{IsGenerateRefresh: true, IsRemoveAccess: true, IsRemoveRefreshing: true}
 )
