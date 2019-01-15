@@ -18,7 +18,7 @@ func TestManager(t *testing.T) {
 		manager.MustTokenStorage(store.NewMemoryTokenStore())
 
 		clientStore := store.NewClientStore()
-		clientStore.Set("1", &models.Client{
+		_ = clientStore.Set("1", &models.Client{
 			ID:     "1",
 			Secret: "11",
 			Domain: "http://localhost",

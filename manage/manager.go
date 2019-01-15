@@ -144,9 +144,11 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 	cli, err := m.GetClient(tgr.ClientID)
 	if err != nil {
 		return
-	} else if verr := m.validateURI(cli.GetDomain(), tgr.RedirectURI); verr != nil {
-		err = verr
-		return
+	} else if tgr.RedirectURI != "" {
+		if verr := m.validateURI(cli.GetDomain(), tgr.RedirectURI); verr != nil {
+			err = verr
+			return
+		}
 	}
 
 	ti := models.NewToken()
@@ -236,17 +238,46 @@ func (m *Manager) delAuthorizationCode(code string) (err error) {
 	return
 }
 
+// get and delete authorization code data
+func (m *Manager) getAndDelAuthorizationCode(tgr *oauth2.TokenGenerateRequest) (info oauth2.TokenInfo, err error) {
+	code := tgr.Code
+	ti, err := m.getAuthorizationCode(code)
+	if err != nil {
+		return
+	} else if ti.GetClientID() != tgr.ClientID {
+		err = errors.ErrInvalidAuthorizeCode
+		return
+	} else if codeURI := ti.GetRedirectURI(); codeURI != "" && codeURI != tgr.RedirectURI {
+		err = errors.ErrInvalidAuthorizeCode
+		return
+	}
+
+	err = m.delAuthorizationCode(code)
+	if err != nil {
+		return
+	}
+	info = ti
+	return
+}
+
 // GenerateAccessToken generate the access token
 func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (accessToken oauth2.TokenInfo, err error) {
+	cli, err := m.GetClient(tgr.ClientID)
+	if err != nil {
+		return
+	} else if tgr.ClientSecret != cli.GetSecret() {
+		err = errors.ErrInvalidClient
+		return
+	} else if tgr.RedirectURI != "" {
+		if verr := m.validateURI(cli.GetDomain(), tgr.RedirectURI); verr != nil {
+			err = verr
+			return
+		}
+	}
+
 	if gt == oauth2.AuthorizationCode {
-		ti, terr := m.getAuthorizationCode(tgr.Code)
-		if terr != nil {
-			err = terr
-			return
-		} else if ti.GetRedirectURI() != tgr.RedirectURI || ti.GetClientID() != tgr.ClientID {
-			err = errors.ErrInvalidAuthorizeCode
-			return
-		} else if verr := m.delAuthorizationCode(tgr.Code); verr != nil {
+		ti, verr := m.getAndDelAuthorizationCode(tgr)
+		if verr != nil {
 			err = verr
 			return
 		}
@@ -255,14 +286,6 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 		if exp := ti.GetAccessExpiresIn(); exp > 0 {
 			tgr.AccessTokenExp = exp
 		}
-	}
-
-	cli, err := m.GetClient(tgr.ClientID)
-	if err != nil {
-		return
-	} else if tgr.ClientSecret != cli.GetSecret() {
-		err = errors.ErrInvalidClient
-		return
 	}
 
 	ti := models.NewToken()

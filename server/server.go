@@ -148,8 +148,7 @@ func (s *Server) ValidationAuthorizeRequest(r *http.Request) (req *AuthorizeRequ
 	redirectURI := r.FormValue("redirect_uri")
 	clientID := r.FormValue("client_id")
 	if !(r.Method == "GET" || r.Method == "POST") ||
-		clientID == "" ||
-		redirectURI == "" {
+		clientID == "" {
 		err = errors.ErrInvalidRequest
 		return
 	}
@@ -280,6 +279,16 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 	if verr != nil {
 		err = s.redirectError(w, req, verr)
 		return
+	}
+
+	// If the redirect URI is empty, the default domain provided by the client is used.
+	if req.RedirectURI == "" {
+		client, verr := s.Manager.GetClient(req.ClientID)
+		if verr != nil {
+			err = verr
+			return
+		}
+		req.RedirectURI = client.GetDomain()
 	}
 
 	err = s.redirect(w, req, s.GetAuthorizeData(req.ResponseType, ti))
