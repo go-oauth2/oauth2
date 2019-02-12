@@ -1,8 +1,4 @@
-# Authorization Code Grant
-
-![login](https://raw.githubusercontent.com/go-oauth2/oauth2/master/example/server/static/login.png)
-![auth](https://raw.githubusercontent.com/go-oauth2/oauth2/master/example/server/static/auth.png)
-![token](https://raw.githubusercontent.com/go-oauth2/oauth2/master/example/server/static/token.png)
+# Use Examples
 
 ## Run Server
 
@@ -20,7 +16,9 @@ $ go build client.go
 $ ./client
 ```
 
-## Open the browser
+## Authorization Code Grant
+
+### Open the browser
 
 [http://localhost:9094](http://localhost:9094)
 
@@ -34,7 +32,7 @@ $ ./client
 ```
 
 
-## Try access token
+### Try access token
 
 Open the browser [http://localhost:9094/try](http://localhost:9094/try)
 
@@ -58,3 +56,32 @@ Open the browser [http://localhost:9094/refresh](http://localhost:9094/refresh)
   "expiry": "2019-01-09T23:03:16.374062+08:00"
 }
 ```
+
+## Password Credentials Grant
+
+Open the browser [http://localhost:9094/pwd](http://localhost:9094/pwd)
+
+```
+{
+  "access_token": "87JT3N6WOWANXVDNZFHY7Q",
+  "token_type": "Bearer",
+  "refresh_token": "LDIS6PXAVY-BXHPEDESWNG",
+  "expiry": "2019-02-12T10:58:43.734902+08:00"
+}
+```
+
+## Client Credentials Grant
+
+Open the browser [http://localhost:9094/client](http://localhost:9094/client)
+
+```
+{
+  "access_token": "OA6ITALNMDOGD58C0SN-MG",
+  "token_type": "Bearer",
+  "expiry": "2019-02-12T11:10:35.864838+08:00"
+}
+```
+
+![login](https://raw.githubusercontent.com/go-oauth2/oauth2/master/example/server/static/login.png)
+![auth](https://raw.githubusercontent.com/go-oauth2/oauth2/master/example/server/static/auth.png)
+![token](https://raw.githubusercontent.com/go-oauth2/oauth2/master/example/server/static/token.png)

@@ -32,6 +32,12 @@ func main() {
 	manager.MapClientStorage(clientStore)
 
 	srv := server.NewServer(server.NewConfig(), manager)
+	srv.SetPasswordAuthorizationHandler(func(username, password string) (userID string, err error) {
+		if username == "test" && password == "test" {
+			userID = "test"
+		}
+		return
+	})
 	srv.SetUserAuthorizationHandler(userAuthorizeHandler)
 
 	srv.SetInternalErrorHandler(func(err error) (re *errors.Response) {

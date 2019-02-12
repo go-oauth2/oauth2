@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 )
 
 const (
@@ -93,6 +94,37 @@ func main() {
 		defer resp.Body.Close()
 
 		io.Copy(w, resp.Body)
+	})
+
+	http.HandleFunc("/pwd", func(w http.ResponseWriter, r *http.Request) {
+		token, err := config.PasswordCredentialsToken(context.Background(), "test", "test")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		globalToken = token
+		e := json.NewEncoder(w)
+		e.SetIndent("", "  ")
+		e.Encode(token)
+	})
+
+	http.HandleFunc("/client", func(w http.ResponseWriter, r *http.Request) {
+		cfg := clientcredentials.Config{
+			ClientID:     config.ClientID,
+			ClientSecret: config.ClientSecret,
+			TokenURL:     config.Endpoint.TokenURL,
+		}
+
+		token, err := cfg.Token(context.Background())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		e := json.NewEncoder(w)
+		e.SetIndent("", "  ")
+		e.Encode(token)
 	})
 
 	log.Println("Client is running at 9094 port.")
