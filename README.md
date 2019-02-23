@@ -163,6 +163,7 @@ if !ok || !token.Valid {
 * [Redis](https://github.com/go-oauth2/redis)
 * [MongoDB](https://github.com/go-oauth2/mongo)
 * [MySQL](https://github.com/go-oauth2/mysql)
+* [PostgreSQL](https://github.com/vgarvardt/go-oauth2-pg)
 * [DynamoDB](https://github.com/contamobi/go-oauth2-dynamodb)
 * [XORM](https://github.com/techknowlogick/go-oauth2-xorm)
 * [GORM](https://github.com/techknowlogick/go-oauth2-gorm)
