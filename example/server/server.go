@@ -8,8 +8,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/go-session/session"
 	"gopkg.in/oauth2.v3/errors"
+	"gopkg.in/oauth2.v3/generates"
 	"gopkg.in/oauth2.v3/manage"
 	"gopkg.in/oauth2.v3/models"
 	"gopkg.in/oauth2.v3/server"
@@ -23,6 +25,9 @@ func main() {
 	// token store
 	manager.MustTokenStorage(store.NewMemoryTokenStore())
 
+	// generate jwt access token
+	manager.MapAccessGenerate(generates.NewJWTAccessGenerate([]byte("00000000"), jwt.SigningMethodHS512))
+
 	clientStore := store.NewClientStore()
 	clientStore.Set("222222", &models.Client{
 		ID:     "222222",
@@ -32,12 +37,14 @@ func main() {
 	manager.MapClientStorage(clientStore)
 
 	srv := server.NewServer(server.NewConfig(), manager)
+
 	srv.SetPasswordAuthorizationHandler(func(username, password string) (userID string, err error) {
 		if username == "test" && password == "test" {
 			userID = "test"
 		}
 		return
 	})
+
 	srv.SetUserAuthorizationHandler(userAuthorizeHandler)
 
 	srv.SetInternalErrorHandler(func(err error) (re *errors.Response) {

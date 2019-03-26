@@ -134,13 +134,15 @@ Simulation examples of authorization code model, please check [example](/example
 
 ```go
 
-import "gopkg.in/oauth2.v3/generates"
-import "github.com/dgrijalva/jwt-go"
+import (
+	"gopkg.in/oauth2.v3/generates"
+	"github.com/dgrijalva/jwt-go"
+)
 
 // ...
 manager.MapAccessGenerate(generates.NewJWTAccessGenerate([]byte("00000000"), jwt.SigningMethodHS512))
 
-// Verify jwt access token
+// Parse and verify jwt access token
 token, err := jwt.ParseWithClaims(access, &generates.JWTAccessClaims{}, func(t *jwt.Token) (interface{}, error) {
 	if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 		return nil, fmt.Errorf("parse error")
@@ -148,12 +150,12 @@ token, err := jwt.ParseWithClaims(access, &generates.JWTAccessClaims{}, func(t *
 	return []byte("00000000"), nil
 })
 if err != nil {
-	panic(err)
+	// panic(err)
 }
 
 claims, ok := token.Claims.(*generates.JWTAccessClaims)
 if !ok || !token.Valid {
-	panic("invalid token")
+	// panic("invalid token")
 }
 ```
 
