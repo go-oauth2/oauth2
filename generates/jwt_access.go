@@ -6,6 +6,7 @@ import (
 	"time"
 
 	errs "errors"
+
 	"github.com/dgrijalva/jwt-go"
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/errors"
@@ -14,14 +15,12 @@ import (
 
 // JWTAccessClaims jwt claims
 type JWTAccessClaims struct {
-	ClientID  string `json:"client_id,omitempty"`
-	UserID    string `json:"user_id,omitempty"`
-	ExpiredAt int64  `json:"expired_at,omitempty"`
+	jwt.StandardClaims
 }
 
 // Valid claims verification
 func (a *JWTAccessClaims) Valid() error {
-	if time.Unix(a.ExpiredAt, 0).Before(time.Now()) {
+	if time.Unix(a.ExpiresAt, 0).Before(time.Now()) {
 		return errors.ErrInvalidAccessToken
 	}
 	return nil
@@ -44,9 +43,11 @@ type JWTAccessGenerate struct {
 // Token based on the UUID generated token
 func (a *JWTAccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool) (access, refresh string, err error) {
 	claims := &JWTAccessClaims{
-		ClientID:  data.Client.GetID(),
-		UserID:    data.UserID,
-		ExpiredAt: data.TokenInfo.GetAccessCreateAt().Add(data.TokenInfo.GetAccessExpiresIn()).Unix(),
+		StandardClaims: jwt.StandardClaims{
+			Audience:  data.Client.GetID(),
+			Subject:   data.UserID,
+			ExpiresAt: data.TokenInfo.GetAccessCreateAt().Add(data.TokenInfo.GetAccessExpiresIn()).Unix(),
+		},
 	}
 
 	token := jwt.NewWithClaims(a.SignedMethod, claims)
