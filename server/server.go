@@ -12,6 +12,16 @@ import (
 	"gopkg.in/oauth2.v3/errors"
 )
 
+// RPCTokenReq interface holds rpc req
+type RPCTokenReq interface {
+	GetUsername() string
+	GetPassword() string
+	GetGrantType() string
+	GetClientId() string
+	GetClientSecret() string
+	GetScope() string
+}
+
 // NewDefaultServer create a default authorization server
 func NewDefaultServer(manager oauth2.Manager) *Server {
 	return NewServer(NewConfig(), manager)
@@ -26,6 +36,7 @@ func NewServer(cfg *Config, manager oauth2.Manager) *Server {
 
 	// default handler
 	srv.ClientInfoHandler = ClientBasicHandler
+	srv.ClientInfoHandlerRPC = ClientBasicHandlerRPC
 
 	srv.UserAuthorizationHandler = func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 		err = errors.ErrAccessDenied
@@ -44,6 +55,7 @@ type Server struct {
 	Config                       *Config
 	Manager                      oauth2.Manager
 	ClientInfoHandler            ClientInfoHandler
+	ClientInfoHandlerRPC         ClientInfoHandlerRPC
 	ClientAuthorizedHandler      ClientAuthorizedHandler
 	ClientScopeHandler           ClientScopeHandler
 	UserAuthorizationHandler     UserAuthorizationHandler
@@ -363,6 +375,60 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (gt oauth2.GrantType, t
 	return
 }
 
+// ValidationTokenRequestRPC the token request validation
+func (s *Server) ValidationTokenRequestRPC(r RPCTokenReq) (gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest, err error) {
+
+	gt = oauth2.GrantType(r.GetGrantType())
+
+	if gt.String() == "" {
+		err = errors.ErrUnsupportedGrantType
+		return
+	}
+
+	clientID, clientSecret, err := s.ClientInfoHandlerRPC(r)
+	if err != nil {
+		return
+	}
+
+	tgr = &oauth2.TokenGenerateRequest{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Request:      nil,
+	}
+
+	switch gt {
+	case oauth2.PasswordCredentials:
+		tgr.Scope = r.GetScope()
+		username, password := r.GetUsername(), r.GetPassword()
+
+		if username == "" || password == "" {
+			err = errors.ErrInvalidRequest
+			return
+		}
+
+		userID, verr := s.PasswordAuthorizationHandler(username, password)
+		if verr != nil {
+			err = verr
+			return
+		} else if userID == "" {
+			err = errors.ErrInvalidGrant
+			return
+		}
+
+		tgr.UserID = userID
+	case oauth2.ClientCredentials:
+		tgr.Scope = r.GetScope()
+	case oauth2.Refreshing:
+		// tgr.Refresh = r.FormValue("refresh_token")
+		// tgr.Scope = r.FormValue("scope")
+
+		// if tgr.Refresh == "" {
+		// 	err = errors.ErrInvalidRequest
+		// }
+	}
+	return
+}
+
 // CheckGrantType check allows grant type
 func (s *Server) CheckGrantType(gt oauth2.GrantType) bool {
 	for _, agt := range s.Config.AllowedGrantTypes {
@@ -501,6 +567,21 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) (err
 	}
 
 	err = s.token(w, s.GetTokenData(ti), nil)
+	return
+}
+
+// HandleTokenRequestRPC handle grpc token request
+func (s *Server) HandleTokenRequestRPC(r RPCTokenReq) (ti oauth2.TokenInfo, err error) {
+	gt, tgr, verr := s.ValidationTokenRequestRPC(r)
+	if verr != nil {
+		err = verr
+		return
+	}
+
+	ti, verr = s.GetAccessToken(gt, tgr)
+	if verr != nil {
+		err = verr
+	}
 	return
 }
 

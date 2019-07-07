@@ -12,6 +12,9 @@ type (
 	// ClientInfoHandler get client info from request
 	ClientInfoHandler func(r *http.Request) (clientID, clientSecret string, err error)
 
+	// ClientInfoHandlerRPC get client info from rpc request
+	ClientInfoHandlerRPC func(r RPCTokenReq) (clientID, clientSecret string, err error)
+
 	// ClientAuthorizedHandler check the client allows to use this authorization grant type
 	ClientAuthorizedHandler func(clientID string, grant oauth2.GrantType) (allowed bool, err error)
 
@@ -57,6 +60,19 @@ func ClientFormHandler(r *http.Request) (clientID, clientSecret string, err erro
 func ClientBasicHandler(r *http.Request) (clientID, clientSecret string, err error) {
 	username, password, ok := r.BasicAuth()
 	if !ok {
+		err = errors.ErrInvalidClient
+		return
+	}
+	clientID = username
+	clientSecret = password
+	return
+}
+
+// ClientBasicHandlerRPC get client data from rpc req
+func ClientBasicHandlerRPC(r RPCTokenReq) (clientID, clientSecret string, err error) {
+	username := r.GetClientId()
+	password := r.GetClientSecret()
+	if username == "" || password == "" {
 		err = errors.ErrInvalidClient
 		return
 	}

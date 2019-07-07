@@ -164,6 +164,70 @@ func TestPasswordCredentials(t *testing.T) {
 	validationAccessToken(t, resObj.Value("access_token").String().Raw())
 }
 
+func TestPasswordCredentialsRPC(t *testing.T) {
+
+	manager.MapClientStorage(clientStore(""))
+	srv = server.NewDefaultServer(manager)
+	srv.SetPasswordAuthorizationHandler(func(username, password string) (userID string, err error) {
+		if username == "admin" && password == "123456" {
+			userID = "000000"
+			return
+		}
+		err = fmt.Errorf("user not found")
+		return
+	})
+
+	type tokenReq struct {
+		username string
+		password string
+		client_id string
+		client_secret string
+		grant_type string
+		scope string
+	}
+
+	func (t *tokenReq) GetUsername() string {
+		return t.username
+	}
+	func (t *tokenReq) GetPassword() string {
+		return t.password
+	}
+	func (t *tokenReq) GetGrantType() string {
+		return t.grant_type
+	}
+	func (t *tokenReq) GetClientId() string {
+		return t.client_id
+	}
+	func (t *tokenReq) GetClientSecret() string {
+		return t.client_secret
+	}
+	func (t *tokenReq) GetScope() string {
+		return t.scope
+	}
+	// RPCTokenReq interface holds rpc req
+	type RPCTokenReq interface {
+		GetUsername() string
+		GetPassword() string
+		GetGrantType() string
+		GetClientId() string
+		GetClientSecret() string
+		GetScope() string
+	}
+
+	ti, err := srv.HandleTokenRequestRPC(&tokenReq{
+		username: "admin",
+		password: "123456",
+		client_id: clientID,
+		client_secret: clientSecret,
+		grant_type: "password",
+		scope: "all",
+	})
+
+	t.Logf("%#v\n", resObj.Raw())
+
+	validationAccessToken(t, ti.GetAccess())
+}
+
 func TestClientCredentials(t *testing.T) {
 	tsrv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		testServer(t, w, r)
