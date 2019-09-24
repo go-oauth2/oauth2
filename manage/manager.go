@@ -489,7 +489,8 @@ func (m *Manager) LoadRefreshToken(refresh string) (info oauth2.TokenInfo, err e
 	} else if ti == nil || ti.GetRefresh() != refresh {
 		err = errors.ErrInvalidRefreshToken
 		return
-	} else if ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(time.Now()) {
+	} else if ti.GetRefreshExpiresIn() != 0 && // refresh token set to not expire
+		ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(time.Now()) {
 		err = errors.ErrExpiredRefreshToken
 		return
 	}

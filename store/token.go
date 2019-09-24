@@ -47,17 +47,19 @@ func (ts *TokenStore) Create(info oauth2.TokenInfo) (err error) {
 		basicID := uuid.Must(uuid.NewRandom()).String()
 		aexp := info.GetAccessExpiresIn()
 		rexp := aexp
+		expires := true
 		if refresh := info.GetRefresh(); refresh != "" {
 			rexp = info.GetRefreshCreateAt().Add(info.GetRefreshExpiresIn()).Sub(ct)
 			if aexp.Seconds() > rexp.Seconds() {
 				aexp = rexp
 			}
-			_, _, err = tx.Set(refresh, basicID, &buntdb.SetOptions{Expires: true, TTL: rexp})
+			expires = info.GetRefreshExpiresIn() != 0
+			_, _, err = tx.Set(refresh, basicID, &buntdb.SetOptions{Expires: expires, TTL: rexp})
 			if err != nil {
 				return
 			}
 		}
-		_, _, err = tx.Set(basicID, string(jv), &buntdb.SetOptions{Expires: true, TTL: rexp})
+		_, _, err = tx.Set(basicID, string(jv), &buntdb.SetOptions{Expires: expires, TTL: rexp})
 		if err != nil {
 			return
 		}
