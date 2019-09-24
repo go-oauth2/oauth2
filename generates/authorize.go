@@ -18,12 +18,12 @@ func NewAuthorizeGenerate() *AuthorizeGenerate {
 type AuthorizeGenerate struct{}
 
 // Token based on the UUID generated token
-func (ag *AuthorizeGenerate) Token(data *oauth2.GenerateBasic) (code string, err error) {
+func (ag *AuthorizeGenerate) Token(data *oauth2.GenerateBasic) (string, error) {
 	buf := bytes.NewBufferString(data.Client.GetID())
 	buf.WriteString(data.UserID)
 	token := uuid.NewMD5(uuid.Must(uuid.NewRandom()), buf.Bytes())
-	code = base64.URLEncoding.EncodeToString(token.Bytes())
+	code := base64.URLEncoding.EncodeToString(token.Bytes())
 	code = strings.ToUpper(strings.TrimRight(code, "="))
 
-	return
+	return code, nil
 }

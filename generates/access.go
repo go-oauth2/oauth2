@@ -19,7 +19,7 @@ func NewAccessGenerate() *AccessGenerate {
 type AccessGenerate struct {
 }
 
-// Token based on the UUID generated token
+// Token based on the UUID generated token.
 func (ag *AccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool) (access, refresh string, err error) {
 	buf := bytes.NewBufferString(data.Client.GetID())
 	buf.WriteString(data.UserID)
@@ -32,5 +32,5 @@ func (ag *AccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool) (
 		refresh = strings.ToUpper(strings.TrimRight(refresh, "="))
 	}
 
-	return
+	return access, refresh, nil
 }

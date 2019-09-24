@@ -52,24 +52,25 @@ func (a *JWTAccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool)
 
 	token := jwt.NewWithClaims(a.SignedMethod, claims)
 	var key interface{}
-	if a.isEs() {
+	switch {
+	case a.isEs():
 		key, err = jwt.ParseECPrivateKeyFromPEM(a.SignedKey)
 		if err != nil {
 			return "", "", err
 		}
-	} else if a.isRsOrPS() {
+	case a.isRsOrPS():
 		key, err = jwt.ParseRSAPrivateKeyFromPEM(a.SignedKey)
 		if err != nil {
 			return "", "", err
 		}
-	} else if a.isHs() {
+	case a.isHs():
 		key = a.SignedKey
-	} else {
+	default:
 		return "", "", errs.New("unsupported sign method")
 	}
 	access, err = token.SignedString(key)
 	if err != nil {
-		return
+		return access, "", err
 	}
 
 	if isGenRefresh {
@@ -77,7 +78,7 @@ func (a *JWTAccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool)
 		refresh = strings.ToUpper(strings.TrimRight(refresh, "="))
 	}
 
-	return
+	return access, refresh, nil
 }
 
 func (a *JWTAccessGenerate) isEs() bool {

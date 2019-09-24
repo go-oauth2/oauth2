@@ -58,9 +58,6 @@ func ClientBasicHandler(r *http.Request) (clientID, clientSecret string, err err
 	username, password, ok := r.BasicAuth()
 	if !ok {
 		err = errors.ErrInvalidClient
-		return
 	}
-	clientID = username
-	clientSecret = password
-	return
+	return username, password, err
 }
