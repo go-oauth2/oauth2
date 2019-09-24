@@ -45,6 +45,7 @@ func TestManager(t *testing.T) {
 
 		Convey("zero expiration access token test", func() {
 			testZeroAccessExpirationManager(tgr, manager)
+			testCannotRequestZeroExpirationAccessTokens(tgr, manager)
 		})
 
 		Convey("zero expiration refresh token test", func() {
@@ -150,6 +151,35 @@ func testZeroAccessExpirationManager(tgr *oauth2.TokenGenerateRequest, manager o
 	So(tokenInfo, ShouldNotBeNil)
 	So(tokenInfo.GetAccess(), ShouldEqual, accessToken)
 	So(tokenInfo.GetAccessExpiresIn(), ShouldEqual, 0)
+}
+
+func testCannotRequestZeroExpirationAccessTokens(tgr *oauth2.TokenGenerateRequest, manager oauth2.Manager) {
+	config := manage.Config{
+		AccessTokenExp: time.Hour * 5,
+	}
+	m, ok := manager.(*manage.Manager)
+	So(ok, ShouldBeTrue)
+	m.SetAuthorizeCodeTokenCfg(&config)
+
+	cti, err := manager.GenerateAuthToken(oauth2.Code, tgr)
+	So(err, ShouldBeNil)
+
+	code := cti.GetCode()
+	So(code, ShouldNotBeEmpty)
+
+	atParams := &oauth2.TokenGenerateRequest{
+		ClientID:       tgr.ClientID,
+		ClientSecret:   "11",
+		RedirectURI:    tgr.RedirectURI,
+		AccessTokenExp: 0, // requesting token without expiration
+		Code:           code,
+	}
+	ati, err := manager.GenerateAccessToken(oauth2.AuthorizationCode, atParams)
+	So(err, ShouldBeNil)
+
+	accessToken := ati.GetAccess()
+	So(accessToken, ShouldNotBeEmpty)
+	So(ati.GetAccessExpiresIn(), ShouldEqual, time.Hour*5)
 }
 
 func testZeroRefreshExpirationManager(tgr *oauth2.TokenGenerateRequest, manager oauth2.Manager) {
