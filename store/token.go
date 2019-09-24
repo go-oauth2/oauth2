@@ -63,7 +63,7 @@ func (ts *TokenStore) Create(info oauth2.TokenInfo) (err error) {
 		if err != nil {
 			return
 		}
-		_, _, err = tx.Set(info.GetAccess(), basicID, &buntdb.SetOptions{Expires: true, TTL: aexp})
+		_, _, err = tx.Set(info.GetAccess(), basicID, &buntdb.SetOptions{Expires: expires, TTL: aexp})
 		return
 	})
 	return

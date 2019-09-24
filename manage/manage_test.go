@@ -2,6 +2,7 @@ package manage_test
 
 import (
 	"testing"
+	"time"
 
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/manage"
@@ -128,10 +129,11 @@ func testZeroRefreshExpirationManager(tgr *oauth2.TokenGenerateRequest, manager 
 	So(code, ShouldNotBeEmpty)
 
 	atParams := &oauth2.TokenGenerateRequest{
-		ClientID:     tgr.ClientID,
-		ClientSecret: "11",
-		RedirectURI:  tgr.RedirectURI,
-		Code:         code,
+		ClientID:       tgr.ClientID,
+		ClientSecret:   "11",
+		RedirectURI:    tgr.RedirectURI,
+		AccessTokenExp: time.Hour,
+		Code:           code,
 	}
 	ati, err := manager.GenerateAccessToken(oauth2.AuthorizationCode, atParams)
 	So(err, ShouldBeNil)
@@ -141,6 +143,13 @@ func testZeroRefreshExpirationManager(tgr *oauth2.TokenGenerateRequest, manager 
 	So(refreshToken, ShouldNotBeEmpty)
 
 	tokenInfo, err := manager.LoadRefreshToken(refreshToken)
+	So(err, ShouldBeNil)
+	So(tokenInfo, ShouldNotBeNil)
+	So(tokenInfo.GetRefresh(), ShouldEqual, refreshToken)
+	So(tokenInfo.GetRefreshExpiresIn(), ShouldEqual, 0)
+
+	// LoadAccessToken also checks refresh expiry
+	tokenInfo, err = manager.LoadAccessToken(accessToken)
 	So(err, ShouldBeNil)
 	So(tokenInfo, ShouldNotBeNil)
 	So(tokenInfo.GetRefresh(), ShouldEqual, refreshToken)
