@@ -122,8 +122,7 @@ func (s *Server) GetRedirectURI(req *AuthorizeRequest, data map[string]interface
 	case oauth2.Code:
 		u.RawQuery = q.Encode()
 	case oauth2.Token:
-		u.RawQuery = ""
-		u.Fragment, err = url.QueryUnescape(q.Encode())
+		u.RawQuery, err = url.QueryUnescape(q.Encode())
 		if err != nil {
 			return
 		}
