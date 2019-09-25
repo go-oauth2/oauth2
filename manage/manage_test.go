@@ -2,6 +2,7 @@ package manage_test
 
 import (
 	"testing"
+	"time"
 
 	"gopkg.in/oauth2.v3"
 	"gopkg.in/oauth2.v3/manage"
@@ -40,6 +41,15 @@ func TestManager(t *testing.T) {
 
 		Convey("Token test", func() {
 			testManager(tgr, manager)
+		})
+
+		Convey("zero expiration access token test", func() {
+			testZeroAccessExpirationManager(tgr, manager)
+			testCannotRequestZeroExpirationAccessTokens(tgr, manager)
+		})
+
+		Convey("zero expiration refresh token test", func() {
+			testZeroRefreshExpirationManager(tgr, manager)
 		})
 	})
 }
@@ -106,4 +116,111 @@ func testManager(tgr *oauth2.TokenGenerateRequest, manager oauth2.Manager) {
 
 	_, err = manager.LoadRefreshToken(refreshToken)
 	So(err, ShouldNotBeNil)
+}
+
+func testZeroAccessExpirationManager(tgr *oauth2.TokenGenerateRequest, manager oauth2.Manager) {
+	config := manage.Config{
+		AccessTokenExp:    0, // Set explicitly as we're testing 0 (no) expiration
+		IsGenerateRefresh: true,
+	}
+	m, ok := manager.(*manage.Manager)
+	So(ok, ShouldBeTrue)
+	m.SetAuthorizeCodeTokenCfg(&config)
+
+	cti, err := manager.GenerateAuthToken(oauth2.Code, tgr)
+	So(err, ShouldBeNil)
+
+	code := cti.GetCode()
+	So(code, ShouldNotBeEmpty)
+
+	atParams := &oauth2.TokenGenerateRequest{
+		ClientID:     tgr.ClientID,
+		ClientSecret: "11",
+		RedirectURI:  tgr.RedirectURI,
+		Code:         code,
+	}
+	ati, err := manager.GenerateAccessToken(oauth2.AuthorizationCode, atParams)
+	So(err, ShouldBeNil)
+
+	accessToken, refreshToken := ati.GetAccess(), ati.GetRefresh()
+	So(accessToken, ShouldNotBeEmpty)
+	So(refreshToken, ShouldNotBeEmpty)
+
+	tokenInfo, err := manager.LoadAccessToken(accessToken)
+	So(err, ShouldBeNil)
+	So(tokenInfo, ShouldNotBeNil)
+	So(tokenInfo.GetAccess(), ShouldEqual, accessToken)
+	So(tokenInfo.GetAccessExpiresIn(), ShouldEqual, 0)
+}
+
+func testCannotRequestZeroExpirationAccessTokens(tgr *oauth2.TokenGenerateRequest, manager oauth2.Manager) {
+	config := manage.Config{
+		AccessTokenExp: time.Hour * 5,
+	}
+	m, ok := manager.(*manage.Manager)
+	So(ok, ShouldBeTrue)
+	m.SetAuthorizeCodeTokenCfg(&config)
+
+	cti, err := manager.GenerateAuthToken(oauth2.Code, tgr)
+	So(err, ShouldBeNil)
+
+	code := cti.GetCode()
+	So(code, ShouldNotBeEmpty)
+
+	atParams := &oauth2.TokenGenerateRequest{
+		ClientID:       tgr.ClientID,
+		ClientSecret:   "11",
+		RedirectURI:    tgr.RedirectURI,
+		AccessTokenExp: 0, // requesting token without expiration
+		Code:           code,
+	}
+	ati, err := manager.GenerateAccessToken(oauth2.AuthorizationCode, atParams)
+	So(err, ShouldBeNil)
+
+	accessToken := ati.GetAccess()
+	So(accessToken, ShouldNotBeEmpty)
+	So(ati.GetAccessExpiresIn(), ShouldEqual, time.Hour*5)
+}
+
+func testZeroRefreshExpirationManager(tgr *oauth2.TokenGenerateRequest, manager oauth2.Manager) {
+	config := manage.Config{
+		RefreshTokenExp:   0, // Set explicitly as we're testing 0 (no) expiration
+		IsGenerateRefresh: true,
+	}
+	m, ok := manager.(*manage.Manager)
+	So(ok, ShouldBeTrue)
+	m.SetAuthorizeCodeTokenCfg(&config)
+
+	cti, err := manager.GenerateAuthToken(oauth2.Code, tgr)
+	So(err, ShouldBeNil)
+
+	code := cti.GetCode()
+	So(code, ShouldNotBeEmpty)
+
+	atParams := &oauth2.TokenGenerateRequest{
+		ClientID:       tgr.ClientID,
+		ClientSecret:   "11",
+		RedirectURI:    tgr.RedirectURI,
+		AccessTokenExp: time.Hour,
+		Code:           code,
+	}
+	ati, err := manager.GenerateAccessToken(oauth2.AuthorizationCode, atParams)
+	So(err, ShouldBeNil)
+
+	accessToken, refreshToken := ati.GetAccess(), ati.GetRefresh()
+	So(accessToken, ShouldNotBeEmpty)
+	So(refreshToken, ShouldNotBeEmpty)
+
+	tokenInfo, err := manager.LoadRefreshToken(refreshToken)
+	So(err, ShouldBeNil)
+	So(tokenInfo, ShouldNotBeNil)
+	So(tokenInfo.GetRefresh(), ShouldEqual, refreshToken)
+	So(tokenInfo.GetRefreshExpiresIn(), ShouldEqual, 0)
+
+	// LoadAccessToken also checks refresh expiry
+	tokenInfo, err = manager.LoadAccessToken(accessToken)
+	So(err, ShouldBeNil)
+	So(tokenInfo, ShouldNotBeNil)
+	So(tokenInfo.GetRefresh(), ShouldEqual, refreshToken)
+	So(tokenInfo.GetRefreshExpiresIn(), ShouldEqual, 0)
 }
