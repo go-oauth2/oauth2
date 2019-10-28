@@ -464,10 +464,12 @@ func (m *Manager) LoadAccessToken(access string) (info oauth2.TokenInfo, err err
 	} else if ti == nil || ti.GetAccess() != access {
 		err = errors.ErrInvalidAccessToken
 		return
-	} else if ti.GetRefresh() != "" && ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(ct) {
+	} else if ti.GetRefresh() != "" && ti.GetRefreshExpiresIn() != 0 &&
+		ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(ct) {
 		err = errors.ErrExpiredRefreshToken
 		return
-	} else if ti.GetAccessCreateAt().Add(ti.GetAccessExpiresIn()).Before(ct) {
+	} else if ti.GetAccessExpiresIn() != 0 &&
+		ti.GetAccessCreateAt().Add(ti.GetAccessExpiresIn()).Before(ct) {
 		err = errors.ErrExpiredAccessToken
 		return
 	}
@@ -489,7 +491,8 @@ func (m *Manager) LoadRefreshToken(refresh string) (info oauth2.TokenInfo, err e
 	} else if ti == nil || ti.GetRefresh() != refresh {
 		err = errors.ErrInvalidRefreshToken
 		return
-	} else if ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(time.Now()) {
+	} else if ti.GetRefreshExpiresIn() != 0 && // refresh token set to not expire
+		ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(time.Now()) {
 		err = errors.ErrExpiredRefreshToken
 		return
 	}
