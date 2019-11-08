@@ -9,21 +9,22 @@ import (
 
 type (
 	// ValidateURIHandler validates that redirectURI is contained in baseURI
-	ValidateURIHandler func(baseURI, redirectURI string) (err error)
+	ValidateURIHandler func(baseURI, redirectURI string) error
 )
 
 // DefaultValidateURI validates that redirectURI is contained in baseURI
-func DefaultValidateURI(baseURI string, redirectURI string) (err error) {
+func DefaultValidateURI(baseURI string, redirectURI string) error {
 	base, err := url.Parse(baseURI)
 	if err != nil {
-		return
+		return err
 	}
+
 	redirect, err := url.Parse(redirectURI)
 	if err != nil {
-		return
+		return err
 	}
 	if !strings.HasSuffix(redirect.Host, base.Host) {
-		err = errors.ErrInvalidRedirectURI
+		return errors.ErrInvalidRedirectURI
 	}
-	return
+	return nil
 }

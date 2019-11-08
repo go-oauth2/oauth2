@@ -21,21 +21,21 @@ type ClientStore struct {
 }
 
 // GetByID according to the ID for the client information
-func (cs *ClientStore) GetByID(id string) (cli oauth2.ClientInfo, err error) {
+func (cs *ClientStore) GetByID(id string) (oauth2.ClientInfo, error) {
 	cs.RLock()
 	defer cs.RUnlock()
+
 	if c, ok := cs.data[id]; ok {
-		cli = c
-		return
+		return c, nil
 	}
-	err = errors.New("not found")
-	return
+	return nil, errors.New("not found")
 }
 
 // Set set client information
 func (cs *ClientStore) Set(id string, cli oauth2.ClientInfo) (err error) {
 	cs.Lock()
 	defer cs.Unlock()
+
 	cs.data[id] = cli
 	return
 }

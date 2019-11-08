@@ -11,19 +11,17 @@ import (
 )
 
 // NewMemoryTokenStore create a token store instance based on memory
-func NewMemoryTokenStore() (store oauth2.TokenStore, err error) {
-	store, err = NewFileTokenStore(":memory:")
-	return
+func NewMemoryTokenStore() (oauth2.TokenStore, error) {
+	return NewFileTokenStore(":memory:")
 }
 
 // NewFileTokenStore create a token store instance based on file
-func NewFileTokenStore(filename string) (store oauth2.TokenStore, err error) {
+func NewFileTokenStore(filename string) (oauth2.TokenStore, error) {
 	db, err := buntdb.Open(filename)
 	if err != nil {
-		return
+		return nil, err
 	}
-	store = &TokenStore{db: db}
-	return
+	return &TokenStore{db: db}, nil
 }
 
 // TokenStore token storage based on buntdb(https://github.com/tidwall/buntdb)
@@ -32,16 +30,17 @@ type TokenStore struct {
 }
 
 // Create create and store the new token information
-func (ts *TokenStore) Create(info oauth2.TokenInfo) (err error) {
+func (ts *TokenStore) Create(info oauth2.TokenInfo) error {
 	ct := time.Now()
 	jv, err := json.Marshal(info)
 	if err != nil {
-		return
+		return err
 	}
-	err = ts.db.Update(func(tx *buntdb.Tx) (err error) {
+
+	return ts.db.Update(func(tx *buntdb.Tx) error {
 		if code := info.GetCode(); code != "" {
-			_, _, err = tx.Set(code, string(jv), &buntdb.SetOptions{Expires: true, TTL: info.GetCodeExpiresIn()})
-			return
+			_, _, err := tx.Set(code, string(jv), &buntdb.SetOptions{Expires: true, TTL: info.GetCodeExpiresIn()})
+			return err
 		}
 
 		basicID := uuid.Must(uuid.NewRandom()).String()
@@ -54,115 +53,111 @@ func (ts *TokenStore) Create(info oauth2.TokenInfo) (err error) {
 				aexp = rexp
 			}
 			expires = info.GetRefreshExpiresIn() != 0
-			_, _, err = tx.Set(refresh, basicID, &buntdb.SetOptions{Expires: expires, TTL: rexp})
+			_, _, err := tx.Set(refresh, basicID, &buntdb.SetOptions{Expires: expires, TTL: rexp})
 			if err != nil {
-				return
+				return err
 			}
 		}
-		_, _, err = tx.Set(basicID, string(jv), &buntdb.SetOptions{Expires: expires, TTL: rexp})
+
+		_, _, err := tx.Set(basicID, string(jv), &buntdb.SetOptions{Expires: expires, TTL: rexp})
 		if err != nil {
-			return
+			return err
 		}
 		_, _, err = tx.Set(info.GetAccess(), basicID, &buntdb.SetOptions{Expires: expires, TTL: aexp})
-		return
+		return err
 	})
-	return
 }
 
 // remove key
-func (ts *TokenStore) remove(key string) (err error) {
-	verr := ts.db.Update(func(tx *buntdb.Tx) (err error) {
-		_, err = tx.Delete(key)
-		return
+func (ts *TokenStore) remove(key string) error {
+	err := ts.db.Update(func(tx *buntdb.Tx) error {
+		_, err := tx.Delete(key)
+		return err
 	})
-	if verr == buntdb.ErrNotFound {
-		return
+	if err == buntdb.ErrNotFound {
+		return nil
 	}
-	err = verr
-	return
+	return err
 }
 
 // RemoveByCode use the authorization code to delete the token information
-func (ts *TokenStore) RemoveByCode(code string) (err error) {
-	err = ts.remove(code)
-	return
+func (ts *TokenStore) RemoveByCode(code string) error {
+	return ts.remove(code)
 }
 
 // RemoveByAccess use the access token to delete the token information
-func (ts *TokenStore) RemoveByAccess(access string) (err error) {
-	err = ts.remove(access)
-	return
+func (ts *TokenStore) RemoveByAccess(access string) error {
+	return ts.remove(access)
 }
 
 // RemoveByRefresh use the refresh token to delete the token information
-func (ts *TokenStore) RemoveByRefresh(refresh string) (err error) {
-	err = ts.remove(refresh)
-	return
+func (ts *TokenStore) RemoveByRefresh(refresh string) error {
+	return ts.remove(refresh)
 }
 
-func (ts *TokenStore) getData(key string) (ti oauth2.TokenInfo, err error) {
-	verr := ts.db.View(func(tx *buntdb.Tx) (err error) {
+func (ts *TokenStore) getData(key string) (oauth2.TokenInfo, error) {
+	var ti oauth2.TokenInfo
+	err := ts.db.View(func(tx *buntdb.Tx) error {
 		jv, err := tx.Get(key)
 		if err != nil {
-			return
+			return err
 		}
+
 		var tm models.Token
 		err = json.Unmarshal([]byte(jv), &tm)
 		if err != nil {
-			return
+			return err
 		}
 		ti = &tm
-		return
+		return nil
 	})
-	if verr != nil {
-		if verr == buntdb.ErrNotFound {
-			return
+	if err != nil {
+		if err == buntdb.ErrNotFound {
+			return nil, nil
 		}
-		err = verr
+		return nil, err
 	}
-	return
+	return ti, nil
 }
 
-func (ts *TokenStore) getBasicID(key string) (basicID string, err error) {
-	verr := ts.db.View(func(tx *buntdb.Tx) (err error) {
+func (ts *TokenStore) getBasicID(key string) (string, error) {
+	var basicID string
+	err := ts.db.View(func(tx *buntdb.Tx) error {
 		v, err := tx.Get(key)
 		if err != nil {
-			return
+			return err
 		}
 		basicID = v
-		return
+		return nil
 	})
-	if verr != nil {
-		if verr == buntdb.ErrNotFound {
-			return
+	if err != nil {
+		if err == buntdb.ErrNotFound {
+			return "", nil
 		}
-		err = verr
+		return "", err
 	}
-	return
+	return basicID, nil
 }
 
 // GetByCode use the authorization code for token information data
-func (ts *TokenStore) GetByCode(code string) (ti oauth2.TokenInfo, err error) {
-	ti, err = ts.getData(code)
-	return
+func (ts *TokenStore) GetByCode(code string) (oauth2.TokenInfo, error) {
+	return ts.getData(code)
 }
 
 // GetByAccess use the access token for token information data
-func (ts *TokenStore) GetByAccess(access string) (ti oauth2.TokenInfo, err error) {
+func (ts *TokenStore) GetByAccess(access string) (oauth2.TokenInfo, error) {
 	basicID, err := ts.getBasicID(access)
 	if err != nil {
-		return
+		return nil, err
 	}
-	ti, err = ts.getData(basicID)
-	return
+	return ts.getData(basicID)
 }
 
 // GetByRefresh use the refresh token for token information data
-func (ts *TokenStore) GetByRefresh(refresh string) (ti oauth2.TokenInfo, err error) {
+func (ts *TokenStore) GetByRefresh(refresh string) (oauth2.TokenInfo, error) {
 	basicID, err := ts.getBasicID(refresh)
 	if err != nil {
-		return
+		return nil, err
 	}
-	ti, err = ts.getData(basicID)
-	return
+	return ts.getData(basicID)
 }

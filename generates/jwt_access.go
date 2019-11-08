@@ -41,7 +41,7 @@ type JWTAccessGenerate struct {
 }
 
 // Token based on the UUID generated token
-func (a *JWTAccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool) (access, refresh string, err error) {
+func (a *JWTAccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool) (string, string, error) {
 	claims := &JWTAccessClaims{
 		StandardClaims: jwt.StandardClaims{
 			Audience:  data.Client.GetID(),
@@ -53,31 +53,35 @@ func (a *JWTAccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool)
 	token := jwt.NewWithClaims(a.SignedMethod, claims)
 	var key interface{}
 	if a.isEs() {
-		key, err = jwt.ParseECPrivateKeyFromPEM(a.SignedKey)
+		v, err := jwt.ParseECPrivateKeyFromPEM(a.SignedKey)
 		if err != nil {
 			return "", "", err
 		}
+		key = v
 	} else if a.isRsOrPS() {
-		key, err = jwt.ParseRSAPrivateKeyFromPEM(a.SignedKey)
+		v, err := jwt.ParseRSAPrivateKeyFromPEM(a.SignedKey)
 		if err != nil {
 			return "", "", err
 		}
+		key = v
 	} else if a.isHs() {
 		key = a.SignedKey
 	} else {
 		return "", "", errs.New("unsupported sign method")
 	}
-	access, err = token.SignedString(key)
+
+	access, err := token.SignedString(key)
 	if err != nil {
-		return
+		return "", "", err
 	}
+	refresh := ""
 
 	if isGenRefresh {
 		refresh = base64.URLEncoding.EncodeToString(uuid.NewSHA1(uuid.Must(uuid.NewRandom()), []byte(access)).Bytes())
 		refresh = strings.ToUpper(strings.TrimRight(refresh, "="))
 	}
 
-	return
+	return access, refresh, nil
 }
 
 func (a *JWTAccessGenerate) isEs() bool {

@@ -140,14 +140,13 @@ func (m *Manager) GetClient(clientID string) (cli oauth2.ClientInfo, err error) 
 }
 
 // GenerateAuthToken generate the authorization token(code)
-func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGenerateRequest) (authToken oauth2.TokenInfo, err error) {
+func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
 	cli, err := m.GetClient(tgr.ClientID)
 	if err != nil {
-		return
+		return nil, err
 	} else if tgr.RedirectURI != "" {
-		if verr := m.validateURI(cli.GetDomain(), tgr.RedirectURI); verr != nil {
-			err = verr
-			return
+		if err := m.validateURI(cli.GetDomain(), tgr.RedirectURI); err != nil {
+			return nil, err
 		}
 	}
 
@@ -177,10 +176,9 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 			ti.SetAccessExpiresIn(exp)
 		}
 
-		tv, terr := m.authorizeGenerate.Token(td)
-		if terr != nil {
-			err = terr
-			return
+		tv, err := m.authorizeGenerate.Token(td)
+		if err != nil {
+			return nil, err
 		}
 		ti.SetCode(tv)
 	case oauth2.Token:
@@ -198,10 +196,9 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 			ti.SetRefreshExpiresIn(icfg.RefreshTokenExp)
 		}
 
-		tv, rv, terr := m.accessGenerate.Token(td, icfg.IsGenerateRefresh)
-		if terr != nil {
-			err = terr
-			return
+		tv, rv, err := m.accessGenerate.Token(td, icfg.IsGenerateRefresh)
+		if err != nil {
+			return nil, err
 		}
 		ti.SetAccess(tv)
 
@@ -212,74 +209,64 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 
 	err = m.tokenStore.Create(ti)
 	if err != nil {
-		return
+		return nil, err
 	}
-	authToken = ti
-	return
+	return ti, nil
 }
 
 // get authorization code data
-func (m *Manager) getAuthorizationCode(code string) (info oauth2.TokenInfo, err error) {
-	ti, terr := m.tokenStore.GetByCode(code)
-	if terr != nil {
-		err = terr
-		return
+func (m *Manager) getAuthorizationCode(code string) (oauth2.TokenInfo, error) {
+	ti, err := m.tokenStore.GetByCode(code)
+	if err != nil {
+		return nil, err
 	} else if ti == nil || ti.GetCode() != code || ti.GetCodeCreateAt().Add(ti.GetCodeExpiresIn()).Before(time.Now()) {
 		err = errors.ErrInvalidAuthorizeCode
-		return
+		return nil, errors.ErrInvalidAuthorizeCode
 	}
-	info = ti
-	return
+	return ti, nil
 }
 
 // delete authorization code data
-func (m *Manager) delAuthorizationCode(code string) (err error) {
-	err = m.tokenStore.RemoveByCode(code)
-	return
+func (m *Manager) delAuthorizationCode(code string) error {
+	return m.tokenStore.RemoveByCode(code)
 }
 
 // get and delete authorization code data
-func (m *Manager) getAndDelAuthorizationCode(tgr *oauth2.TokenGenerateRequest) (info oauth2.TokenInfo, err error) {
+func (m *Manager) getAndDelAuthorizationCode(tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
 	code := tgr.Code
 	ti, err := m.getAuthorizationCode(code)
 	if err != nil {
-		return
+		return nil, err
 	} else if ti.GetClientID() != tgr.ClientID {
-		err = errors.ErrInvalidAuthorizeCode
-		return
+		return nil, errors.ErrInvalidAuthorizeCode
 	} else if codeURI := ti.GetRedirectURI(); codeURI != "" && codeURI != tgr.RedirectURI {
-		err = errors.ErrInvalidAuthorizeCode
-		return
+		return nil, errors.ErrInvalidAuthorizeCode
 	}
 
 	err = m.delAuthorizationCode(code)
 	if err != nil {
-		return
+		return nil, err
 	}
-	info = ti
-	return
+	return ti, nil
 }
 
 // GenerateAccessToken generate the access token
-func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (accessToken oauth2.TokenInfo, err error) {
+func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
 	cli, err := m.GetClient(tgr.ClientID)
 	if err != nil {
-		return
+		return nil, err
 	} else if tgr.ClientSecret != cli.GetSecret() {
-		err = errors.ErrInvalidClient
-		return
+		return nil, errors.ErrInvalidClient
 	} else if tgr.RedirectURI != "" {
-		if verr := m.validateURI(cli.GetDomain(), tgr.RedirectURI); verr != nil {
-			err = verr
-			return
+		if err := m.validateURI(cli.GetDomain(), tgr.RedirectURI); err != nil {
+			return nil, err
 		}
 	}
 
 	if gt == oauth2.AuthorizationCode {
-		ti, verr := m.getAndDelAuthorizationCode(tgr)
-		if verr != nil {
-			err = verr
-			return
+		ti, err := m.getAndDelAuthorizationCode(tgr)
+		if err != nil {
+			return nil, err
 		}
 		tgr.UserID = ti.GetUserID()
 		tgr.Scope = ti.GetScope()
@@ -317,10 +304,9 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 		Request:   tgr.Request,
 	}
 
-	av, rv, terr := m.accessGenerate.Token(td, gcfg.IsGenerateRefresh)
-	if terr != nil {
-		err = terr
-		return
+	av, rv, err := m.accessGenerate.Token(td, gcfg.IsGenerateRefresh)
+	if err != nil {
+		return nil, err
 	}
 	ti.SetAccess(av)
 
@@ -330,29 +316,26 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 
 	err = m.tokenStore.Create(ti)
 	if err != nil {
-		return
+		return nil, err
 	}
-	accessToken = ti
 
-	return
+	return ti, nil
 }
 
 // RefreshAccessToken refreshing an access token
-func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessToken oauth2.TokenInfo, err error) {
+func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
 	cli, err := m.GetClient(tgr.ClientID)
 	if err != nil {
-		return
+		return nil, err
 	} else if tgr.ClientSecret != cli.GetSecret() {
-		err = errors.ErrInvalidClient
-		return
+		return nil, errors.ErrInvalidClient
 	}
 
 	ti, err := m.LoadRefreshToken(tgr.Refresh)
 	if err != nil {
-		return
+		return nil, err
 	} else if ti.GetClientID() != tgr.ClientID {
-		err = errors.ErrInvalidRefreshToken
-		return
+		return nil, errors.ErrInvalidRefreshToken
 	}
 
 	oldAccess, oldRefresh := ti.GetAccess(), ti.GetRefresh()
@@ -387,10 +370,9 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 		ti.SetScope(scope)
 	}
 
-	tv, rv, terr := m.accessGenerate.Token(td, rcfg.IsGenerateRefresh)
-	if terr != nil {
-		err = terr
-		return
+	tv, rv, err := m.accessGenerate.Token(td, rcfg.IsGenerateRefresh)
+	if err != nil {
+		return nil, err
 	}
 
 	ti.SetAccess(tv)
@@ -398,104 +380,85 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (accessTo
 		ti.SetRefresh(rv)
 	}
 
-	if verr := m.tokenStore.Create(ti); verr != nil {
-		err = verr
-		return
+	if err := m.tokenStore.Create(ti); err != nil {
+		return nil, err
 	}
 
 	if rcfg.IsRemoveAccess {
 		// remove the old access token
-		if verr := m.tokenStore.RemoveByAccess(oldAccess); verr != nil {
-			err = verr
-			return
+		if err := m.tokenStore.RemoveByAccess(oldAccess); err != nil {
+			return nil, err
 		}
 	}
 
 	if rcfg.IsRemoveRefreshing && rv != "" {
 		// remove the old refresh token
-		if verr := m.tokenStore.RemoveByRefresh(oldRefresh); verr != nil {
-			err = verr
-			return
+		if err := m.tokenStore.RemoveByRefresh(oldRefresh); err != nil {
+			return nil, err
 		}
 	}
 
-	accessToken = ti
 	if rv == "" {
-		accessToken.SetRefresh("")
-		accessToken.SetRefreshCreateAt(time.Now())
-		accessToken.SetRefreshExpiresIn(0)
+		ti.SetRefresh("")
+		ti.SetRefreshCreateAt(time.Now())
+		ti.SetRefreshExpiresIn(0)
 	}
 
-	return
+	return ti, nil
 }
 
 // RemoveAccessToken use the access token to delete the token information
-func (m *Manager) RemoveAccessToken(access string) (err error) {
+func (m *Manager) RemoveAccessToken(access string) error {
 	if access == "" {
-		err = errors.ErrInvalidAccessToken
-		return
+		return errors.ErrInvalidAccessToken
 	}
-	err = m.tokenStore.RemoveByAccess(access)
-	return
+	return m.tokenStore.RemoveByAccess(access)
 }
 
 // RemoveRefreshToken use the refresh token to delete the token information
-func (m *Manager) RemoveRefreshToken(refresh string) (err error) {
+func (m *Manager) RemoveRefreshToken(refresh string) error {
 	if refresh == "" {
-		err = errors.ErrInvalidAccessToken
-		return
+		return errors.ErrInvalidAccessToken
 	}
-	err = m.tokenStore.RemoveByRefresh(refresh)
-	return
+	return m.tokenStore.RemoveByRefresh(refresh)
 }
 
 // LoadAccessToken according to the access token for corresponding token information
-func (m *Manager) LoadAccessToken(access string) (info oauth2.TokenInfo, err error) {
+func (m *Manager) LoadAccessToken(access string) (oauth2.TokenInfo, error) {
 	if access == "" {
-		err = errors.ErrInvalidAccessToken
-		return
+		return nil, errors.ErrInvalidAccessToken
 	}
 
 	ct := time.Now()
-	ti, terr := m.tokenStore.GetByAccess(access)
-	if terr != nil {
-		err = terr
-		return
+	ti, err := m.tokenStore.GetByAccess(access)
+	if err != nil {
+		return nil, err
 	} else if ti == nil || ti.GetAccess() != access {
-		err = errors.ErrInvalidAccessToken
-		return
+		return nil, errors.ErrInvalidAccessToken
 	} else if ti.GetRefresh() != "" && ti.GetRefreshExpiresIn() != 0 &&
 		ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(ct) {
-		err = errors.ErrExpiredRefreshToken
-		return
+		return nil, errors.ErrExpiredRefreshToken
 	} else if ti.GetAccessExpiresIn() != 0 &&
 		ti.GetAccessCreateAt().Add(ti.GetAccessExpiresIn()).Before(ct) {
-		err = errors.ErrExpiredAccessToken
-		return
+		return nil, errors.ErrExpiredAccessToken
 	}
-	info = ti
-	return
+	return ti, nil
 }
 
 // LoadRefreshToken according to the refresh token for corresponding token information
-func (m *Manager) LoadRefreshToken(refresh string) (info oauth2.TokenInfo, err error) {
+func (m *Manager) LoadRefreshToken(refresh string) (oauth2.TokenInfo, error) {
 	if refresh == "" {
-		err = errors.ErrInvalidRefreshToken
-		return
+		return nil, errors.ErrInvalidRefreshToken
 	}
 
-	ti, terr := m.tokenStore.GetByRefresh(refresh)
-	if terr != nil {
-		err = terr
-		return
+	ti, err := m.tokenStore.GetByRefresh(refresh)
+	if err != nil {
+		return nil, err
 	} else if ti == nil || ti.GetRefresh() != refresh {
-		err = errors.ErrInvalidRefreshToken
-		return
+		return nil, errors.ErrInvalidRefreshToken
 	} else if ti.GetRefreshExpiresIn() != 0 && // refresh token set to not expire
 		ti.GetRefreshCreateAt().Add(ti.GetRefreshExpiresIn()).Before(time.Now()) {
-		err = errors.ErrExpiredRefreshToken
-		return
+		return nil, errors.ErrExpiredRefreshToken
 	}
-	info = ti
-	return
+	return ti, nil
 }
