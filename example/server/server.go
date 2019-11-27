@@ -143,7 +143,13 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "POST" {
-		store.Set("LoggedInUserID", "000000")
+		if r.Form == nil {
+			if err := r.ParseForm(); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+		store.Set("LoggedInUserID", r.Form.Get("username"))
 		store.Save()
 
 		w.Header().Set("Location", "/auth")
