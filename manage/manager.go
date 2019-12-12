@@ -255,7 +255,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 	cli, err := m.GetClient(tgr.ClientID)
 	if err != nil {
 		return nil, err
-	} else if tgr.ClientSecret != cli.GetSecret() {
+	} else if tgr.ClientSecret != cli.GetSecret() && gt  != oauth2.PasswordCredentials {
 		return nil, errors.ErrInvalidClient
 	} else if tgr.RedirectURI != "" {
 		if err := m.validateURI(cli.GetDomain(), tgr.RedirectURI); err != nil {
