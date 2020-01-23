@@ -276,19 +276,25 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 		return "", nil, errors.ErrUnsupportedGrantType
 	}
 
-	clientID, clientSecret, err := s.ClientInfoHandler(r)
-	if err != nil {
-		return "", nil, err
+	tgr := &oauth2.TokenGenerateRequest{
+		Request: r,
 	}
 
-	tgr := &oauth2.TokenGenerateRequest{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		Request:      r,
+	getClientInfoFromRequest := func() error {
+		clientID, clientSecret, err := s.ClientInfoHandler(r)
+		if err != nil {
+			return err
+		}
+		tgr.ClientID = clientID
+		tgr.ClientSecret = clientSecret
+		return nil
 	}
 
 	switch gt {
 	case oauth2.AuthorizationCode:
+		if err := getClientInfoFromRequest(); err != nil {
+			return "", nil, err
+		}
 		tgr.RedirectURI = r.FormValue("redirect_uri")
 		tgr.Code = r.FormValue("code")
 		if tgr.RedirectURI == "" ||
@@ -296,6 +302,9 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 			return "", nil, errors.ErrInvalidRequest
 		}
 	case oauth2.PasswordCredentials:
+		if err := getClientInfoFromRequest(); err != nil {
+			return "", nil, err
+		}
 		tgr.Scope = r.FormValue("scope")
 		username, password := r.FormValue("username"), r.FormValue("password")
 		if username == "" || password == "" {
@@ -310,8 +319,12 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 		}
 		tgr.UserID = userID
 	case oauth2.ClientCredentials:
+		if err := getClientInfoFromRequest(); err != nil {
+			return "", nil, err
+		}
 		tgr.Scope = r.FormValue("scope")
 	case oauth2.Refreshing:
+		// don't check for clientID or clientSecret here to allow public clients to use the refresh flow
 		tgr.Refresh = r.FormValue("refresh_token")
 		tgr.Scope = r.FormValue("scope")
 		if tgr.Refresh == "" {

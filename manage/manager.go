@@ -324,18 +324,16 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 
 // RefreshAccessToken refreshing an access token
 func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
-	cli, err := m.GetClient(tgr.ClientID)
-	if err != nil {
-		return nil, err
-	} else if tgr.ClientSecret != cli.GetSecret() {
-		return nil, errors.ErrInvalidClient
-	}
-
 	ti, err := m.LoadRefreshToken(tgr.Refresh)
 	if err != nil {
 		return nil, err
-	} else if ti.GetClientID() != tgr.ClientID {
-		return nil, errors.ErrInvalidRefreshToken
+	}
+
+	cli, err := m.GetClient(ti.GetClientID())
+
+	if err != nil {
+		// this shouldn't happen: all refresh tokens should have associated clients
+		return nil, errors.ErrServerError
 	}
 
 	oldAccess, oldRefresh := ti.GetAccess(), ti.GetRefresh()
