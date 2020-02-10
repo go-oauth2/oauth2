@@ -10,11 +10,7 @@ const (
 )
 
 func (rt ResponseType) String() string {
-	if rt == Code ||
-		rt == Token {
-		return string(rt)
-	}
-	return ""
+	return string(rt)
 }
 
 // GrantType authorization model
