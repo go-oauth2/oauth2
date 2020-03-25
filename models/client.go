@@ -13,7 +13,7 @@ func (c *Client) GetID() string {
 	return c.ID
 }
 
-// GetSecret client domain
+// GetSecret client secret
 func (c *Client) GetSecret() string {
 	return c.Secret
 }
