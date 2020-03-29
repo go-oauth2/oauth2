@@ -67,14 +67,18 @@ func main() {
 		}
 
 		var form url.Values
+		// If the handler is invoked after user does authorization, get the saved form.
 		if v, ok := store.Get("ReturnUri"); ok {
 			form = v.(url.Values)
 		}
+		// When /authorize handler is first triggered from the client, form is
+		// empty.
 		r.Form = form
 
 		store.Delete("ReturnUri")
 		store.Save()
 
+		// If r.Form has not been parsed, HandleAuthorizeRequest will parse it.
 		err = srv.HandleAuthorizeRequest(w, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -121,6 +125,7 @@ func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string
 			r.ParseForm()
 		}
 
+		// Save the form for the later use when invoking /authorize handler.
 		store.Set("ReturnUri", r.Form)
 		store.Save()
 
