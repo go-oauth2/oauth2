@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -165,7 +166,7 @@ func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest,
 }
 
 // GetAuthorizeToken get authorization token(code)
-func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (oauth2.TokenInfo, error) {
+func (s *Server) GetAuthorizeToken(ctx context.Context, req *AuthorizeRequest) (oauth2.TokenInfo, error) {
 	// check the client allows the grant type
 	if fn := s.ClientAuthorizedHandler; fn != nil {
 		gt := oauth2.AuthorizationCode
@@ -199,7 +200,7 @@ func (s *Server) GetAuthorizeToken(req *AuthorizeRequest) (oauth2.TokenInfo, err
 		AccessTokenExp: req.AccessTokenExp,
 		Request:        req.Request,
 	}
-	return s.Manager.GenerateAuthToken(req.ResponseType, tgr)
+	return s.Manager.GenerateAuthToken(ctx, req.ResponseType, tgr)
 }
 
 // GetAuthorizeData get authorization response data
@@ -214,6 +215,8 @@ func (s *Server) GetAuthorizeData(rt oauth2.ResponseType, ti oauth2.TokenInfo) m
 
 // HandleAuthorizeRequest the authorization request handling
 func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) error {
+	ctx := context.Background()
+
 	req, err := s.ValidationAuthorizeRequest(r)
 	if err != nil {
 		return s.redirectError(w, req, err)
@@ -247,14 +250,14 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 		req.AccessTokenExp = exp
 	}
 
-	ti, err := s.GetAuthorizeToken(req)
+	ti, err := s.GetAuthorizeToken(ctx, req)
 	if err != nil {
 		return s.redirectError(w, req, err)
 	}
 
 	// If the redirect URI is empty, the default domain provided by the client is used.
 	if req.RedirectURI == "" {
-		client, err := s.Manager.GetClient(req.ClientID)
+		client, err := s.Manager.GetClient(ctx, req.ClientID)
 		if err != nil {
 			return err
 		}
@@ -332,7 +335,7 @@ func (s *Server) CheckGrantType(gt oauth2.GrantType) bool {
 }
 
 // GetAccessToken access token
-func (s *Server) GetAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
+func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
 	if allowed := s.CheckGrantType(gt); !allowed {
 		return nil, errors.ErrUnauthorizedClient
 	}
@@ -348,7 +351,7 @@ func (s *Server) GetAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRe
 
 	switch gt {
 	case oauth2.AuthorizationCode:
-		ti, err := s.Manager.GenerateAccessToken(gt, tgr)
+		ti, err := s.Manager.GenerateAccessToken(ctx, gt, tgr)
 		if err != nil {
 			switch err {
 			case errors.ErrInvalidAuthorizeCode:
@@ -369,11 +372,11 @@ func (s *Server) GetAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRe
 				return nil, errors.ErrInvalidScope
 			}
 		}
-		return s.Manager.GenerateAccessToken(gt, tgr)
+		return s.Manager.GenerateAccessToken(ctx, gt, tgr)
 	case oauth2.Refreshing:
 		// check scope
 		if scope, scopeFn := tgr.Scope, s.RefreshingScopeHandler; scope != "" && scopeFn != nil {
-			rti, err := s.Manager.LoadRefreshToken(tgr.Refresh)
+			rti, err := s.Manager.LoadRefreshToken(ctx, tgr.Refresh)
 			if err != nil {
 				if err == errors.ErrInvalidRefreshToken || err == errors.ErrExpiredRefreshToken {
 					return nil, errors.ErrInvalidGrant
@@ -389,7 +392,7 @@ func (s *Server) GetAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRe
 			}
 		}
 
-		ti, err := s.Manager.RefreshAccessToken(tgr)
+		ti, err := s.Manager.RefreshAccessToken(ctx, tgr)
 		if err != nil {
 			if err == errors.ErrInvalidRefreshToken || err == errors.ErrExpiredRefreshToken {
 				return nil, errors.ErrInvalidGrant
@@ -432,12 +435,14 @@ func (s *Server) GetTokenData(ti oauth2.TokenInfo) map[string]interface{} {
 
 // HandleTokenRequest token request handling
 func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) error {
+	ctx := context.Background()
+
 	gt, tgr, err := s.ValidationTokenRequest(r)
 	if err != nil {
 		return s.tokenError(w, err)
 	}
 
-	ti, err := s.GetAccessToken(gt, tgr)
+	ti, err := s.GetAccessToken(ctx, gt, tgr)
 	if err != nil {
 		return s.tokenError(w, err)
 	}
@@ -513,10 +518,12 @@ func (s *Server) BearerAuth(r *http.Request) (string, bool) {
 // ValidationBearerToken validation the bearer tokens
 // https://tools.ietf.org/html/rfc6750
 func (s *Server) ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error) {
+	ctx := context.Background()
+
 	accessToken, ok := s.BearerAuth(r)
 	if !ok {
 		return nil, errors.ErrInvalidAccessToken
 	}
 
-	return s.Manager.LoadAccessToken(accessToken)
+	return s.Manager.LoadAccessToken(ctx, accessToken)
 }

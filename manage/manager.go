@@ -1,6 +1,7 @@
 package manage
 
 import (
+	"context"
 	"time"
 
 	"gopkg.in/oauth2.v3"
@@ -129,8 +130,8 @@ func (m *Manager) MustTokenStorage(stor oauth2.TokenStore, err error) {
 }
 
 // GetClient get the client information
-func (m *Manager) GetClient(clientID string) (cli oauth2.ClientInfo, err error) {
-	cli, err = m.clientStore.GetByID(clientID)
+func (m *Manager) GetClient(ctx context.Context, clientID string) (cli oauth2.ClientInfo, err error) {
+	cli, err = m.clientStore.GetByID(ctx, clientID)
 	if err != nil {
 		return
 	} else if cli == nil {
@@ -140,8 +141,8 @@ func (m *Manager) GetClient(clientID string) (cli oauth2.ClientInfo, err error) 
 }
 
 // GenerateAuthToken generate the authorization token(code)
-func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
-	cli, err := m.GetClient(tgr.ClientID)
+func (m *Manager) GenerateAuthToken(ctx context.Context, rt oauth2.ResponseType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
+	cli, err := m.GetClient(ctx, tgr.ClientID)
 	if err != nil {
 		return nil, err
 	} else if tgr.RedirectURI != "" {
@@ -176,7 +177,7 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 			ti.SetAccessExpiresIn(exp)
 		}
 
-		tv, err := m.authorizeGenerate.Token(td)
+		tv, err := m.authorizeGenerate.Token(ctx, td)
 		if err != nil {
 			return nil, err
 		}
@@ -196,7 +197,7 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 			ti.SetRefreshExpiresIn(icfg.RefreshTokenExp)
 		}
 
-		tv, rv, err := m.accessGenerate.Token(td, icfg.IsGenerateRefresh)
+		tv, rv, err := m.accessGenerate.Token(ctx, td, icfg.IsGenerateRefresh)
 		if err != nil {
 			return nil, err
 		}
@@ -207,7 +208,7 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 		}
 	}
 
-	err = m.tokenStore.Create(ti)
+	err = m.tokenStore.Create(ctx, ti)
 	if err != nil {
 		return nil, err
 	}
@@ -215,8 +216,8 @@ func (m *Manager) GenerateAuthToken(rt oauth2.ResponseType, tgr *oauth2.TokenGen
 }
 
 // get authorization code data
-func (m *Manager) getAuthorizationCode(code string) (oauth2.TokenInfo, error) {
-	ti, err := m.tokenStore.GetByCode(code)
+func (m *Manager) getAuthorizationCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
+	ti, err := m.tokenStore.GetByCode(ctx, code)
 	if err != nil {
 		return nil, err
 	} else if ti == nil || ti.GetCode() != code || ti.GetCodeCreateAt().Add(ti.GetCodeExpiresIn()).Before(time.Now()) {
@@ -227,14 +228,14 @@ func (m *Manager) getAuthorizationCode(code string) (oauth2.TokenInfo, error) {
 }
 
 // delete authorization code data
-func (m *Manager) delAuthorizationCode(code string) error {
-	return m.tokenStore.RemoveByCode(code)
+func (m *Manager) delAuthorizationCode(ctx context.Context, code string) error {
+	return m.tokenStore.RemoveByCode(ctx, code)
 }
 
 // get and delete authorization code data
-func (m *Manager) getAndDelAuthorizationCode(tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
+func (m *Manager) getAndDelAuthorizationCode(ctx context.Context, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
 	code := tgr.Code
-	ti, err := m.getAuthorizationCode(code)
+	ti, err := m.getAuthorizationCode(ctx, code)
 	if err != nil {
 		return nil, err
 	} else if ti.GetClientID() != tgr.ClientID {
@@ -243,7 +244,7 @@ func (m *Manager) getAndDelAuthorizationCode(tgr *oauth2.TokenGenerateRequest) (
 		return nil, errors.ErrInvalidAuthorizeCode
 	}
 
-	err = m.delAuthorizationCode(code)
+	err = m.delAuthorizationCode(ctx, code)
 	if err != nil {
 		return nil, err
 	}
@@ -251,8 +252,8 @@ func (m *Manager) getAndDelAuthorizationCode(tgr *oauth2.TokenGenerateRequest) (
 }
 
 // GenerateAccessToken generate the access token
-func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
-	cli, err := m.GetClient(tgr.ClientID)
+func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
+	cli, err := m.GetClient(ctx, tgr.ClientID)
 	if err != nil {
 		return nil, err
 	} else if tgr.ClientSecret != cli.GetSecret() {
@@ -264,7 +265,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 	}
 
 	if gt == oauth2.AuthorizationCode {
-		ti, err := m.getAndDelAuthorizationCode(tgr)
+		ti, err := m.getAndDelAuthorizationCode(ctx, tgr)
 		if err != nil {
 			return nil, err
 		}
@@ -304,7 +305,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 		Request:   tgr.Request,
 	}
 
-	av, rv, err := m.accessGenerate.Token(td, gcfg.IsGenerateRefresh)
+	av, rv, err := m.accessGenerate.Token(ctx, td, gcfg.IsGenerateRefresh)
 	if err != nil {
 		return nil, err
 	}
@@ -314,7 +315,7 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 		ti.SetRefresh(rv)
 	}
 
-	err = m.tokenStore.Create(ti)
+	err = m.tokenStore.Create(ctx, ti)
 	if err != nil {
 		return nil, err
 	}
@@ -323,15 +324,15 @@ func (m *Manager) GenerateAccessToken(gt oauth2.GrantType, tgr *oauth2.TokenGene
 }
 
 // RefreshAccessToken refreshing an access token
-func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
-	cli, err := m.GetClient(tgr.ClientID)
+func (m *Manager) RefreshAccessToken(ctx context.Context, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
+	cli, err := m.GetClient(ctx, tgr.ClientID)
 	if err != nil {
 		return nil, err
 	} else if tgr.ClientSecret != cli.GetSecret() {
 		return nil, errors.ErrInvalidClient
 	}
 
-	ti, err := m.LoadRefreshToken(tgr.Refresh)
+	ti, err := m.LoadRefreshToken(ctx, tgr.Refresh)
 	if err != nil {
 		return nil, err
 	} else if ti.GetClientID() != tgr.ClientID {
@@ -370,7 +371,7 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (oauth2.T
 		ti.SetScope(scope)
 	}
 
-	tv, rv, err := m.accessGenerate.Token(td, rcfg.IsGenerateRefresh)
+	tv, rv, err := m.accessGenerate.Token(ctx, td, rcfg.IsGenerateRefresh)
 	if err != nil {
 		return nil, err
 	}
@@ -380,20 +381,20 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (oauth2.T
 		ti.SetRefresh(rv)
 	}
 
-	if err := m.tokenStore.Create(ti); err != nil {
+	if err := m.tokenStore.Create(ctx, ti); err != nil {
 		return nil, err
 	}
 
 	if rcfg.IsRemoveAccess {
 		// remove the old access token
-		if err := m.tokenStore.RemoveByAccess(oldAccess); err != nil {
+		if err := m.tokenStore.RemoveByAccess(ctx, oldAccess); err != nil {
 			return nil, err
 		}
 	}
 
 	if rcfg.IsRemoveRefreshing && rv != "" {
 		// remove the old refresh token
-		if err := m.tokenStore.RemoveByRefresh(oldRefresh); err != nil {
+		if err := m.tokenStore.RemoveByRefresh(ctx, oldRefresh); err != nil {
 			return nil, err
 		}
 	}
@@ -408,29 +409,29 @@ func (m *Manager) RefreshAccessToken(tgr *oauth2.TokenGenerateRequest) (oauth2.T
 }
 
 // RemoveAccessToken use the access token to delete the token information
-func (m *Manager) RemoveAccessToken(access string) error {
+func (m *Manager) RemoveAccessToken(ctx context.Context, access string) error {
 	if access == "" {
 		return errors.ErrInvalidAccessToken
 	}
-	return m.tokenStore.RemoveByAccess(access)
+	return m.tokenStore.RemoveByAccess(ctx, access)
 }
 
 // RemoveRefreshToken use the refresh token to delete the token information
-func (m *Manager) RemoveRefreshToken(refresh string) error {
+func (m *Manager) RemoveRefreshToken(ctx context.Context, refresh string) error {
 	if refresh == "" {
 		return errors.ErrInvalidAccessToken
 	}
-	return m.tokenStore.RemoveByRefresh(refresh)
+	return m.tokenStore.RemoveByRefresh(ctx, refresh)
 }
 
 // LoadAccessToken according to the access token for corresponding token information
-func (m *Manager) LoadAccessToken(access string) (oauth2.TokenInfo, error) {
+func (m *Manager) LoadAccessToken(ctx context.Context, access string) (oauth2.TokenInfo, error) {
 	if access == "" {
 		return nil, errors.ErrInvalidAccessToken
 	}
 
 	ct := time.Now()
-	ti, err := m.tokenStore.GetByAccess(access)
+	ti, err := m.tokenStore.GetByAccess(ctx, access)
 	if err != nil {
 		return nil, err
 	} else if ti == nil || ti.GetAccess() != access {
@@ -446,12 +447,12 @@ func (m *Manager) LoadAccessToken(access string) (oauth2.TokenInfo, error) {
 }
 
 // LoadRefreshToken according to the refresh token for corresponding token information
-func (m *Manager) LoadRefreshToken(refresh string) (oauth2.TokenInfo, error) {
+func (m *Manager) LoadRefreshToken(ctx context.Context, refresh string) (oauth2.TokenInfo, error) {
 	if refresh == "" {
 		return nil, errors.ErrInvalidRefreshToken
 	}
 
-	ti, err := m.tokenStore.GetByRefresh(refresh)
+	ti, err := m.tokenStore.GetByRefresh(ctx, refresh)
 	if err != nil {
 		return nil, err
 	} else if ti == nil || ti.GetRefresh() != refresh {

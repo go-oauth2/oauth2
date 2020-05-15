@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 
@@ -30,7 +31,7 @@ type TokenStore struct {
 }
 
 // Create create and store the new token information
-func (ts *TokenStore) Create(info oauth2.TokenInfo) error {
+func (ts *TokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error {
 	ct := time.Now()
 	jv, err := json.Marshal(info)
 	if err != nil {
@@ -81,17 +82,17 @@ func (ts *TokenStore) remove(key string) error {
 }
 
 // RemoveByCode use the authorization code to delete the token information
-func (ts *TokenStore) RemoveByCode(code string) error {
+func (ts *TokenStore) RemoveByCode(ctx context.Context, code string) error {
 	return ts.remove(code)
 }
 
 // RemoveByAccess use the access token to delete the token information
-func (ts *TokenStore) RemoveByAccess(access string) error {
+func (ts *TokenStore) RemoveByAccess(ctx context.Context, access string) error {
 	return ts.remove(access)
 }
 
 // RemoveByRefresh use the refresh token to delete the token information
-func (ts *TokenStore) RemoveByRefresh(refresh string) error {
+func (ts *TokenStore) RemoveByRefresh(ctx context.Context, refresh string) error {
 	return ts.remove(refresh)
 }
 
@@ -140,12 +141,12 @@ func (ts *TokenStore) getBasicID(key string) (string, error) {
 }
 
 // GetByCode use the authorization code for token information data
-func (ts *TokenStore) GetByCode(code string) (oauth2.TokenInfo, error) {
+func (ts *TokenStore) GetByCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
 	return ts.getData(code)
 }
 
 // GetByAccess use the access token for token information data
-func (ts *TokenStore) GetByAccess(access string) (oauth2.TokenInfo, error) {
+func (ts *TokenStore) GetByAccess(ctx context.Context, access string) (oauth2.TokenInfo, error) {
 	basicID, err := ts.getBasicID(access)
 	if err != nil {
 		return nil, err
@@ -154,7 +155,7 @@ func (ts *TokenStore) GetByAccess(access string) (oauth2.TokenInfo, error) {
 }
 
 // GetByRefresh use the refresh token for token information data
-func (ts *TokenStore) GetByRefresh(refresh string) (oauth2.TokenInfo, error) {
+func (ts *TokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2.TokenInfo, error) {
 	basicID, err := ts.getBasicID(refresh)
 	if err != nil {
 		return nil, err

@@ -1,6 +1,7 @@
 package generates_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -22,7 +23,7 @@ func TestAuthorize(t *testing.T) {
 			CreateAt: time.Now(),
 		}
 		gen := generates.NewAuthorizeGenerate()
-		code, err := gen.Token(data)
+		code, err := gen.Token(context.Background(), data)
 		So(err, ShouldBeNil)
 		So(code, ShouldNotBeEmpty)
 		Println("\nAuthorize Code:" + code)

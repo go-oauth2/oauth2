@@ -1,6 +1,7 @@
 package generates_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -28,7 +29,7 @@ func TestJWTAccess(t *testing.T) {
 		}
 
 		gen := generates.NewJWTAccessGenerate([]byte("00000000"), jwt.SigningMethodHS512)
-		access, refresh, err := gen.Token(data, true)
+		access, refresh, err := gen.Token(context.Background(), data, true)
 		So(err, ShouldBeNil)
 		So(access, ShouldNotBeEmpty)
 		So(refresh, ShouldNotBeEmpty)

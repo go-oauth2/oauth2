@@ -1,6 +1,7 @@
 package oauth2
 
 import (
+	"context"
 	"net/http"
 	"time"
 )
@@ -21,26 +22,26 @@ type TokenGenerateRequest struct {
 // Manager authorization management interface
 type Manager interface {
 	// get the client information
-	GetClient(clientID string) (cli ClientInfo, err error)
+	GetClient(ctx context.Context, clientID string) (cli ClientInfo, err error)
 
 	// generate the authorization token(code)
-	GenerateAuthToken(rt ResponseType, tgr *TokenGenerateRequest) (authToken TokenInfo, err error)
+	GenerateAuthToken(ctx context.Context, rt ResponseType, tgr *TokenGenerateRequest) (authToken TokenInfo, err error)
 
 	// generate the access token
-	GenerateAccessToken(rt GrantType, tgr *TokenGenerateRequest) (accessToken TokenInfo, err error)
+	GenerateAccessToken(ctx context.Context, rt GrantType, tgr *TokenGenerateRequest) (accessToken TokenInfo, err error)
 
 	// refreshing an access token
-	RefreshAccessToken(tgr *TokenGenerateRequest) (accessToken TokenInfo, err error)
+	RefreshAccessToken(ctx context.Context, tgr *TokenGenerateRequest) (accessToken TokenInfo, err error)
 
 	// use the access token to delete the token information
-	RemoveAccessToken(access string) (err error)
+	RemoveAccessToken(ctx context.Context, access string) (err error)
 
 	// use the refresh token to delete the token information
-	RemoveRefreshToken(refresh string) (err error)
+	RemoveRefreshToken(ctx context.Context, refresh string) (err error)
 
 	// according to the access token for corresponding token information
-	LoadAccessToken(access string) (ti TokenInfo, err error)
+	LoadAccessToken(ctx context.Context, access string) (ti TokenInfo, err error)
 
 	// according to the refresh token for corresponding token information
-	LoadRefreshToken(refresh string) (ti TokenInfo, err error)
+	LoadRefreshToken(ctx context.Context, refresh string) (ti TokenInfo, err error)
 }
