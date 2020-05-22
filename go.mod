@@ -1,4 +1,4 @@
-module gopkg.in/oauth2.v3
+module gopkg.in/oauth2.v4
 
 go 1.13
 

@@ -8,12 +8,12 @@ import (
 	"testing"
 
 	"github.com/gavv/httpexpect"
-	"gopkg.in/oauth2.v3"
-	"gopkg.in/oauth2.v3/errors"
-	"gopkg.in/oauth2.v3/manage"
-	"gopkg.in/oauth2.v3/models"
-	"gopkg.in/oauth2.v3/server"
-	"gopkg.in/oauth2.v3/store"
+	"gopkg.in/oauth2.v4"
+	"gopkg.in/oauth2.v4/errors"
+	"gopkg.in/oauth2.v4/manage"
+	"gopkg.in/oauth2.v4/models"
+	"gopkg.in/oauth2.v4/server"
+	"gopkg.in/oauth2.v4/store"
 )
 
 var (

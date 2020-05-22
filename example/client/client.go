@@ -127,6 +127,6 @@ func main() {
 		e.Encode(token)
 	})
 
-	log.Println("Client is running at 9094 port.")
+	log.Println("Client is running at 9094 port.Please open http://localhost:9094")
 	log.Fatal(http.ListenAndServe(":9094", nil))
 }

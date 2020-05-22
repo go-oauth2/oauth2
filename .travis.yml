@@ -1,6 +1,6 @@
 language: go
 sudo: false
-go_import_path: gopkg.in/oauth2.v3
+go_import_path: gopkg.in/oauth2.v4
 go:
   - 1.9
 before_install:

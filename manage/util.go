@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"strings"
 
-	"gopkg.in/oauth2.v3/errors"
+	"gopkg.in/oauth2.v4/errors"
 )
 
 type (

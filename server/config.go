@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"gopkg.in/oauth2.v3"
+	"gopkg.in/oauth2.v4"
 )
 
 // Config configuration parameters

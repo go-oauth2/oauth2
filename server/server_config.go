@@ -1,7 +1,7 @@
 package server
 
 import (
-	"gopkg.in/oauth2.v3"
+	"gopkg.in/oauth2.v4"
 )
 
 // SetTokenType token type

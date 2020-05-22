@@ -6,8 +6,8 @@ import (
 	"encoding/base64"
 	"strings"
 
-	"gopkg.in/oauth2.v3"
-	"gopkg.in/oauth2.v3/utils/uuid"
+	"gopkg.in/oauth2.v4"
+	"gopkg.in/oauth2.v4/utils/uuid"
 )
 
 // NewAuthorizeGenerate create to generate the authorize code instance

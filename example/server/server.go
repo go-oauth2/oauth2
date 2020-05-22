@@ -10,12 +10,12 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-session/session"
-	"gopkg.in/oauth2.v3/errors"
-	"gopkg.in/oauth2.v3/generates"
-	"gopkg.in/oauth2.v3/manage"
-	"gopkg.in/oauth2.v3/models"
-	"gopkg.in/oauth2.v3/server"
-	"gopkg.in/oauth2.v3/store"
+	"gopkg.in/oauth2.v4/errors"
+	"gopkg.in/oauth2.v4/generates"
+	"gopkg.in/oauth2.v4/manage"
+	"gopkg.in/oauth2.v4/models"
+	"gopkg.in/oauth2.v4/server"
+	"gopkg.in/oauth2.v4/store"
 )
 
 func main() {
