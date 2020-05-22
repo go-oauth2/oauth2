@@ -5,6 +5,11 @@ import (
 	"net/http"
 )
 
+// Define alias
+var (
+	New = errors.New
+)
+
 // Response error response
 type Response struct {
 	Error       error

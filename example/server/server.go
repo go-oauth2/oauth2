@@ -60,7 +60,7 @@ func main() {
 	http.HandleFunc("/auth", authHandler)
 
 	http.HandleFunc("/authorize", func(w http.ResponseWriter, r *http.Request) {
-		store, err := session.Start(nil, w, r)
+		store, err := session.Start(r.Context(), w, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -110,7 +110,7 @@ func main() {
 }
 
 func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string, err error) {
-	store, err := session.Start(nil, w, r)
+	store, err := session.Start(r.Context(), w, r)
 	if err != nil {
 		return
 	}
@@ -136,7 +136,7 @@ func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	store, err := session.Start(nil, w, r)
+	store, err := session.Start(r.Context(), w, r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -215,7 +215,7 @@ func (s *Server) GetAuthorizeData(rt oauth2.ResponseType, ti oauth2.TokenInfo) m
 
 // HandleAuthorizeRequest the authorization request handling
 func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) error {
-	ctx := context.Background()
+	ctx := r.Context()
 
 	req, err := s.ValidationAuthorizeRequest(r)
 	if err != nil {
@@ -435,7 +435,7 @@ func (s *Server) GetTokenData(ti oauth2.TokenInfo) map[string]interface{} {
 
 // HandleTokenRequest token request handling
 func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) error {
-	ctx := context.Background()
+	ctx := r.Context()
 
 	gt, tgr, err := s.ValidationTokenRequest(r)
 	if err != nil {
@@ -518,7 +518,7 @@ func (s *Server) BearerAuth(r *http.Request) (string, bool) {
 // ValidationBearerToken validation the bearer tokens
 // https://tools.ietf.org/html/rfc6750
 func (s *Server) ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error) {
-	ctx := context.Background()
+	ctx := r.Context()
 
 	accessToken, ok := s.BearerAuth(r)
 	if !ok {
