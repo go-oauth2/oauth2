@@ -1,6 +1,7 @@
 package store_test
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
@@ -30,6 +31,7 @@ func TestTokenStore(t *testing.T) {
 
 func testToken(store oauth2.TokenStore) {
 	Convey("Test authorization code store", func() {
+		ctx := context.Background()
 		info := &models.Token{
 			ClientID:      "1",
 			UserID:        "1_1",
@@ -39,22 +41,23 @@ func testToken(store oauth2.TokenStore) {
 			CodeCreateAt:  time.Now(),
 			CodeExpiresIn: time.Second * 5,
 		}
-		err := store.Create(info)
+		err := store.Create(ctx, info)
 		So(err, ShouldBeNil)
 
-		cinfo, err := store.GetByCode(info.Code)
+		cinfo, err := store.GetByCode(ctx, info.Code)
 		So(err, ShouldBeNil)
 		So(cinfo.GetUserID(), ShouldEqual, info.UserID)
 
-		err = store.RemoveByCode(info.Code)
+		err = store.RemoveByCode(ctx, info.Code)
 		So(err, ShouldBeNil)
 
-		cinfo, err = store.GetByCode(info.Code)
+		cinfo, err = store.GetByCode(ctx, info.Code)
 		So(err, ShouldBeNil)
 		So(cinfo, ShouldBeNil)
 	})
 
 	Convey("Test access token store", func() {
+		ctx := context.Background()
 		info := &models.Token{
 			ClientID:        "1",
 			UserID:          "1_1",
@@ -64,22 +67,23 @@ func testToken(store oauth2.TokenStore) {
 			AccessCreateAt:  time.Now(),
 			AccessExpiresIn: time.Second * 5,
 		}
-		err := store.Create(info)
+		err := store.Create(ctx, info)
 		So(err, ShouldBeNil)
 
-		ainfo, err := store.GetByAccess(info.GetAccess())
+		ainfo, err := store.GetByAccess(ctx, info.GetAccess())
 		So(err, ShouldBeNil)
 		So(ainfo.GetUserID(), ShouldEqual, info.GetUserID())
 
-		err = store.RemoveByAccess(info.GetAccess())
+		err = store.RemoveByAccess(ctx, info.GetAccess())
 		So(err, ShouldBeNil)
 
-		ainfo, err = store.GetByAccess(info.GetAccess())
+		ainfo, err = store.GetByAccess(ctx, info.GetAccess())
 		So(err, ShouldBeNil)
 		So(ainfo, ShouldBeNil)
 	})
 
 	Convey("Test refresh token store", func() {
+		ctx := context.Background()
 		info := &models.Token{
 			ClientID:         "1",
 			UserID:           "1_2",
@@ -92,22 +96,23 @@ func testToken(store oauth2.TokenStore) {
 			RefreshCreateAt:  time.Now(),
 			RefreshExpiresIn: time.Second * 15,
 		}
-		err := store.Create(info)
+		err := store.Create(ctx, info)
 		So(err, ShouldBeNil)
 
-		rinfo, err := store.GetByRefresh(info.GetRefresh())
+		rinfo, err := store.GetByRefresh(ctx, info.GetRefresh())
 		So(err, ShouldBeNil)
 		So(rinfo.GetUserID(), ShouldEqual, info.GetUserID())
 
-		err = store.RemoveByRefresh(info.GetRefresh())
+		err = store.RemoveByRefresh(ctx, info.GetRefresh())
 		So(err, ShouldBeNil)
 
-		rinfo, err = store.GetByRefresh(info.GetRefresh())
+		rinfo, err = store.GetByRefresh(ctx, info.GetRefresh())
 		So(err, ShouldBeNil)
 		So(rinfo, ShouldBeNil)
 	})
 
 	Convey("Test TTL", func() {
+		ctx := context.Background()
 		info := &models.Token{
 			ClientID:         "1",
 			UserID:           "1_1",
@@ -120,14 +125,14 @@ func testToken(store oauth2.TokenStore) {
 			RefreshCreateAt:  time.Now(),
 			RefreshExpiresIn: time.Second * 1,
 		}
-		err := store.Create(info)
+		err := store.Create(ctx, info)
 		So(err, ShouldBeNil)
 
 		time.Sleep(time.Second * 1)
-		ainfo, err := store.GetByAccess(info.Access)
+		ainfo, err := store.GetByAccess(ctx, info.Access)
 		So(err, ShouldBeNil)
 		So(ainfo, ShouldBeNil)
-		rinfo, err := store.GetByRefresh(info.Refresh)
+		rinfo, err := store.GetByRefresh(ctx, info.Refresh)
 		So(err, ShouldBeNil)
 		So(rinfo, ShouldBeNil)
 	})

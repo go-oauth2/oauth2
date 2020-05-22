@@ -1,6 +1,7 @@
 package store_test
 
 import (
+	"context"
 	"testing"
 
 	"gopkg.in/oauth2.v3/models"
@@ -16,7 +17,7 @@ func TestClientStore(t *testing.T) {
 		err := clientStore.Set("1", &models.Client{ID: "1", Secret: "2"})
 		So(err, ShouldBeNil)
 
-		cli, err := clientStore.GetByID("1")
+		cli, err := clientStore.GetByID(context.Background(), "1")
 		So(err, ShouldBeNil)
 		So(cli.GetID(), ShouldEqual, "1")
 	})

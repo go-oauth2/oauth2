@@ -1,6 +1,7 @@
 package generates
 
 import (
+	"context"
 	"encoding/base64"
 	"strings"
 	"time"
@@ -41,7 +42,7 @@ type JWTAccessGenerate struct {
 }
 
 // Token based on the UUID generated token
-func (a *JWTAccessGenerate) Token(data *oauth2.GenerateBasic, isGenRefresh bool) (string, string, error) {
+func (a *JWTAccessGenerate) Token(ctx context.Context, data *oauth2.GenerateBasic, isGenRefresh bool) (string, string, error) {
 	claims := &JWTAccessClaims{
 		StandardClaims: jwt.StandardClaims{
 			Audience:  data.Client.GetID(),
