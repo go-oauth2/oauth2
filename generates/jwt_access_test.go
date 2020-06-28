@@ -28,7 +28,7 @@ func TestJWTAccess(t *testing.T) {
 			},
 		}
 
-		gen := generates.NewJWTAccessGenerate([]byte("00000000"), jwt.SigningMethodHS512)
+		gen := generates.NewJWTAccessGenerate("", []byte("00000000"), jwt.SigningMethodHS512)
 		access, refresh, err := gen.Token(context.Background(), data, true)
 		So(err, ShouldBeNil)
 		So(access, ShouldNotBeEmpty)

@@ -28,8 +28,9 @@ func (a *JWTAccessClaims) Valid() error {
 }
 
 // NewJWTAccessGenerate create to generate the jwt access token instance
-func NewJWTAccessGenerate(key []byte, method jwt.SigningMethod) *JWTAccessGenerate {
+func NewJWTAccessGenerate(kid string, key []byte, method jwt.SigningMethod) *JWTAccessGenerate {
 	return &JWTAccessGenerate{
+		SignedKeyId:  kid,
 		SignedKey:    key,
 		SignedMethod: method,
 	}
@@ -37,6 +38,7 @@ func NewJWTAccessGenerate(key []byte, method jwt.SigningMethod) *JWTAccessGenera
 
 // JWTAccessGenerate generate the jwt access token
 type JWTAccessGenerate struct {
+	SignedKeyId  string
 	SignedKey    []byte
 	SignedMethod jwt.SigningMethod
 }
@@ -52,6 +54,9 @@ func (a *JWTAccessGenerate) Token(ctx context.Context, data *oauth2.GenerateBasi
 	}
 
 	token := jwt.NewWithClaims(a.SignedMethod, claims)
+	if a.SignedKeyId != "" {
+		token.Header["kid"] = a.SignedKeyId
+	}
 	var key interface{}
 	if a.isEs() {
 		v, err := jwt.ParseECPrivateKeyFromPEM(a.SignedKey)
