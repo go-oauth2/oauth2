@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"gopkg.in/oauth2.v4"
-	"gopkg.in/oauth2.v4/errors"
-	"gopkg.in/oauth2.v4/generates"
-	"gopkg.in/oauth2.v4/models"
+	"github.com/go-oauth2/oauth2/v4"
+	"github.com/go-oauth2/oauth2/v4/errors"
+	"github.com/go-oauth2/oauth2/v4/generates"
+	"github.com/go-oauth2/oauth2/v4/models"
 )
 
 // NewDefaultManager create to default authorization management instance

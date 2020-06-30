@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/oauth2.v4"
-	"gopkg.in/oauth2.v4/utils/uuid"
+	"github.com/go-oauth2/oauth2/v4"
+	"github.com/google/uuid"
 )
 
 // NewAccessGenerate create to generate the access token instance
@@ -26,11 +26,11 @@ func (ag *AccessGenerate) Token(ctx context.Context, data *oauth2.GenerateBasic,
 	buf.WriteString(data.UserID)
 	buf.WriteString(strconv.FormatInt(data.CreateAt.UnixNano(), 10))
 
-	access := base64.URLEncoding.EncodeToString(uuid.NewMD5(uuid.Must(uuid.NewRandom()), buf.Bytes()).Bytes())
+	access := base64.URLEncoding.EncodeToString([]byte(uuid.NewMD5(uuid.Must(uuid.NewRandom()), buf.Bytes()).String()))
 	access = strings.ToUpper(strings.TrimRight(access, "="))
 	refresh := ""
 	if isGenRefresh {
-		refresh = base64.URLEncoding.EncodeToString(uuid.NewSHA1(uuid.Must(uuid.NewRandom()), buf.Bytes()).Bytes())
+		refresh = base64.URLEncoding.EncodeToString([]byte(uuid.NewSHA1(uuid.Must(uuid.NewRandom()), buf.Bytes()).String()))
 		refresh = strings.ToUpper(strings.TrimRight(refresh, "="))
 	}
 

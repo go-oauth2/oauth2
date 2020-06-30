@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/go-oauth2/oauth2/v4"
+	"github.com/go-oauth2/oauth2/v4/models"
+	"github.com/google/uuid"
 	"github.com/tidwall/buntdb"
-	"gopkg.in/oauth2.v4"
-	"gopkg.in/oauth2.v4/models"
-	"gopkg.in/oauth2.v4/utils/uuid"
 )
 
 // NewMemoryTokenStore create a token store instance based on memory

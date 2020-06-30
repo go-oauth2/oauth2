@@ -6,12 +6,10 @@ import (
 	"strings"
 	"time"
 
-	errs "errors"
-
 	"github.com/dgrijalva/jwt-go"
-	"gopkg.in/oauth2.v4"
-	"gopkg.in/oauth2.v4/errors"
-	"gopkg.in/oauth2.v4/utils/uuid"
+	"github.com/go-oauth2/oauth2/v4"
+	"github.com/go-oauth2/oauth2/v4/errors"
+	"github.com/google/uuid"
 )
 
 // JWTAccessClaims jwt claims
@@ -30,7 +28,7 @@ func (a *JWTAccessClaims) Valid() error {
 // NewJWTAccessGenerate create to generate the jwt access token instance
 func NewJWTAccessGenerate(kid string, key []byte, method jwt.SigningMethod) *JWTAccessGenerate {
 	return &JWTAccessGenerate{
-		SignedKeyId:  kid,
+		SignedKeyID:  kid,
 		SignedKey:    key,
 		SignedMethod: method,
 	}
@@ -38,7 +36,7 @@ func NewJWTAccessGenerate(kid string, key []byte, method jwt.SigningMethod) *JWT
 
 // JWTAccessGenerate generate the jwt access token
 type JWTAccessGenerate struct {
-	SignedKeyId  string
+	SignedKeyID  string
 	SignedKey    []byte
 	SignedMethod jwt.SigningMethod
 }
@@ -54,8 +52,8 @@ func (a *JWTAccessGenerate) Token(ctx context.Context, data *oauth2.GenerateBasi
 	}
 
 	token := jwt.NewWithClaims(a.SignedMethod, claims)
-	if a.SignedKeyId != "" {
-		token.Header["kid"] = a.SignedKeyId
+	if a.SignedKeyID != "" {
+		token.Header["kid"] = a.SignedKeyID
 	}
 	var key interface{}
 	if a.isEs() {
@@ -73,7 +71,7 @@ func (a *JWTAccessGenerate) Token(ctx context.Context, data *oauth2.GenerateBasi
 	} else if a.isHs() {
 		key = a.SignedKey
 	} else {
-		return "", "", errs.New("unsupported sign method")
+		return "", "", errors.New("unsupported sign method")
 	}
 
 	access, err := token.SignedString(key)
@@ -83,7 +81,8 @@ func (a *JWTAccessGenerate) Token(ctx context.Context, data *oauth2.GenerateBasi
 	refresh := ""
 
 	if isGenRefresh {
-		refresh = base64.URLEncoding.EncodeToString(uuid.NewSHA1(uuid.Must(uuid.NewRandom()), []byte(access)).Bytes())
+		t := uuid.NewSHA1(uuid.Must(uuid.NewRandom()), []byte(access)).String()
+		refresh = base64.URLEncoding.EncodeToString([]byte(t))
 		refresh = strings.ToUpper(strings.TrimRight(refresh, "="))
 	}
 
