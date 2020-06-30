@@ -13,6 +13,11 @@ type (
 		GetUserID() string
 	}
 
+	// ClientPasswordVerifier the password handler interface
+	ClientPasswordVerifier interface {
+		VerifyPassword(string) bool
+	}
+
 	// TokenInfo the token information model interface
 	TokenInfo interface {
 		New() TokenInfo
