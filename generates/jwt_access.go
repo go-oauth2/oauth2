@@ -13,11 +13,13 @@ import (
 )
 
 // JWTAccessClaims jwt claims
+// jwt声明
 type JWTAccessClaims struct {
 	jwt.StandardClaims
 }
 
 // Valid claims verification
+// 有效的声明验证
 func (a *JWTAccessClaims) Valid() error {
 	if time.Unix(a.ExpiresAt, 0).Before(time.Now()) {
 		return errors.ErrInvalidAccessToken
@@ -26,6 +28,7 @@ func (a *JWTAccessClaims) Valid() error {
 }
 
 // NewJWTAccessGenerate create to generate the jwt access token instance
+// 创建以生成jwt访问令牌实例
 func NewJWTAccessGenerate(kid string, key []byte, method jwt.SigningMethod) *JWTAccessGenerate {
 	return &JWTAccessGenerate{
 		SignedKeyID:  kid,
@@ -35,6 +38,7 @@ func NewJWTAccessGenerate(kid string, key []byte, method jwt.SigningMethod) *JWT
 }
 
 // JWTAccessGenerate generate the jwt access token
+// 生成jwt访问令牌
 type JWTAccessGenerate struct {
 	SignedKeyID  string
 	SignedKey    []byte
@@ -42,6 +46,7 @@ type JWTAccessGenerate struct {
 }
 
 // Token based on the UUID generated token
+// 基于UUID生成的令牌的令牌
 func (a *JWTAccessGenerate) Token(ctx context.Context, data *oauth2.GenerateBasic, isGenRefresh bool) (string, string, error) {
 	claims := &JWTAccessClaims{
 		StandardClaims: jwt.StandardClaims{

@@ -6,6 +6,7 @@ import (
 )
 
 // Response error response
+// 错误响应
 type Response struct {
 	Error       error
 	ErrorCode   int
@@ -16,6 +17,7 @@ type Response struct {
 }
 
 // NewResponse create the response pointer
+// 创建响应指针
 func NewResponse(err error, statusCode int) *Response {
 	return &Response{
 		Error:      err,
@@ -25,6 +27,8 @@ func NewResponse(err error, statusCode int) *Response {
 
 // SetHeader sets the header entries associated with key to
 // the single element value.
+// 将与key关联的标题条目设置为
+// 单个元素的值。
 func (r *Response) SetHeader(key, value string) {
 	if r.Header == nil {
 		r.Header = make(http.Header)
@@ -47,6 +51,7 @@ var (
 )
 
 // Descriptions error description
+// 错误说明
 var Descriptions = map[error]string{
 	ErrInvalidRequest:          "The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed",
 	ErrUnauthorizedClient:      "The client is not authorized to request an authorization code using this method",
@@ -61,6 +66,7 @@ var Descriptions = map[error]string{
 }
 
 // StatusCodes response error HTTP status code
+// 响应错误HTTP状态代码
 var StatusCodes = map[error]int{
 	ErrInvalidRequest:          400,
 	ErrUnauthorizedClient:      401,

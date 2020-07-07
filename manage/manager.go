@@ -11,9 +11,11 @@ import (
 )
 
 // NewDefaultManager create to default authorization management instance
+// 创建到默认授权管理实例
 func NewDefaultManager() *Manager {
 	m := NewManager()
 	// default implementation
+	// 默认实现
 	m.MapAuthorizeGenerate(generates.NewAuthorizeGenerate())
 	m.MapAccessGenerate(generates.NewAccessGenerate())
 
@@ -21,6 +23,7 @@ func NewDefaultManager() *Manager {
 }
 
 // NewManager create to authorization management instance
+// 创建到授权管理实例
 func NewManager() *Manager {
 	return &Manager{
 		gtcfg:       make(map[oauth2.GrantType]*Config),
@@ -29,6 +32,7 @@ func NewManager() *Manager {
 }
 
 // Manager provide authorization management
+// 管理者提供授权管理
 type Manager struct {
 	codeExp           time.Duration
 	gtcfg             map[oauth2.GrantType]*Config
@@ -41,6 +45,7 @@ type Manager struct {
 }
 
 // get grant type config
+// 获取授权类型配置
 func (m *Manager) grantConfig(gt oauth2.GrantType) *Config {
 	if c, ok := m.gtcfg[gt]; ok && c != nil {
 		return c
@@ -59,56 +64,67 @@ func (m *Manager) grantConfig(gt oauth2.GrantType) *Config {
 }
 
 // SetAuthorizeCodeExp set the authorization code expiration time
+// 设置授权码有效时间
 func (m *Manager) SetAuthorizeCodeExp(exp time.Duration) {
 	m.codeExp = exp
 }
 
 // SetAuthorizeCodeTokenCfg set the authorization code grant token config
+// 设置授权码授予令牌配置
 func (m *Manager) SetAuthorizeCodeTokenCfg(cfg *Config) {
 	m.gtcfg[oauth2.AuthorizationCode] = cfg
 }
 
 // SetImplicitTokenCfg set the implicit grant token config
+// 设置隐式授予令牌配置
 func (m *Manager) SetImplicitTokenCfg(cfg *Config) {
 	m.gtcfg[oauth2.Implicit] = cfg
 }
 
 // SetPasswordTokenCfg set the password grant token config
+// 设置密码授予令牌配置
 func (m *Manager) SetPasswordTokenCfg(cfg *Config) {
 	m.gtcfg[oauth2.PasswordCredentials] = cfg
 }
 
 // SetClientTokenCfg set the client grant token config
+// 设置客户端授予令牌配置
 func (m *Manager) SetClientTokenCfg(cfg *Config) {
 	m.gtcfg[oauth2.ClientCredentials] = cfg
 }
 
 // SetRefreshTokenCfg set the refreshing token config
+// 设置刷新令牌配置
 func (m *Manager) SetRefreshTokenCfg(cfg *RefreshingConfig) {
 	m.rcfg = cfg
 }
 
 // SetValidateURIHandler set the validates that RedirectURI is contained in baseURI
+// 设置验证RedirectURI是否包含在baseURI中
 func (m *Manager) SetValidateURIHandler(handler ValidateURIHandler) {
 	m.validateURI = handler
 }
 
 // MapAuthorizeGenerate mapping the authorize code generate interface
+// 映射授权代码生成接口
 func (m *Manager) MapAuthorizeGenerate(gen oauth2.AuthorizeGenerate) {
 	m.authorizeGenerate = gen
 }
 
 // MapAccessGenerate mapping the access token generate interface
+// 映射访问令牌生成接口
 func (m *Manager) MapAccessGenerate(gen oauth2.AccessGenerate) {
 	m.accessGenerate = gen
 }
 
 // MapClientStorage mapping the client store interface
+// 映射客户端存储接口
 func (m *Manager) MapClientStorage(stor oauth2.ClientStore) {
 	m.clientStore = stor
 }
 
 // MustClientStorage mandatory mapping the client store interface
+// 强制映射客户端存储接口
 func (m *Manager) MustClientStorage(stor oauth2.ClientStore, err error) {
 	if err != nil {
 		panic(err.Error())
@@ -117,11 +133,13 @@ func (m *Manager) MustClientStorage(stor oauth2.ClientStore, err error) {
 }
 
 // MapTokenStorage mapping the token store interface
+// 映射令牌存储接口
 func (m *Manager) MapTokenStorage(stor oauth2.TokenStore) {
 	m.tokenStore = stor
 }
 
 // MustTokenStorage mandatory mapping the token store interface
+// 强制映射令牌存储接口
 func (m *Manager) MustTokenStorage(stor oauth2.TokenStore, err error) {
 	if err != nil {
 		panic(err)
@@ -130,6 +148,7 @@ func (m *Manager) MustTokenStorage(stor oauth2.TokenStore, err error) {
 }
 
 // GetClient get the client information
+// 获取客户端信息
 func (m *Manager) GetClient(ctx context.Context, clientID string) (cli oauth2.ClientInfo, err error) {
 	cli, err = m.clientStore.GetByID(ctx, clientID)
 	if err != nil {
@@ -141,6 +160,7 @@ func (m *Manager) GetClient(ctx context.Context, clientID string) (cli oauth2.Cl
 }
 
 // GenerateAuthToken generate the authorization token(code)
+// 生成授权令牌（code）
 func (m *Manager) GenerateAuthToken(ctx context.Context, rt oauth2.ResponseType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
 	cli, err := m.GetClient(ctx, tgr.ClientID)
 	if err != nil {
@@ -184,6 +204,7 @@ func (m *Manager) GenerateAuthToken(ctx context.Context, rt oauth2.ResponseType,
 		ti.SetCode(tv)
 	case oauth2.Token:
 		// set access token expires
+		// 设置访问令牌过期
 		icfg := m.grantConfig(oauth2.Implicit)
 		aexp := icfg.AccessTokenExp
 		if exp := tgr.AccessTokenExp; exp > 0 {
@@ -216,6 +237,7 @@ func (m *Manager) GenerateAuthToken(ctx context.Context, rt oauth2.ResponseType,
 }
 
 // get authorization code data
+// 获取授权码数据
 func (m *Manager) getAuthorizationCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
 	ti, err := m.tokenStore.GetByCode(ctx, code)
 	if err != nil {
@@ -228,11 +250,13 @@ func (m *Manager) getAuthorizationCode(ctx context.Context, code string) (oauth2
 }
 
 // delete authorization code data
+// 删除授权码数据
 func (m *Manager) delAuthorizationCode(ctx context.Context, code string) error {
 	return m.tokenStore.RemoveByCode(ctx, code)
 }
 
 // get and delete authorization code data
+// 获取和删除授权码数据
 func (m *Manager) getAndDelAuthorizationCode(ctx context.Context, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
 	code := tgr.Code
 	ti, err := m.getAuthorizationCode(ctx, code)
@@ -252,6 +276,7 @@ func (m *Manager) getAndDelAuthorizationCode(ctx context.Context, tgr *oauth2.To
 }
 
 // GenerateAccessToken generate the access token
+// 生成访问令牌
 func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
 	cli, err := m.GetClient(ctx, tgr.ClientID)
 	if err != nil {
@@ -292,6 +317,7 @@ func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, 
 	ti.SetAccessCreateAt(createAt)
 
 	// set access token expires
+	// 设置访问令牌过期
 	gcfg := m.grantConfig(gt)
 	aexp := gcfg.AccessTokenExp
 	if exp := tgr.AccessTokenExp; exp > 0 {
@@ -330,6 +356,7 @@ func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, 
 }
 
 // RefreshAccessToken refreshing an access token
+// 刷新访问令牌
 func (m *Manager) RefreshAccessToken(ctx context.Context, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
 	cli, err := m.GetClient(ctx, tgr.ClientID)
 	if err != nil {
@@ -393,6 +420,7 @@ func (m *Manager) RefreshAccessToken(ctx context.Context, tgr *oauth2.TokenGener
 
 	if rcfg.IsRemoveAccess {
 		// remove the old access token
+		// 删除旧的访问令牌
 		if err := m.tokenStore.RemoveByAccess(ctx, oldAccess); err != nil {
 			return nil, err
 		}
@@ -400,6 +428,7 @@ func (m *Manager) RefreshAccessToken(ctx context.Context, tgr *oauth2.TokenGener
 
 	if rcfg.IsRemoveRefreshing && rv != "" {
 		// remove the old refresh token
+		// 删除旧的刷新令牌
 		if err := m.tokenStore.RemoveByRefresh(ctx, oldRefresh); err != nil {
 			return nil, err
 		}
@@ -415,6 +444,7 @@ func (m *Manager) RefreshAccessToken(ctx context.Context, tgr *oauth2.TokenGener
 }
 
 // RemoveAccessToken use the access token to delete the token information
+// 使用访问令牌删除令牌信息
 func (m *Manager) RemoveAccessToken(ctx context.Context, access string) error {
 	if access == "" {
 		return errors.ErrInvalidAccessToken
@@ -423,6 +453,7 @@ func (m *Manager) RemoveAccessToken(ctx context.Context, access string) error {
 }
 
 // RemoveRefreshToken use the refresh token to delete the token information
+// 使用刷新令牌删除令牌信息
 func (m *Manager) RemoveRefreshToken(ctx context.Context, refresh string) error {
 	if refresh == "" {
 		return errors.ErrInvalidAccessToken
@@ -431,6 +462,7 @@ func (m *Manager) RemoveRefreshToken(ctx context.Context, refresh string) error 
 }
 
 // LoadAccessToken according to the access token for corresponding token information
+// 根据访问令牌获取相应的令牌信息的LoadAccessToken
 func (m *Manager) LoadAccessToken(ctx context.Context, access string) (oauth2.TokenInfo, error) {
 	if access == "" {
 		return nil, errors.ErrInvalidAccessToken
@@ -453,6 +485,7 @@ func (m *Manager) LoadAccessToken(ctx context.Context, access string) (oauth2.To
 }
 
 // LoadRefreshToken according to the refresh token for corresponding token information
+// 根据刷新令牌获取LoadRefreshToken以获取相应的令牌信息
 func (m *Manager) LoadRefreshToken(ctx context.Context, refresh string) (oauth2.TokenInfo, error) {
 	if refresh == "" {
 		return nil, errors.ErrInvalidRefreshToken

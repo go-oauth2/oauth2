@@ -6,6 +6,7 @@ import (
 
 type (
 	// ClientInfo the client information model interface
+	// 客户端信息模型接口
 	ClientInfo interface {
 		GetID() string
 		GetSecret() string
@@ -14,11 +15,13 @@ type (
 	}
 
 	// ClientPasswordVerifier the password handler interface
+	// 密码处理程序接口
 	ClientPasswordVerifier interface {
 		VerifyPassword(string) bool
 	}
 
 	// TokenInfo the token information model interface
+	// 令牌信息模型接口
 	TokenInfo interface {
 		New() TokenInfo
 

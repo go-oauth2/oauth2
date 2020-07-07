@@ -8,6 +8,7 @@ import (
 )
 
 // Config configuration parameters
+// 配置参数
 type Config struct {
 	TokenType             string                // token type
 	AllowGetAccessRequest bool                  // to allow GET requests for the token
@@ -16,6 +17,7 @@ type Config struct {
 }
 
 // NewConfig create to configuration instance
+// 创建配置实例
 func NewConfig() *Config {
 	return &Config{
 		TokenType:            "Bearer",
@@ -30,6 +32,7 @@ func NewConfig() *Config {
 }
 
 // AuthorizeRequest authorization request
+// 授权请求
 type AuthorizeRequest struct {
 	ResponseType   oauth2.ResponseType
 	ClientID       string
