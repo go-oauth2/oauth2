@@ -172,6 +172,10 @@ if !ok || !token.Valid {
 * [GORM](https://github.com/techknowlogick/go-oauth2-gorm)
 * [Firestore](https://github.com/tslamic/go-oauth2-firestore)
 
+## Handy Utilities
+
+* [OAuth2 Proxy Logger (Debug utility that proxies interfaces and logs)](https://github.com/aubelsb2/oauth2-logger-proxy)
+
 ## MIT License
 
   Copyright (c) 2016 Lyric
