@@ -46,10 +46,10 @@ type (
 // ClientFormHandler get client data from form
 func ClientFormHandler(r *http.Request) (string, string, error) {
 	clientID := r.Form.Get("client_id")
-	clientSecret := r.Form.Get("client_secret")
-	if clientID == "" || clientSecret == "" {
+	if clientID == "" {
 		return "", "", errors.ErrInvalidClient
 	}
+	clientSecret := r.Form.Get("client_secret")
 	return clientID, clientSecret, nil
 }
 
