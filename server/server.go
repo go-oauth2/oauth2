@@ -182,16 +182,6 @@ func (s *Server) GetAuthorizeToken(ctx context.Context, req *AuthorizeRequest) (
 		}
 	}
 
-	// check the client allows the authorized scope
-	if fn := s.ClientScopeHandler; fn != nil {
-		allowed, err := fn(req.ClientID, req.Scope)
-		if err != nil {
-			return nil, err
-		} else if !allowed {
-			return nil, errors.ErrInvalidScope
-		}
-	}
-
 	tgr := &oauth2.TokenGenerateRequest{
 		ClientID:       req.ClientID,
 		UserID:         req.UserID,
@@ -200,6 +190,17 @@ func (s *Server) GetAuthorizeToken(ctx context.Context, req *AuthorizeRequest) (
 		AccessTokenExp: req.AccessTokenExp,
 		Request:        req.Request,
 	}
+
+	// check the client allows the authorized scope
+	if fn := s.ClientScopeHandler; fn != nil {
+		allowed, err := fn(tgr)
+		if err != nil {
+			return nil, err
+		} else if !allowed {
+			return nil, errors.ErrInvalidScope
+		}
+	}
+
 	return s.Manager.GenerateAuthToken(ctx, req.ResponseType, tgr)
 }
 
@@ -365,7 +366,7 @@ func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *o
 		return ti, nil
 	case oauth2.PasswordCredentials, oauth2.ClientCredentials:
 		if fn := s.ClientScopeHandler; fn != nil {
-			allowed, err := fn(tgr.ClientID, tgr.Scope)
+			allowed, err := fn(tgr)
 			if err != nil {
 				return nil, err
 			} else if !allowed {
@@ -375,7 +376,7 @@ func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *o
 		return s.Manager.GenerateAccessToken(ctx, gt, tgr)
 	case oauth2.Refreshing:
 		// check scope
-		if scope, scopeFn := tgr.Scope, s.RefreshingScopeHandler; scope != "" && scopeFn != nil {
+		if scopeFn := s.RefreshingScopeHandler; tgr.Scope != "" && scopeFn != nil {
 			rti, err := s.Manager.LoadRefreshToken(ctx, tgr.Refresh)
 			if err != nil {
 				if err == errors.ErrInvalidRefreshToken || err == errors.ErrExpiredRefreshToken {
@@ -384,7 +385,7 @@ func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *o
 				return nil, err
 			}
 
-			allowed, err := scopeFn(scope, rti.GetScope())
+			allowed, err := scopeFn(tgr, rti.GetScope())
 			if err != nil {
 				return nil, err
 			} else if !allowed {
