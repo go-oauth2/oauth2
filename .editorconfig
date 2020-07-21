@@ -1,2 +1,2 @@
 [*.go]
-end_of_line = cr
+end_of_line = lf
