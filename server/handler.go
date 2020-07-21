@@ -43,7 +43,6 @@ type (
 	ExtensionFieldsHandler func(ti oauth2.TokenInfo) (fieldsValue map[string]interface{})
 )
 
-
 // ClientFormHandler get client data from form
 func ClientFormHandler(r *http.Request) (string, string, error) {
 	clientID := r.Form.Get("client_id")

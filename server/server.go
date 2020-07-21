@@ -55,7 +55,6 @@ type Server struct {
 	AuthorizeScopeHandler        AuthorizeScopeHandler
 }
 
-
 func (s *Server) redirectError(w http.ResponseWriter, req *AuthorizeRequest, err error) error {
 	if req == nil {
 		return err
