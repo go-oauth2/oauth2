@@ -8,15 +8,18 @@ import (
 
 // TokenGenerateRequest provide to generate the token request parameters
 type TokenGenerateRequest struct {
-	ClientID       string
-	ClientSecret   string
-	UserID         string
-	RedirectURI    string
-	Scope          string
-	Code           string
-	Refresh        string
-	AccessTokenExp time.Duration
-	Request        *http.Request
+	ClientID            string
+	ClientSecret        string
+	UserID              string
+	RedirectURI         string
+	Scope               string
+	Code                string
+	CodeChallenge       string
+	CodeChallengeMethod CodeChallengeMethod
+	Refresh             string
+	CodeVerifier        string
+	AccessTokenExp      time.Duration
+	Request             *http.Request
 }
 
 // Manager authorization management interface

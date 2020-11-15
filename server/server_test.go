@@ -23,6 +23,11 @@ var (
 	csrv         *httptest.Server
 	clientID     = "111111"
 	clientSecret = "11111111"
+
+	plainChallenge = "plaintest"
+	s256Challenge  = "s256test"
+	// echo s256test | sha256 | base64 | tr '/+' '_-'
+	s256ChallengeHash = "W6YWc_4yHwYN-cGDgGmOMHF3l7KDy7VcRjf7q2FVF-o="
 )
 
 func init() {
@@ -102,6 +107,111 @@ func TestAuthorizeCode(t *testing.T) {
 		WithQuery("scope", "all").
 		WithQuery("state", "123").
 		WithQuery("redirect_uri", url.QueryEscape(csrv.URL+"/oauth2")).
+		Expect().Status(http.StatusOK)
+}
+
+func TestAuthorizeCodeWithChallengePlain(t *testing.T) {
+	tsrv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		testServer(t, w, r)
+	}))
+	defer tsrv.Close()
+
+	e := httpexpect.New(t, tsrv.URL)
+
+	csrv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/oauth2":
+			r.ParseForm()
+			code, state := r.Form.Get("code"), r.Form.Get("state")
+			if state != "123" {
+				t.Error("unrecognized state:", state)
+				return
+			}
+			resObj := e.POST("/token").
+				WithFormField("redirect_uri", csrv.URL+"/oauth2").
+				WithFormField("code", code).
+				WithFormField("grant_type", "authorization_code").
+				WithFormField("client_id", clientID).
+				WithFormField("code", code).
+				WithBasicAuth("code_verifier", "testchallenge").
+				Expect().
+				Status(http.StatusOK).
+				JSON().Object()
+
+			t.Logf("%#v\n", resObj.Raw())
+
+			validationAccessToken(t, resObj.Value("access_token").String().Raw())
+		}
+	}))
+	defer csrv.Close()
+
+	manager.MapClientStorage(clientStore(csrv.URL))
+	srv = server.NewDefaultServer(manager)
+	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+		userID = "000000"
+		return
+	})
+
+	e.GET("/authorize").
+		WithQuery("response_type", "code").
+		WithQuery("client_id", clientID).
+		WithQuery("scope", "all").
+		WithQuery("state", "123").
+		WithQuery("redirect_uri", url.QueryEscape(csrv.URL+"/oauth2")).
+		WithQuery("code_challenge", plainChallenge).
+		Expect().Status(http.StatusOK)
+}
+
+func TestAuthorizeCodeWithChallengeS256(t *testing.T) {
+	tsrv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		testServer(t, w, r)
+	}))
+	defer tsrv.Close()
+
+	e := httpexpect.New(t, tsrv.URL)
+
+	csrv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/oauth2":
+			r.ParseForm()
+			code, state := r.Form.Get("code"), r.Form.Get("state")
+			if state != "123" {
+				t.Error("unrecognized state:", state)
+				return
+			}
+			resObj := e.POST("/token").
+				WithFormField("redirect_uri", csrv.URL+"/oauth2").
+				WithFormField("code", code).
+				WithFormField("grant_type", "authorization_code").
+				WithFormField("client_id", clientID).
+				WithFormField("code", code).
+				WithBasicAuth("code_verifier", s256Challenge).
+				Expect().
+				Status(http.StatusOK).
+				JSON().Object()
+
+			t.Logf("%#v\n", resObj.Raw())
+
+			validationAccessToken(t, resObj.Value("access_token").String().Raw())
+		}
+	}))
+	defer csrv.Close()
+
+	manager.MapClientStorage(clientStore(csrv.URL))
+	srv = server.NewDefaultServer(manager)
+	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+		userID = "000000"
+		return
+	})
+
+	e.GET("/authorize").
+		WithQuery("response_type", "code").
+		WithQuery("client_id", clientID).
+		WithQuery("scope", "all").
+		WithQuery("state", "123").
+		WithQuery("redirect_uri", url.QueryEscape(csrv.URL+"/oauth2")).
+		WithQuery("code_challenge", s256ChallengeHash).
+		WithQuery("code_challenge_method", "S256").
 		Expect().Status(http.StatusOK)
 }
 

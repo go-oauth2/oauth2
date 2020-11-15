@@ -13,19 +13,21 @@ func NewToken() *Token {
 
 // Token token model
 type Token struct {
-	ClientID         string        `bson:"ClientID"`
-	UserID           string        `bson:"UserID"`
-	RedirectURI      string        `bson:"RedirectURI"`
-	Scope            string        `bson:"Scope"`
-	Code             string        `bson:"Code"`
-	CodeCreateAt     time.Time     `bson:"CodeCreateAt"`
-	CodeExpiresIn    time.Duration `bson:"CodeExpiresIn"`
-	Access           string        `bson:"Access"`
-	AccessCreateAt   time.Time     `bson:"AccessCreateAt"`
-	AccessExpiresIn  time.Duration `bson:"AccessExpiresIn"`
-	Refresh          string        `bson:"Refresh"`
-	RefreshCreateAt  time.Time     `bson:"RefreshCreateAt"`
-	RefreshExpiresIn time.Duration `bson:"RefreshExpiresIn"`
+	ClientID            string        `bson:"ClientID"`
+	UserID              string        `bson:"UserID"`
+	RedirectURI         string        `bson:"RedirectURI"`
+	Scope               string        `bson:"Scope"`
+	Code                string        `bson:"Code"`
+	CodeChallenge       string        `bson:"CodeChallenge"`
+	CodeChallengeMethod string        `bson:"CodeChallengeMethod"`
+	CodeCreateAt        time.Time     `bson:"CodeCreateAt"`
+	CodeExpiresIn       time.Duration `bson:"CodeExpiresIn"`
+	Access              string        `bson:"Access"`
+	AccessCreateAt      time.Time     `bson:"AccessCreateAt"`
+	AccessExpiresIn     time.Duration `bson:"AccessExpiresIn"`
+	Refresh             string        `bson:"Refresh"`
+	RefreshCreateAt     time.Time     `bson:"RefreshCreateAt"`
+	RefreshExpiresIn    time.Duration `bson:"RefreshExpiresIn"`
 }
 
 // New create to token model instance
@@ -101,6 +103,26 @@ func (t *Token) GetCodeExpiresIn() time.Duration {
 // SetCodeExpiresIn the lifetime in seconds of the authorization code
 func (t *Token) SetCodeExpiresIn(exp time.Duration) {
 	t.CodeExpiresIn = exp
+}
+
+// GetCodeChallenge challenge code
+func (t *Token) GetCodeChallenge() string {
+	return t.CodeChallenge
+}
+
+// SetCodeChallenge challenge code
+func (t *Token) SetCodeChallenge(code string) {
+	t.CodeChallenge = code
+}
+
+// GetCodeChallengeMethod challenge method
+func (t *Token) GetCodeChallengeMethod() oauth2.CodeChallengeMethod {
+	return oauth2.CodeChallengeMethod(t.CodeChallengeMethod)
+}
+
+// SetCodeChallengeMethod challenge method
+func (t *Token) SetCodeChallengeMethod(method oauth2.CodeChallengeMethod) {
+	t.CodeChallengeMethod = string(method)
 }
 
 // GetAccess access Token
