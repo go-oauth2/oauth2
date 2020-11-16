@@ -265,7 +265,7 @@ func (m *Manager) validateCodeChallenge(ti oauth2.TokenInfo, ver string) error {
 		return errors.ErrMissingCodeVerifier
 	}
 	if ver == "" {
-		return errors.New("missing code verifier")
+		return errors.ErrMissingCodeVerifier
 	}
 	ccm := ti.GetCodeChallengeMethod()
 	if ccm.String() == "" {

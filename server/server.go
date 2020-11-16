@@ -168,10 +168,8 @@ func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest,
 	if cc == "" && s.Config.ForcePKCE {
 		return nil, errors.ErrCodeChallengeRquired
 	}
-	if cc != "" {
-		if len(cc) < 43 || len(cc) > 128 {
-			return nil, errors.ErrInvalidCodeChallengeLen
-		}
+	if cc != "" && (len(cc) < 43 || len(cc) > 128) {
+		return nil, errors.ErrInvalidCodeChallengeLen
 	}
 
 	ccm := oauth2.CodeChallengeMethod(r.FormValue("code_challenge_method"))
@@ -313,10 +311,8 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 	}
 
 	codeVer := r.FormValue("code_verifier")
-	if s.Config.ForcePKCE {
-		if codeVer == "" {
-			return "", nil, errors.ErrInvalidRequest
-		}
+	if s.Config.ForcePKCE && codeVer == "" {
+		return "", nil, errors.ErrInvalidRequest
 	}
 
 	clientID, clientSecret, err := s.ClientInfoHandler(r)
