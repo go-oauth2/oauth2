@@ -3,6 +3,7 @@ package oauth2
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"strings"
 )
 
 // ResponseType the type of authorization request
@@ -65,7 +66,10 @@ func (ccm CodeChallengeMethod) Validate(cc, ver string) bool {
 		return cc == ver
 	case CodeChallengeS256:
 		s256 := sha256.Sum256([]byte(ver))
-		return base64.URLEncoding.EncodeToString(s256[:]) == cc
+		// trim padding
+		a := strings.TrimRight(base64.URLEncoding.EncodeToString(s256[:]), "=")
+		b := strings.TrimRight(cc, "=")
+		return a == b
 	default:
 		return false
 	}

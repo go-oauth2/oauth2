@@ -24,7 +24,7 @@ var (
 	clientID     = "111111"
 	clientSecret = "11111111"
 
-	plainChallenge = "plaintest"
+	plainChallenge = "ThisIsAFourtyThreeCharactersLongStringThing"
 	s256Challenge  = "s256test"
 	// echo s256test | sha256 | base64 | tr '/+' '_-'
 	s256ChallengeHash = "W6YWc_4yHwYN-cGDgGmOMHF3l7KDy7VcRjf7q2FVF-o="
