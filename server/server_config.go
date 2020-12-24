@@ -54,6 +54,12 @@ func (s *Server) SetRefreshingScopeHandler(handler RefreshingScopeHandler) {
 	s.RefreshingScopeHandler = handler
 }
 
+// SetRefreshingValidationHandler check if refresh_token is still valid. eg no revocation or other
+func (s *Server) SetRefreshingValidationHandler(handler RefreshingValidationHandler) {
+	s.RefreshingValidationHandler = handler
+}
+
+
 // SetResponseErrorHandler response error handling
 func (s *Server) SetResponseErrorHandler(handler ResponseErrorHandler) {
 	s.ResponseErrorHandler = handler
