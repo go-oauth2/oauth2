@@ -47,6 +47,7 @@ type Server struct {
 	ClientScopeHandler           ClientScopeHandler
 	UserAuthorizationHandler     UserAuthorizationHandler
 	PasswordAuthorizationHandler PasswordAuthorizationHandler
+	RefreshingValidationHandler  RefreshingValidationHandler
 	RefreshingScopeHandler       RefreshingScopeHandler
 	ResponseErrorHandler         ResponseErrorHandler
 	InternalErrorHandler         InternalErrorHandler
@@ -385,6 +386,22 @@ func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *o
 			}
 
 			allowed, err := scopeFn(scope, rti.GetScope())
+			if err != nil {
+				return nil, err
+			} else if !allowed {
+				return nil, errors.ErrInvalidScope
+			}
+		}
+
+		if validationFn := s.RefreshingValidationHandler; validationFn != nil {
+			rti, err := s.Manager.LoadRefreshToken(ctx, tgr.Refresh)
+			if err != nil {
+				if err == errors.ErrInvalidRefreshToken || err == errors.ErrExpiredRefreshToken {
+					return nil, errors.ErrInvalidGrant
+				}
+				return nil, err
+			}
+			allowed, err := validationFn(rti)
 			if err != nil {
 				return nil, err
 			} else if !allowed {
