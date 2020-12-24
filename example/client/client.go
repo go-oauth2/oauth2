@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -33,7 +35,9 @@ var (
 
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		u := config.AuthCodeURL("xyz")
+		u := config.AuthCodeURL("xyz",
+			oauth2.SetAuthURLParam("code_challenge", genCodeChallengeS256("s256example")),
+			oauth2.SetAuthURLParam("code_challenge_method", "S256"))
 		http.Redirect(w, r, u, http.StatusFound)
 	})
 
@@ -49,7 +53,7 @@ func main() {
 			http.Error(w, "Code not found", http.StatusBadRequest)
 			return
 		}
-		token, err := config.Exchange(context.Background(), code)
+		token, err := config.Exchange(context.Background(), code, oauth2.SetAuthURLParam("code_verifier", "s256example"))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -129,4 +133,9 @@ func main() {
 
 	log.Println("Client is running at 9094 port.Please open http://localhost:9094")
 	log.Fatal(http.ListenAndServe(":9094", nil))
+}
+
+func genCodeChallengeS256(s string) string {
+	s256 := sha256.Sum256([]byte(s))
+	return base64.URLEncoding.EncodeToString(s256[:])
 }

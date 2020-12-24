@@ -176,6 +176,10 @@ func (m *Manager) GenerateAuthToken(ctx context.Context, rt oauth2.ResponseType,
 		if exp := tgr.AccessTokenExp; exp > 0 {
 			ti.SetAccessExpiresIn(exp)
 		}
+		if tgr.CodeChallenge != "" {
+			ti.SetCodeChallenge(tgr.CodeChallenge)
+			ti.SetCodeChallengeMethod(tgr.CodeChallengeMethod)
+		}
 
 		tv, err := m.authorizeGenerate.Token(ctx, td)
 		if err != nil {
@@ -251,6 +255,28 @@ func (m *Manager) getAndDelAuthorizationCode(ctx context.Context, tgr *oauth2.To
 	return ti, nil
 }
 
+func (m *Manager) validateCodeChallenge(ti oauth2.TokenInfo, ver string) error {
+	cc := ti.GetCodeChallenge()
+	// early return
+	if cc == "" && ver == "" {
+		return nil
+	}
+	if cc == "" {
+		return errors.ErrMissingCodeVerifier
+	}
+	if ver == "" {
+		return errors.ErrMissingCodeVerifier
+	}
+	ccm := ti.GetCodeChallengeMethod()
+	if ccm.String() == "" {
+		ccm = oauth2.CodeChallengePlain
+	}
+	if !ccm.Validate(cc, ver) {
+		return errors.ErrInvalidCodeChallenge
+	}
+	return nil
+}
+
 // GenerateAccessToken generate the access token
 func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
 	cli, err := m.GetClient(ctx, tgr.ClientID)
@@ -273,6 +299,9 @@ func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, 
 	if gt == oauth2.AuthorizationCode {
 		ti, err := m.getAndDelAuthorizationCode(ctx, tgr)
 		if err != nil {
+			return nil, err
+		}
+		if err := m.validateCodeChallenge(ti, tgr.CodeVerifier); err != nil {
 			return nil, err
 		}
 		tgr.UserID = ti.GetUserID()

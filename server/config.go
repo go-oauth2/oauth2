@@ -9,10 +9,12 @@ import (
 
 // Config configuration parameters
 type Config struct {
-	TokenType             string                // token type
-	AllowGetAccessRequest bool                  // to allow GET requests for the token
-	AllowedResponseTypes  []oauth2.ResponseType // allow the authorization type
-	AllowedGrantTypes     []oauth2.GrantType    // allow the grant type
+	TokenType                   string                // token type
+	AllowGetAccessRequest       bool                  // to allow GET requests for the token
+	AllowedResponseTypes        []oauth2.ResponseType // allow the authorization type
+	AllowedGrantTypes           []oauth2.GrantType    // allow the grant type
+	AllowedCodeChallengeMethods []oauth2.CodeChallengeMethod
+	ForcePKCE                   bool
 }
 
 // NewConfig create to configuration instance
@@ -26,17 +28,23 @@ func NewConfig() *Config {
 			oauth2.ClientCredentials,
 			oauth2.Refreshing,
 		},
+		AllowedCodeChallengeMethods: []oauth2.CodeChallengeMethod{
+			oauth2.CodeChallengePlain,
+			oauth2.CodeChallengeS256,
+		},
 	}
 }
 
 // AuthorizeRequest authorization request
 type AuthorizeRequest struct {
-	ResponseType   oauth2.ResponseType
-	ClientID       string
-	Scope          string
-	RedirectURI    string
-	State          string
-	UserID         string
-	AccessTokenExp time.Duration
-	Request        *http.Request
+	ResponseType        oauth2.ResponseType
+	ClientID            string
+	Scope               string
+	RedirectURI         string
+	State               string
+	UserID              string
+	CodeChallenge       string
+	CodeChallengeMethod oauth2.CodeChallengeMethod
+	AccessTokenExp      time.Duration
+	Request             *http.Request
 }
