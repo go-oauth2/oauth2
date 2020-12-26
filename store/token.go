@@ -12,11 +12,13 @@ import (
 )
 
 // NewMemoryTokenStore create a token store instance based on memory
+// 基于内存创建令牌存储实例
 func NewMemoryTokenStore() (oauth2.TokenStore, error) {
 	return NewFileTokenStore(":memory:")
 }
 
 // NewFileTokenStore create a token store instance based on file
+// 基于文件创建令牌存储实例
 func NewFileTokenStore(filename string) (oauth2.TokenStore, error) {
 	db, err := buntdb.Open(filename)
 	if err != nil {
@@ -26,11 +28,13 @@ func NewFileTokenStore(filename string) (oauth2.TokenStore, error) {
 }
 
 // TokenStore token storage based on buntdb(https://github.com/tidwall/buntdb)
+// 基于buntdb创建令牌存储实例
 type TokenStore struct {
 	db *buntdb.DB
 }
 
 // Create create and store the new token information
+// 创建创建并存储新令牌信息
 func (ts *TokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error {
 	ct := time.Now()
 	jv, err := json.Marshal(info)
@@ -70,6 +74,7 @@ func (ts *TokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error {
 }
 
 // remove key
+// 移除秘钥
 func (ts *TokenStore) remove(key string) error {
 	err := ts.db.Update(func(tx *buntdb.Tx) error {
 		_, err := tx.Delete(key)
@@ -82,16 +87,19 @@ func (ts *TokenStore) remove(key string) error {
 }
 
 // RemoveByCode use the authorization code to delete the token information
+// 使用授权码删除令牌信息
 func (ts *TokenStore) RemoveByCode(ctx context.Context, code string) error {
 	return ts.remove(code)
 }
 
 // RemoveByAccess use the access token to delete the token information
+// 使用访问令牌删除令牌信息
 func (ts *TokenStore) RemoveByAccess(ctx context.Context, access string) error {
 	return ts.remove(access)
 }
 
 // RemoveByRefresh use the refresh token to delete the token information
+// 使用刷新令牌删除令牌信息
 func (ts *TokenStore) RemoveByRefresh(ctx context.Context, refresh string) error {
 	return ts.remove(refresh)
 }
@@ -141,11 +149,13 @@ func (ts *TokenStore) getBasicID(key string) (string, error) {
 }
 
 // GetByCode use the authorization code for token information data
+// 使用授权代码存储令牌信息数据
 func (ts *TokenStore) GetByCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
 	return ts.getData(code)
 }
 
 // GetByAccess use the access token for token information data
+// 使用访问令牌获取令牌信息数据
 func (ts *TokenStore) GetByAccess(ctx context.Context, access string) (oauth2.TokenInfo, error) {
 	basicID, err := ts.getBasicID(access)
 	if err != nil {
@@ -155,6 +165,7 @@ func (ts *TokenStore) GetByAccess(ctx context.Context, access string) (oauth2.To
 }
 
 // GetByRefresh use the refresh token for token information data
+// 将刷新令牌用于令牌信息数据
 func (ts *TokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2.TokenInfo, error) {
 	basicID, err := ts.getBasicID(refresh)
 	if err != nil {

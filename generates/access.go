@@ -12,15 +12,18 @@ import (
 )
 
 // NewAccessGenerate create to generate the access token instance
+// 创建以生成访问令牌实例
 func NewAccessGenerate() *AccessGenerate {
 	return &AccessGenerate{}
 }
 
 // AccessGenerate generate the access token
+// 生成访问令牌
 type AccessGenerate struct {
 }
 
 // Token based on the UUID generated token
+// 基于UUID生成的令牌的令牌
 func (ag *AccessGenerate) Token(ctx context.Context, data *oauth2.GenerateBasic, isGenRefresh bool) (string, string, error) {
 	buf := bytes.NewBufferString(data.Client.GetID())
 	buf.WriteString(data.UserID)

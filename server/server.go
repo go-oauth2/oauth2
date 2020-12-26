@@ -14,11 +14,13 @@ import (
 )
 
 // NewDefaultServer create a default authorization server
+// 创建默认授权服务器
 func NewDefaultServer(manager oauth2.Manager) *Server {
 	return NewServer(NewConfig(), manager)
 }
 
 // NewServer create authorization server
+// 创建授权服务器
 func NewServer(cfg *Config, manager oauth2.Manager) *Server {
 	srv := &Server{
 		Config:  cfg,
@@ -26,6 +28,7 @@ func NewServer(cfg *Config, manager oauth2.Manager) *Server {
 	}
 
 	// default handler
+	// 默认处理程序
 	srv.ClientInfoHandler = ClientBasicHandler
 
 	srv.UserAuthorizationHandler = func(w http.ResponseWriter, r *http.Request) (string, error) {
@@ -39,6 +42,7 @@ func NewServer(cfg *Config, manager oauth2.Manager) *Server {
 }
 
 // Server Provide authorization server
+// 服务器提供授权服务器
 type Server struct {
 	Config                       *Config
 	Manager                      oauth2.Manager
@@ -56,6 +60,7 @@ type Server struct {
 	AuthorizeScopeHandler        AuthorizeScopeHandler
 }
 
+// 重定向错误
 func (s *Server) redirectError(w http.ResponseWriter, req *AuthorizeRequest, err error) error {
 	if req == nil {
 		return err
@@ -64,6 +69,7 @@ func (s *Server) redirectError(w http.ResponseWriter, req *AuthorizeRequest, err
 	return s.redirect(w, req, data)
 }
 
+// 重定向
 func (s *Server) redirect(w http.ResponseWriter, req *AuthorizeRequest, data map[string]interface{}) error {
 	uri, err := s.GetRedirectURI(req, data)
 	if err != nil {
@@ -75,11 +81,13 @@ func (s *Server) redirect(w http.ResponseWriter, req *AuthorizeRequest, data map
 	return nil
 }
 
+// token错误
 func (s *Server) tokenError(w http.ResponseWriter, err error) error {
 	data, statusCode, header := s.GetErrorData(err)
 	return s.token(w, data, header, statusCode)
 }
 
+// 获取token
 func (s *Server) token(w http.ResponseWriter, data map[string]interface{}, header http.Header, statusCode ...int) error {
 	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.Header().Set("Cache-Control", "no-store")
@@ -99,6 +107,7 @@ func (s *Server) token(w http.ResponseWriter, data map[string]interface{}, heade
 }
 
 // GetRedirectURI get redirect uri
+// 获取重定向URI
 func (s *Server) GetRedirectURI(req *AuthorizeRequest, data map[string]interface{}) (string, error) {
 	u, err := url.Parse(req.RedirectURI)
 	if err != nil {
@@ -130,6 +139,7 @@ func (s *Server) GetRedirectURI(req *AuthorizeRequest, data map[string]interface
 }
 
 // CheckResponseType check allows response type
+// 检查允许响应类型
 func (s *Server) CheckResponseType(rt oauth2.ResponseType) bool {
 	for _, art := range s.Config.AllowedResponseTypes {
 		if art == rt {
@@ -150,6 +160,7 @@ func (s *Server) CheckCodeChallengeMethod(ccm oauth2.CodeChallengeMethod) bool {
 }
 
 // ValidationAuthorizeRequest the authorization request validation
+// 授权请求验证
 func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest, error) {
 	redirectURI := r.FormValue("redirect_uri")
 	clientID := r.FormValue("client_id")
@@ -196,8 +207,10 @@ func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest,
 }
 
 // GetAuthorizeToken get authorization token(code)
+// 获取授权令牌（code）
 func (s *Server) GetAuthorizeToken(ctx context.Context, req *AuthorizeRequest) (oauth2.TokenInfo, error) {
 	// check the client allows the grant type
+	// 检查客户端是否允许授予类型
 	if fn := s.ClientAuthorizedHandler; fn != nil {
 		gt := oauth2.AuthorizationCode
 		if req.ResponseType == oauth2.Token {
@@ -213,6 +226,7 @@ func (s *Server) GetAuthorizeToken(ctx context.Context, req *AuthorizeRequest) (
 	}
 
 	// check the client allows the authorized scope
+	// 检查客户端是否允许授权范围
 	if fn := s.ClientScopeHandler; fn != nil {
 		allowed, err := fn(req.ClientID, req.Scope)
 		if err != nil {
@@ -236,6 +250,7 @@ func (s *Server) GetAuthorizeToken(ctx context.Context, req *AuthorizeRequest) (
 }
 
 // GetAuthorizeData get authorization response data
+// 获取授权响应数据
 func (s *Server) GetAuthorizeData(rt oauth2.ResponseType, ti oauth2.TokenInfo) map[string]interface{} {
 	if rt == oauth2.Code {
 		return map[string]interface{}{
@@ -246,6 +261,7 @@ func (s *Server) GetAuthorizeData(rt oauth2.ResponseType, ti oauth2.TokenInfo) m
 }
 
 // HandleAuthorizeRequest the authorization request handling
+// 授权请求处理
 func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 
@@ -255,6 +271,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// user authorization
+	// 用户授权
 	userID, err := s.UserAuthorizationHandler(w, r)
 	if err != nil {
 		return s.redirectError(w, req, err)
@@ -264,6 +281,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 	req.UserID = userID
 
 	// specify the scope of authorization
+	// 指定授权范围
 	if fn := s.AuthorizeScopeHandler; fn != nil {
 		scope, err := fn(w, r)
 		if err != nil {
@@ -274,6 +292,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// specify the expiration time of access token
+	// 指定访问令牌的到期时间
 	if fn := s.AccessTokenExpHandler; fn != nil {
 		exp, err := fn(w, r)
 		if err != nil {
@@ -288,6 +307,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// If the redirect URI is empty, the default domain provided by the client is used.
+	// 如果重定向URI为空，则使用客户端提供的默认域
 	if req.RedirectURI == "" {
 		client, err := s.Manager.GetClient(ctx, req.ClientID)
 		if err != nil {
@@ -300,6 +320,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 }
 
 // ValidationTokenRequest the token request validation
+// 令牌请求验证
 func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oauth2.TokenGenerateRequest, error) {
 	if v := r.Method; !(v == "POST" ||
 		(s.Config.AllowGetAccessRequest && v == "GET")) {
@@ -363,6 +384,7 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 }
 
 // CheckGrantType check allows grant type
+// 检查允许授予类型
 func (s *Server) CheckGrantType(gt oauth2.GrantType) bool {
 	for _, agt := range s.Config.AllowedGrantTypes {
 		if agt == gt {
@@ -373,6 +395,7 @@ func (s *Server) CheckGrantType(gt oauth2.GrantType) bool {
 }
 
 // GetAccessToken access token
+// 获取访问令牌
 func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
 	if allowed := s.CheckGrantType(gt); !allowed {
 		return nil, errors.ErrUnauthorizedClient
@@ -461,6 +484,7 @@ func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *o
 }
 
 // GetTokenData token data
+// 获取令牌数据
 func (s *Server) GetTokenData(ti oauth2.TokenInfo) map[string]interface{} {
 	data := map[string]interface{}{
 		"access_token": ti.GetAccess(),
@@ -489,6 +513,7 @@ func (s *Server) GetTokenData(ti oauth2.TokenInfo) map[string]interface{} {
 }
 
 // HandleTokenRequest token request handling
+// 令牌请求处理
 func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 
@@ -506,6 +531,7 @@ func (s *Server) HandleTokenRequest(w http.ResponseWriter, r *http.Request) erro
 }
 
 // GetErrorData get error response data
+// 获取错误响应数据
 func (s *Server) GetErrorData(err error) (map[string]interface{}, int, http.Header) {
 	var re errors.Response
 	if v, ok := errors.Descriptions[err]; ok {
@@ -556,6 +582,7 @@ func (s *Server) GetErrorData(err error) (map[string]interface{}, int, http.Head
 }
 
 // BearerAuth parse bearer token
+// 解析承载令牌
 func (s *Server) BearerAuth(r *http.Request) (string, bool) {
 	auth := r.Header.Get("Authorization")
 	prefix := "Bearer "
@@ -570,8 +597,8 @@ func (s *Server) BearerAuth(r *http.Request) (string, bool) {
 	return token, token != ""
 }
 
-// ValidationBearerToken validation the bearer tokens
-// https://tools.ietf.org/html/rfc6750
+// ValidationBearerToken validation the bearer tokens  //https://tools.ietf.org/html/rfc6750
+// 解析承载令牌
 func (s *Server) ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error) {
 	ctx := r.Context()
 

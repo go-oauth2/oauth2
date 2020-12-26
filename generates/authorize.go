@@ -11,14 +11,17 @@ import (
 )
 
 // NewAuthorizeGenerate create to generate the authorize code instance
+// 创建以生成授权代码实例
 func NewAuthorizeGenerate() *AuthorizeGenerate {
 	return &AuthorizeGenerate{}
 }
 
 // AuthorizeGenerate generate the authorize code
+// 生成授权代码
 type AuthorizeGenerate struct{}
 
 // Token based on the UUID generated token
+// 基于UUID生成的令牌的令牌
 func (ag *AuthorizeGenerate) Token(ctx context.Context, data *oauth2.GenerateBasic) (string, error) {
 	buf := bytes.NewBufferString(data.Client.GetID())
 	buf.WriteString(data.UserID)
