@@ -83,7 +83,7 @@ func main() {
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/auth", authHandler)
 
-	http.HandleFunc("/authorize", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/oauth/authorize", func(w http.ResponseWriter, r *http.Request) {
 		if dumpvar {
 			dumpRequest(os.Stdout, "authorize", r)
 		}
@@ -109,7 +109,7 @@ func main() {
 		}
 	})
 
-	http.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/oauth/token", func(w http.ResponseWriter, r *http.Request) {
 		if dumpvar {
 			_ = dumpRequest(os.Stdout, "token", r) // Ignore the error
 		}
@@ -141,6 +141,8 @@ func main() {
 	})
 
 	log.Printf("Server is running at %d port.\n", portvar)
+	log.Printf("Point your OAuth client Auth endpoint to %s:%d%s", "http://localhost", portvar, "/oauth/authorize")
+	log.Printf("Point your OAuth client Token endpoint to %s:%d%s", "http://localhost", portvar, "/oauth/token")
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d",portvar), nil))
 }
 
