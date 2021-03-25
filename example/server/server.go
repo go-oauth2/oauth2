@@ -2,15 +2,18 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
+	"fmt"
+	"github.com/go-oauth2/oauth2/v4/generates"
+	"io"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/go-oauth2/oauth2/v4/errors"
-	"github.com/go-oauth2/oauth2/v4/generates"
 	"github.com/go-oauth2/oauth2/v4/manage"
 	"github.com/go-oauth2/oauth2/v4/models"
 	"github.com/go-oauth2/oauth2/v4/server"
@@ -18,7 +21,27 @@ import (
 	"github.com/go-session/session"
 )
 
+var (
+	dumpvar   bool
+	idvar     string
+	secretvar string
+	domainvar string
+	portvar   int
+)
+
+func init() {
+	flag.BoolVar(&dumpvar, "d", true, "Dump requests and responses")
+	flag.StringVar(&idvar, "i", "222222", "The client id being passed in")
+	flag.StringVar(&secretvar, "s", "22222222", "The client secret being passed in")
+	flag.StringVar(&domainvar, "r", "http://localhost:9094", "The domain of the redirect url")
+	flag.IntVar(&portvar, "p", 9096, "the base port for the server")
+}
+
 func main() {
+	flag.Parse()
+	if dumpvar {
+		log.Println("Dumping requests")
+	}
 	manager := manage.NewDefaultManager()
 	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
 
@@ -26,13 +49,14 @@ func main() {
 	manager.MustTokenStorage(store.NewMemoryTokenStore())
 
 	// generate jwt access token
-	manager.MapAccessGenerate(generates.NewJWTAccessGenerate("", []byte("00000000"), jwt.SigningMethodHS512))
+	// manager.MapAccessGenerate(generates.NewJWTAccessGenerate("", []byte("00000000"), jwt.SigningMethodHS512))
+	manager.MapAccessGenerate(generates.NewAccessGenerate())
 
 	clientStore := store.NewClientStore()
-	clientStore.Set("222222", &models.Client{
-		ID:     "222222",
-		Secret: "22222222",
-		Domain: "http://localhost:9094",
+	clientStore.Set(idvar, &models.Client{
+		ID:     idvar,
+		Secret: secretvar,
+		Domain: domainvar,
 	})
 	manager.MapClientStorage(clientStore)
 
@@ -60,6 +84,10 @@ func main() {
 	http.HandleFunc("/auth", authHandler)
 
 	http.HandleFunc("/authorize", func(w http.ResponseWriter, r *http.Request) {
+		if dumpvar {
+			dumpRequest(os.Stdout, "authorize", r)
+		}
+
 		store, err := session.Start(r.Context(), w, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -82,6 +110,10 @@ func main() {
 	})
 
 	http.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
+		if dumpvar {
+			_ = dumpRequest(os.Stdout, "token", r) // Ignore the error
+		}
+
 		err := srv.HandleTokenRequest(w, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -89,6 +121,9 @@ func main() {
 	})
 
 	http.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+		if dumpvar {
+			_ = dumpRequest(os.Stdout, "test", r) // Ignore the error
+		}
 		token, err := srv.ValidationBearerToken(r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -105,11 +140,24 @@ func main() {
 		e.Encode(data)
 	})
 
-	log.Println("Server is running at 9096 port.")
-	log.Fatal(http.ListenAndServe(":9096", nil))
+	log.Printf("Server is running at %d port.\n", portvar)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d",portvar), nil))
+}
+
+func dumpRequest(writer io.Writer, header string, r *http.Request) error {
+	data, err := httputil.DumpRequest(r, true)
+	if err != nil {
+		return err
+	}
+	writer.Write([]byte("\n" + header + ": \n"))
+	writer.Write(data)
+	return nil
 }
 
 func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+	if dumpvar {
+		_ = dumpRequest(os.Stdout, "userAuthorizeHandler", r) // Ignore the error
+	}
 	store, err := session.Start(r.Context(), w, r)
 	if err != nil {
 		return
@@ -136,6 +184,9 @@ func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
+	if dumpvar {
+		_ = dumpRequest(os.Stdout, "login", r) // Ignore the error
+	}
 	store, err := session.Start(r.Context(), w, r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -160,6 +211,9 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func authHandler(w http.ResponseWriter, r *http.Request) {
+	if dumpvar {
+		_ = dumpRequest(os.Stdout, "auth", r) // Ignore the error
+	}
 	store, err := session.Start(nil, w, r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
