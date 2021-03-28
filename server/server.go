@@ -311,11 +311,6 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 		return "", nil, errors.ErrUnsupportedGrantType
 	}
 
-	codeVer := r.FormValue("code_verifier")
-	if s.Config.ForcePKCE && codeVer == "" {
-		return "", nil, errors.ErrInvalidRequest
-	}
-
 	clientID, clientSecret, err := s.ClientInfoHandler(r)
 	if err != nil {
 		return "", nil, err
@@ -335,7 +330,10 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 			tgr.Code == "" {
 			return "", nil, errors.ErrInvalidRequest
 		}
-		tgr.CodeVerifier = codeVer
+		tgr.CodeVerifier = r.FormValue("code_verifier")
+		if s.Config.ForcePKCE && tgr.CodeVerifier == "" {
+			return "", nil, errors.ErrInvalidRequest
+		}
 	case oauth2.PasswordCredentials:
 		tgr.Scope = r.FormValue("scope")
 		username, password := r.FormValue("username"), r.FormValue("password")
