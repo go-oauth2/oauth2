@@ -26,8 +26,8 @@ var (
 		Scopes:       []string{"all"},
 		RedirectURL:  "http://localhost:9094/oauth2",
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  authServerURL + "/authorize",
-			TokenURL: authServerURL + "/token",
+			AuthURL:  authServerURL + "/oauth/authorize",
+			TokenURL: authServerURL + "/oauth/token",
 		},
 	}
 	globalToken *oauth2.Token // Non-concurrent security
