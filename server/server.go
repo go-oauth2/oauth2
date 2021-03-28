@@ -214,7 +214,15 @@ func (s *Server) GetAuthorizeToken(ctx context.Context, req *AuthorizeRequest) (
 
 	// check the client allows the authorized scope
 	if fn := s.ClientScopeHandler; fn != nil {
-		allowed, err := fn(req.ClientID, req.Scope)
+		tgr := &oauth2.TokenGenerateRequest{
+			ClientID:       req.ClientID,
+			UserID:         req.UserID,
+			RedirectURI:    req.RedirectURI,
+			Scope:          req.Scope,
+			AccessTokenExp: req.AccessTokenExp,
+			Request:        req.Request,
+		}
+		allowed, err := fn(tgr)
 		if err != nil {
 			return nil, err
 		} else if !allowed {
@@ -402,7 +410,7 @@ func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *o
 		return ti, nil
 	case oauth2.PasswordCredentials, oauth2.ClientCredentials:
 		if fn := s.ClientScopeHandler; fn != nil {
-			allowed, err := fn(tgr.ClientID, tgr.Scope)
+			allowed, err := fn(tgr)
 			if err != nil {
 				return nil, err
 			} else if !allowed {
@@ -421,7 +429,7 @@ func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *o
 				return nil, err
 			}
 
-			allowed, err := scopeFn(scope, rti.GetScope())
+			allowed, err := scopeFn(tgr, rti.GetScope())
 			if err != nil {
 				return nil, err
 			} else if !allowed {

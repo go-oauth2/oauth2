@@ -306,7 +306,7 @@ func TestClientCredentials(t *testing.T) {
 	srv.SetAuthorizeScopeHandler(func(w http.ResponseWriter, r *http.Request) (scope string, err error) {
 		return
 	})
-	srv.SetClientScopeHandler(func(clientID, scope string) (allowed bool, err error) {
+	srv.SetClientScopeHandler(func(tgr *oauth2.TokenGenerateRequest) (allowed bool, err error) {
 		allowed = true
 		return
 	})
