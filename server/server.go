@@ -398,8 +398,7 @@ func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *o
 		ti, err := s.Manager.GenerateAccessToken(ctx, gt, tgr)
 		if err != nil {
 			switch err {
-			case errors.ErrInvalidAuthorizeCode, errors.ErrInvalidCodeChallenge,
-				errors.ErrMissingCodeChallenge, errors.ErrMissingCodeChallenge:
+			case errors.ErrInvalidAuthorizeCode, errors.ErrInvalidCodeChallenge, errors.ErrMissingCodeChallenge:
 				return nil, errors.ErrInvalidGrant
 			case errors.ErrInvalidClient:
 				return nil, errors.ErrInvalidClient
