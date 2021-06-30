@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/generates"
 	"github.com/go-oauth2/oauth2/v4/models"
+	"github.com/golang-jwt/jwt"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
