@@ -212,6 +212,15 @@ func (s *Server) GetAuthorizeToken(ctx context.Context, req *AuthorizeRequest) (
 		}
 	}
 
+	tgr := &oauth2.TokenGenerateRequest{
+		ClientID:       req.ClientID,
+		UserID:         req.UserID,
+		RedirectURI:    req.RedirectURI,
+		Scope:          req.Scope,
+		AccessTokenExp: req.AccessTokenExp,
+		Request:        req.Request,
+	}
+
 	// check the client allows the authorized scope
 	if fn := s.ClientScopeHandler; fn != nil {
 		tgr := &oauth2.TokenGenerateRequest{
@@ -222,6 +231,7 @@ func (s *Server) GetAuthorizeToken(ctx context.Context, req *AuthorizeRequest) (
 			AccessTokenExp: req.AccessTokenExp,
 			Request:        req.Request,
 		}
+
 		allowed, err := fn(tgr)
 		if err != nil {
 			return nil, err
@@ -240,6 +250,7 @@ func (s *Server) GetAuthorizeToken(ctx context.Context, req *AuthorizeRequest) (
 		CodeChallenge:       req.CodeChallenge,
 		CodeChallengeMethod: req.CodeChallengeMethod,
 	}
+
 	return s.Manager.GenerateAuthToken(ctx, req.ResponseType, tgr)
 }
 
@@ -419,7 +430,7 @@ func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *o
 		return s.Manager.GenerateAccessToken(ctx, gt, tgr)
 	case oauth2.Refreshing:
 		// check scope
-		if scope, scopeFn := tgr.Scope, s.RefreshingScopeHandler; scope != "" && scopeFn != nil {
+		if scopeFn := s.RefreshingScopeHandler; tgr.Scope != "" && scopeFn != nil {
 			rti, err := s.Manager.LoadRefreshToken(ctx, tgr.Refresh)
 			if err != nil {
 				if err == errors.ErrInvalidRefreshToken || err == errors.ErrExpiredRefreshToken {
