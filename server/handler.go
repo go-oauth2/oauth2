@@ -27,6 +27,9 @@ type (
 	// RefreshingScopeHandler check the scope of the refreshing token
 	RefreshingScopeHandler func(tgr *oauth2.TokenGenerateRequest, oldScope string) (allowed bool, err error)
 
+	// RefreshingValidationHandler check if refresh_token is still valid. eg no revocation or other
+	RefreshingValidationHandler func(ti oauth2.TokenInfo) (allowed bool, err error)
+
 	// ResponseErrorHandler response error handing
 	ResponseErrorHandler func(re *errors.Response)
 

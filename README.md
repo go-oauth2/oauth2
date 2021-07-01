@@ -2,11 +2,11 @@
 
 > An open protocol to allow secure authorization in a simple and standard method from web, mobile and desktop applications.
 
-[![Build][Build-Status-Image]][Build-Status-Url] [![Codecov][codecov-image]][codecov-url] [![ReportCard][reportcard-image]][reportcard-url] [![GoDoc][godoc-image]][godoc-url] [![License][license-image]][license-url]
+[![Build][build-status-image]][build-status-url] [![Codecov][codecov-image]][codecov-url] [![ReportCard][reportcard-image]][reportcard-url] [![GoDoc][godoc-image]][godoc-url] [![License][license-image]][license-url]
 
 ## Protocol Flow
 
-``` text
+```text
      +--------+                               +---------------+
      |        |--(A)- Authorization Request ->|   Resource    |
      |        |                               |     Owner     |
@@ -30,13 +30,13 @@
 
 ### Download and install
 
-``` bash
+```bash
 go get -u -v github.com/go-oauth2/oauth2/v4/...
 ```
 
 ### Create file `server.go`
 
-``` go
+```go
 package main
 
 import (
@@ -95,7 +95,7 @@ func main() {
 
 ### Build and run
 
-``` bash
+```bash
 go build server.go
 
 ./server
@@ -105,24 +105,24 @@ go build server.go
 
 [http://localhost:9096/token?grant_type=client_credentials&client_id=000000&client_secret=999999&scope=read](http://localhost:9096/token?grant_type=client_credentials&client_id=000000&client_secret=999999&scope=read)
 
-``` json
+```json
 {
-    "access_token": "J86XVRYSNFCFI233KXDL0Q",
-    "expires_in": 7200,
-    "scope": "read",
-    "token_type": "Bearer"
+  "access_token": "J86XVRYSNFCFI233KXDL0Q",
+  "expires_in": 7200,
+  "scope": "read",
+  "token_type": "Bearer"
 }
 ```
 
 ## Features
 
-* Easy to use
-* Based on the [RFC 6749](https://tools.ietf.org/html/rfc6749) implementation
-* Token storage support TTL
-* Support custom expiration time of the access token
-* Support custom extension field
-* Support custom scope
-* Support jwt to generate access tokens
+- Easy to use
+- Based on the [RFC 6749](https://tools.ietf.org/html/rfc6749) implementation
+- Token storage support TTL
+- Support custom expiration time of the access token
+- Support custom extension field
+- Support custom scope
+- Support jwt to generate access tokens
 
 ## Example
 
@@ -161,27 +161,28 @@ if !ok || !token.Valid {
 
 ## Store Implements
 
-* [BuntDB](https://github.com/tidwall/buntdb)(default store)
-* [Redis](https://github.com/go-oauth2/redis)
-* [MongoDB](https://github.com/go-oauth2/mongo)
-* [MySQL](https://github.com/go-oauth2/mysql)
-* [MySQL (Provides both client and token store)](https://github.com/imrenagi/go-oauth2-mysql) 
-* [PostgreSQL](https://github.com/vgarvardt/go-oauth2-pg)
-* [DynamoDB](https://github.com/contamobi/go-oauth2-dynamodb)
-* [XORM](https://github.com/techknowlogick/go-oauth2-xorm)
-* [GORM](https://github.com/techknowlogick/go-oauth2-gorm)
-* [Firestore](https://github.com/tslamic/go-oauth2-firestore)
+- [BuntDB](https://github.com/tidwall/buntdb)(default store)
+- [Redis](https://github.com/go-oauth2/redis)
+- [MongoDB](https://github.com/go-oauth2/mongo)
+- [MySQL](https://github.com/go-oauth2/mysql)
+- [MySQL (Provides both client and token store)](https://github.com/imrenagi/go-oauth2-mysql)
+- [PostgreSQL](https://github.com/vgarvardt/go-oauth2-pg)
+- [DynamoDB](https://github.com/contamobi/go-oauth2-dynamodb)
+- [XORM](https://github.com/techknowlogick/go-oauth2-xorm)
+- [XORM (MySQL, client and token store)](https://github.com/rainlay/go-oauth2-xorm)
+- [GORM](https://github.com/techknowlogick/go-oauth2-gorm)
+- [Firestore](https://github.com/tslamic/go-oauth2-firestore)
 
 ## Handy Utilities
 
-* [OAuth2 Proxy Logger (Debug utility that proxies interfaces and logs)](https://github.com/aubelsb2/oauth2-logger-proxy)
+- [OAuth2 Proxy Logger (Debug utility that proxies interfaces and logs)](https://github.com/aubelsb2/oauth2-logger-proxy)
 
 ## MIT License
 
-  Copyright (c) 2016 Lyric
+Copyright (c) 2016 Lyric
 
-[Build-Status-Url]: https://travis-ci.org/go-oauth2/oauth2
-[Build-Status-Image]: https://travis-ci.org/go-oauth2/oauth2.svg?branch=master
+[build-status-url]: https://travis-ci.org/go-oauth2/oauth2
+[build-status-image]: https://travis-ci.org/go-oauth2/oauth2.svg?branch=master
 [codecov-url]: https://codecov.io/gh/go-oauth2/oauth2
 [codecov-image]: https://codecov.io/gh/go-oauth2/oauth2/branch/master/graph/badge.svg
 [reportcard-url]: https://goreportcard.com/report/github.com/go-oauth2/oauth2/v4
