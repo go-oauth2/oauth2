@@ -240,7 +240,7 @@ func (s *Server) GetAuthorizeToken(ctx context.Context, req *AuthorizeRequest) (
 		}
 	}
 
-	tgr := &oauth2.TokenGenerateRequest{
+	tgr = &oauth2.TokenGenerateRequest{
 		ClientID:            req.ClientID,
 		UserID:              req.UserID,
 		RedirectURI:         req.RedirectURI,
