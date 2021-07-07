@@ -102,7 +102,10 @@ go build server.go
 ```
 
 ### Open in your web browser
+**Authorization Request**:
+[http://localhost:9096/authorize?client_id=000000&response_type=code](http://localhost:9096/authorize?client_id=000000&response_type=code)
 
+**Grant Token Request**:
 [http://localhost:9096/token?grant_type=client_credentials&client_id=000000&client_secret=999999&scope=read](http://localhost:9096/token?grant_type=client_credentials&client_id=000000&client_secret=999999&scope=read)
 
 ```json
