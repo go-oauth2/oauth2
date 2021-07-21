@@ -223,15 +223,6 @@ func (s *Server) GetAuthorizeToken(ctx context.Context, req *AuthorizeRequest) (
 
 	// check the client allows the authorized scope
 	if fn := s.ClientScopeHandler; fn != nil {
-		tgr := &oauth2.TokenGenerateRequest{
-			ClientID:       req.ClientID,
-			UserID:         req.UserID,
-			RedirectURI:    req.RedirectURI,
-			Scope:          req.Scope,
-			AccessTokenExp: req.AccessTokenExp,
-			Request:        req.Request,
-		}
-
 		allowed, err := fn(tgr)
 		if err != nil {
 			return nil, err
@@ -240,16 +231,8 @@ func (s *Server) GetAuthorizeToken(ctx context.Context, req *AuthorizeRequest) (
 		}
 	}
 
-	tgr = &oauth2.TokenGenerateRequest{
-		ClientID:            req.ClientID,
-		UserID:              req.UserID,
-		RedirectURI:         req.RedirectURI,
-		Scope:               req.Scope,
-		AccessTokenExp:      req.AccessTokenExp,
-		Request:             req.Request,
-		CodeChallenge:       req.CodeChallenge,
-		CodeChallengeMethod: req.CodeChallengeMethod,
-	}
+	tgr.CodeChallenge = req.CodeChallenge
+	tgr.CodeChallengeMethod = req.CodeChallengeMethod
 
 	return s.Manager.GenerateAuthToken(ctx, req.ResponseType, tgr)
 }
@@ -390,7 +373,8 @@ func (s *Server) CheckGrantType(gt oauth2.GrantType) bool {
 }
 
 // GetAccessToken access token
-func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
+func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo,
+	error) {
 	if allowed := s.CheckGrantType(gt); !allowed {
 		return nil, errors.ErrUnauthorizedClient
 	}
