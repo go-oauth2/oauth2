@@ -84,3 +84,8 @@ func (s *Server) SetAccessTokenExpHandler(handler AccessTokenExpHandler) {
 func (s *Server) SetAuthorizeScopeHandler(handler AuthorizeScopeHandler) {
 	s.AuthorizeScopeHandler = handler
 }
+
+// SetResponseTokenHandler response token handing
+func (s *Server) SetResponseTokenHandler(handler ResponseTokenHandler) {
+	s.ResponseTokenHandler = handler
+}

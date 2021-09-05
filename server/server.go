@@ -54,6 +54,7 @@ type Server struct {
 	ExtensionFieldsHandler       ExtensionFieldsHandler
 	AccessTokenExpHandler        AccessTokenExpHandler
 	AuthorizeScopeHandler        AuthorizeScopeHandler
+	ResponseTokenHandler         ResponseTokenHandler
 }
 
 func (s *Server) redirectError(w http.ResponseWriter, req *AuthorizeRequest, err error) error {
@@ -81,6 +82,9 @@ func (s *Server) tokenError(w http.ResponseWriter, err error) error {
 }
 
 func (s *Server) token(w http.ResponseWriter, data map[string]interface{}, header http.Header, statusCode ...int) error {
+	if fn := s.ResponseTokenHandler; fn != nil {
+		return fn(w, data, header, statusCode...)
+	}
 	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
