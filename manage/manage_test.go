@@ -93,9 +93,11 @@ func testManager(tgr *oauth2.TokenGenerateRequest, manager oauth2.Manager) {
 	So(err, ShouldBeNil)
 	So(rinfo.GetClientID(), ShouldEqual, atParams.ClientID)
 
-	atParams.Refresh = refreshToken
-	atParams.Scope = "owner"
-	rti, err := manager.RefreshAccessToken(ctx, atParams)
+	refreshParams := &oauth2.TokenGenerateRequest{
+		Refresh: refreshToken,
+		Scope:   "owner",
+	}
+	rti, err := manager.RefreshAccessToken(ctx, refreshParams)
 	So(err, ShouldBeNil)
 
 	refreshAT := rti.GetAccess()

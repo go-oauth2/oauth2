@@ -360,22 +360,14 @@ func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, 
 
 // RefreshAccessToken refreshing an access token
 func (m *Manager) RefreshAccessToken(ctx context.Context, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
-	cli, err := m.GetClient(ctx, tgr.ClientID)
-	if err != nil {
-		return nil, err
-	} else if cliPass, ok := cli.(oauth2.ClientPasswordVerifier); ok {
-		if !cliPass.VerifyPassword(tgr.ClientSecret) {
-			return nil, errors.ErrInvalidClient
-		}
-	} else if tgr.ClientSecret != cli.GetSecret() {
-		return nil, errors.ErrInvalidClient
-	}
-
 	ti, err := m.LoadRefreshToken(ctx, tgr.Refresh)
 	if err != nil {
 		return nil, err
-	} else if ti.GetClientID() != tgr.ClientID {
-		return nil, errors.ErrInvalidRefreshToken
+	}
+
+	cli, err := m.GetClient(ctx, ti.GetClientID())
+	if err != nil {
+		return nil, err
 	}
 
 	oldAccess, oldRefresh := ti.GetAccess(), ti.GetRefresh()
