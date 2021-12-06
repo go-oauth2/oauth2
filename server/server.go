@@ -182,7 +182,7 @@ func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest,
 	if ccm == "" {
 		ccm = oauth2.CodeChallengePlain
 	}
-	if ccm.String() != "" && !s.CheckCodeChallengeMethod(ccm) {
+	if ccm != "" && !s.CheckCodeChallengeMethod(ccm) {
 		return nil, errors.ErrUnsupportedCodeChallengeMethod
 	}
 
