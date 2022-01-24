@@ -36,6 +36,9 @@ type (
 	// InternalErrorHandler internal error handing
 	InternalErrorHandler func(err error) (re *errors.Response)
 
+	// PreRedirectErrorHandler is used to override "redirect-on-error" behavior
+	PreRedirectErrorHandler func(w http.ResponseWriter, req *AuthorizeRequest, err error) error
+
 	// AuthorizeScopeHandler set the authorized scope
 	AuthorizeScopeHandler func(w http.ResponseWriter, r *http.Request) (scope string, err error)
 

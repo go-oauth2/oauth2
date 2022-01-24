@@ -59,7 +59,6 @@ func (s *Server) SetRefreshingValidationHandler(handler RefreshingValidationHand
 	s.RefreshingValidationHandler = handler
 }
 
-
 // SetResponseErrorHandler response error handling
 func (s *Server) SetResponseErrorHandler(handler ResponseErrorHandler) {
 	s.ResponseErrorHandler = handler
@@ -68,6 +67,11 @@ func (s *Server) SetResponseErrorHandler(handler ResponseErrorHandler) {
 // SetInternalErrorHandler internal error handling
 func (s *Server) SetInternalErrorHandler(handler InternalErrorHandler) {
 	s.InternalErrorHandler = handler
+}
+
+// SetPreRedirectErrorHandler sets the PreRedirectErrorHandler in current Server instance
+func (s *Server) SetPreRedirectErrorHandler(handler PreRedirectErrorHandler) {
+	s.PreRedirectErrorHandler = handler
 }
 
 // SetExtensionFieldsHandler in response to the access token with the extension of the field

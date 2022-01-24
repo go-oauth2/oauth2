@@ -48,6 +48,7 @@ type Server struct {
 	UserAuthorizationHandler     UserAuthorizationHandler
 	PasswordAuthorizationHandler PasswordAuthorizationHandler
 	RefreshingValidationHandler  RefreshingValidationHandler
+	PreRedirectErrorHandler      PreRedirectErrorHandler
 	RefreshingScopeHandler       RefreshingScopeHandler
 	ResponseErrorHandler         ResponseErrorHandler
 	InternalErrorHandler         InternalErrorHandler
@@ -57,10 +58,19 @@ type Server struct {
 	ResponseTokenHandler         ResponseTokenHandler
 }
 
+func (s *Server) handleError(w http.ResponseWriter, req *AuthorizeRequest, err error) error {
+	if fn := s.PreRedirectErrorHandler; fn != nil {
+		return fn(w, req, err)
+	}
+
+	return s.redirectError(w, req, err)
+}
+
 func (s *Server) redirectError(w http.ResponseWriter, req *AuthorizeRequest, err error) error {
 	if req == nil {
 		return err
 	}
+
 	data, _, _ := s.GetErrorData(err)
 	return s.redirect(w, req, data)
 }
@@ -257,13 +267,13 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 
 	req, err := s.ValidationAuthorizeRequest(r)
 	if err != nil {
-		return s.redirectError(w, req, err)
+		return s.handleError(w, req, err)
 	}
 
 	// user authorization
 	userID, err := s.UserAuthorizationHandler(w, r)
 	if err != nil {
-		return s.redirectError(w, req, err)
+		return s.handleError(w, req, err)
 	} else if userID == "" {
 		return nil
 	}
@@ -290,7 +300,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 
 	ti, err := s.GetAuthorizeToken(ctx, req)
 	if err != nil {
-		return s.redirectError(w, req, err)
+		return s.handleError(w, req, err)
 	}
 
 	// If the redirect URI is empty, the default domain provided by the client is used.
