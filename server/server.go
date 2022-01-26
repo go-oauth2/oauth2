@@ -32,7 +32,7 @@ func NewServer(cfg *Config, manager oauth2.Manager) *Server {
 		return "", errors.ErrAccessDenied
 	}
 
-	srv.PasswordAuthorizationHandler = func(username, password string) (string, error) {
+	srv.PasswordAuthorizationHandler = func(ctx context.Context, username, password string) (string, error) {
 		return "", errors.ErrAccessDenied
 	}
 	return srv
@@ -347,7 +347,7 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 			return "", nil, errors.ErrInvalidRequest
 		}
 
-		userID, err := s.PasswordAuthorizationHandler(username, password)
+		userID, err := s.PasswordAuthorizationHandler(r.Context(), username, password)
 		if err != nil {
 			return "", nil, err
 		} else if userID == "" {
