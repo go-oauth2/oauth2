@@ -32,7 +32,7 @@ func NewServer(cfg *Config, manager oauth2.Manager) *Server {
 		return "", errors.ErrAccessDenied
 	}
 
-	srv.PasswordAuthorizationHandler = func(ctx context.Context, clientID, username, password string) (string, error) {
+	srv.PasswordAuthorizationHandler = func(ctx context.Context, username, password, clientID string) (string, error) {
 		return "", errors.ErrAccessDenied
 	}
 	return srv
