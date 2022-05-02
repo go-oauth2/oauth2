@@ -64,7 +64,7 @@ func main() {
 
 	srv := server.NewServer(server.NewConfig(), manager)
 
-	srv.SetPasswordAuthorizationHandler(func(ctx context.Context, username, password string) (userID string, err error) {
+	srv.SetPasswordAuthorizationHandler(func(ctx context.Context, username, password, clientID string) (userID string, err error) {
 		if username == "test" && password == "test" {
 			userID = "test"
 		}
