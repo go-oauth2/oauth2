@@ -357,7 +357,7 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 			return "", nil, errors.ErrInvalidRequest
 		}
 
-		userID, err := s.PasswordAuthorizationHandler(r.Context(), username, password, clientID)
+		userID, err := s.PasswordAuthorizationHandler(r.Context(), clientID, username, password)
 		if err != nil {
 			return "", nil, err
 		} else if userID == "" {
