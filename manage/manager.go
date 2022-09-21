@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-oauth2/oauth2/v4"
-	"github.com/go-oauth2/oauth2/v4/errors"
-	"github.com/go-oauth2/oauth2/v4/generates"
-	"github.com/go-oauth2/oauth2/v4/models"
+	"github.com/NFTGalaxy/oauth2/v4"
+	"github.com/NFTGalaxy/oauth2/v4/errors"
+	"github.com/NFTGalaxy/oauth2/v4/generates"
+	"github.com/NFTGalaxy/oauth2/v4/models"
 )
 
 // NewDefaultManager create to default authorization management instance
@@ -218,7 +218,7 @@ func (m *Manager) GenerateAuthToken(ctx context.Context, rt oauth2.ResponseType,
 	}
 	return ti, nil
 }
- 
+
 // get authorization code data
 func (m *Manager) getAuthorizationCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
 	ti, err := m.tokenStore.GetByCode(ctx, code)
