@@ -262,20 +262,20 @@ func (s *Server) GetAuthorizeData(rt oauth2.ResponseType, ti oauth2.TokenInfo) m
 }
 
 // HandleAuthorizeRequest the authorization request handling
-func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) error {
+func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) (map[string]interface{}, error) {
 	ctx := r.Context()
 
 	req, err := s.ValidationAuthorizeRequest(r)
 	if err != nil {
-		return s.handleError(w, req, err)
+		return nil, fmt.Errorf("invalid authorize request: %w", err)
 	}
 
 	// user authorization
 	userID, err := s.UserAuthorizationHandler(w, r)
 	if err != nil {
-		return s.handleError(w, req, err)
+		return nil, fmt.Errorf("invalid authorize request: %w", err)
 	} else if userID == "" {
-		return nil
+		return nil, fmt.Errorf("invalid user")
 	}
 	req.UserID = userID
 
@@ -283,7 +283,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 	if fn := s.AuthorizeScopeHandler; fn != nil {
 		scope, err := fn(w, r)
 		if err != nil {
-			return err
+			return nil, fmt.Errorf("verify scope failed: %w", err)
 		} else if scope != "" {
 			req.Scope = scope
 		}
@@ -293,26 +293,17 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 	if fn := s.AccessTokenExpHandler; fn != nil {
 		exp, err := fn(w, r)
 		if err != nil {
-			return err
+			return nil, fmt.Errorf("invalid authorize request: %w", err)
 		}
 		req.AccessTokenExp = exp
 	}
 
 	ti, err := s.GetAuthorizeToken(ctx, req)
 	if err != nil {
-		return s.handleError(w, req, err)
+		return nil, fmt.Errorf("get authorize token failed: %w", err)
 	}
 
-	// If the redirect URI is empty, the default domain provided by the client is used.
-	if req.RedirectURI == "" {
-		client, err := s.Manager.GetClient(ctx, req.ClientID)
-		if err != nil {
-			return err
-		}
-		req.RedirectURI = client.GetDomain()
-	}
-
-	return s.redirect(w, req, s.GetAuthorizeData(req.ResponseType, ti))
+	return s.GetAuthorizeData(req.ResponseType, ti), nil
 }
 
 // ValidationTokenRequest the token request validation

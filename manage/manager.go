@@ -145,10 +145,6 @@ func (m *Manager) GenerateAuthToken(ctx context.Context, rt oauth2.ResponseType,
 	cli, err := m.GetClient(ctx, tgr.ClientID)
 	if err != nil {
 		return nil, err
-	} else if tgr.RedirectURI != "" {
-		if err := m.validateURI(cli.GetDomain(), tgr.RedirectURI); err != nil {
-			return nil, err
-		}
 	}
 
 	ti := models.NewToken()
