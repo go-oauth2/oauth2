@@ -333,8 +333,7 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 	case oauth2.AuthorizationCode:
 		tgr.RedirectURI = r.FormValue("redirect_uri")
 		tgr.Code = r.FormValue("code")
-		if tgr.RedirectURI == "" ||
-			tgr.Code == "" {
+		if tgr.Code == "" {
 			return "", nil, errors.ErrInvalidRequest
 		}
 		tgr.CodeVerifier = r.FormValue("code_verifier")
