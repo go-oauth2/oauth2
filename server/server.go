@@ -273,9 +273,9 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 	// user authorization
 	userID, err := s.UserAuthorizationHandler(w, r)
 	if err != nil {
-		return nil, fmt.Errorf("invalid authorize request: %w", err)
+		return nil, fmt.Errorf("%s: %w", err.Error(), errors.ErrUnauthorizedUser)
 	} else if userID == "" {
-		return nil, fmt.Errorf("invalid user")
+		return nil, fmt.Errorf("invalid user: %w", errors.ErrUnauthorizedUser)
 	}
 	req.UserID = userID
 

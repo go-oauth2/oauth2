@@ -7,6 +7,7 @@ var New = errors.New
 
 // known errors
 var (
+	ErrUnauthorizedUser     = errors.New("unauthorized user")
 	ErrInvalidRedirectURI   = errors.New("invalid redirect uri")
 	ErrInvalidAuthorizeCode = errors.New("invalid authorize code")
 	ErrInvalidAccessToken   = errors.New("invalid access token")
