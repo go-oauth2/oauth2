@@ -240,8 +240,6 @@ func (m *Manager) getAndDelAuthorizationCode(ctx context.Context, tgr *oauth2.To
 		return nil, err
 	} else if ti.GetClientID() != tgr.ClientID {
 		return nil, errors.ErrInvalidAuthorizeCode
-	} else if codeURI := ti.GetRedirectURI(); codeURI != "" && codeURI != tgr.RedirectURI {
-		return nil, errors.ErrInvalidAuthorizeCode
 	}
 
 	err = m.delAuthorizationCode(ctx, code)
@@ -285,11 +283,6 @@ func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, 
 		}
 	} else if len(cli.GetSecret()) > 0 && tgr.ClientSecret != cli.GetSecret() {
 		return nil, errors.ErrInvalidClient
-	}
-	if tgr.RedirectURI != "" {
-		if err := m.validateURI(cli.GetDomain(), tgr.RedirectURI); err != nil {
-			return nil, err
-		}
 	}
 
 	if gt == oauth2.AuthorizationCode {
