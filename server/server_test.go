@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 
 	"github.com/gavv/httpexpect"
@@ -107,7 +106,7 @@ func TestAuthorizeCode(t *testing.T) {
 		WithQuery("client_id", clientID).
 		WithQuery("scope", "all").
 		WithQuery("state", "123").
-		WithQuery("redirect_uri", url.QueryEscape(csrv.URL+"/oauth2")).
+		WithQuery("redirect_uri", csrv.URL+"/oauth2").
 		Expect().Status(http.StatusOK)
 }
 
@@ -134,7 +133,7 @@ func TestAuthorizeCodeWithChallengePlain(t *testing.T) {
 				WithFormField("grant_type", "authorization_code").
 				WithFormField("client_id", clientID).
 				WithFormField("code", code).
-				WithBasicAuth("code_verifier", "testchallenge").
+				WithFormField("code_verifier", plainChallenge).
 				Expect().
 				Status(http.StatusOK).
 				JSON().Object()
@@ -152,13 +151,14 @@ func TestAuthorizeCodeWithChallengePlain(t *testing.T) {
 		userID = "000000"
 		return
 	})
+	srv.SetClientInfoHandler(server.ClientFormHandler)
 
 	e.GET("/authorize").
 		WithQuery("response_type", "code").
 		WithQuery("client_id", clientID).
 		WithQuery("scope", "all").
 		WithQuery("state", "123").
-		WithQuery("redirect_uri", url.QueryEscape(csrv.URL+"/oauth2")).
+		WithQuery("redirect_uri", csrv.URL+"/oauth2").
 		WithQuery("code_challenge", plainChallenge).
 		Expect().Status(http.StatusOK)
 }
@@ -186,7 +186,7 @@ func TestAuthorizeCodeWithChallengeS256(t *testing.T) {
 				WithFormField("grant_type", "authorization_code").
 				WithFormField("client_id", clientID).
 				WithFormField("code", code).
-				WithBasicAuth("code_verifier", s256Challenge).
+				WithFormField("code_verifier", s256Challenge).
 				Expect().
 				Status(http.StatusOK).
 				JSON().Object()
@@ -204,13 +204,14 @@ func TestAuthorizeCodeWithChallengeS256(t *testing.T) {
 		userID = "000000"
 		return
 	})
+	srv.SetClientInfoHandler(server.ClientFormHandler)
 
 	e.GET("/authorize").
 		WithQuery("response_type", "code").
 		WithQuery("client_id", clientID).
 		WithQuery("scope", "all").
 		WithQuery("state", "123").
-		WithQuery("redirect_uri", url.QueryEscape(csrv.URL+"/oauth2")).
+		WithQuery("redirect_uri", csrv.URL+"/oauth2").
 		WithQuery("code_challenge", s256ChallengeHash).
 		WithQuery("code_challenge_method", "S256").
 		Expect().Status(http.StatusOK)
@@ -238,7 +239,7 @@ func TestImplicit(t *testing.T) {
 		WithQuery("client_id", clientID).
 		WithQuery("scope", "all").
 		WithQuery("state", "123").
-		WithQuery("redirect_uri", url.QueryEscape(csrv.URL+"/oauth2")).
+		WithQuery("redirect_uri", csrv.URL+"/oauth2").
 		Expect().Status(http.StatusOK)
 }
 
@@ -384,7 +385,7 @@ func TestRefreshing(t *testing.T) {
 		WithQuery("client_id", clientID).
 		WithQuery("scope", "all").
 		WithQuery("state", "123").
-		WithQuery("redirect_uri", url.QueryEscape(csrv.URL+"/oauth2")).
+		WithQuery("redirect_uri", csrv.URL+"/oauth2").
 		Expect().Status(http.StatusOK)
 }
 

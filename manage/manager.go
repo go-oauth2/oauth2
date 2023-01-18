@@ -218,7 +218,7 @@ func (m *Manager) GenerateAuthToken(ctx context.Context, rt oauth2.ResponseType,
 	}
 	return ti, nil
 }
- 
+
 // get authorization code data
 func (m *Manager) getAuthorizationCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
 	ti, err := m.tokenStore.GetByCode(ctx, code)
@@ -287,7 +287,7 @@ func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, 
 		if !cliPass.VerifyPassword(tgr.ClientSecret) {
 			return nil, errors.ErrInvalidClient
 		}
-	} else if len(cli.GetSecret()) > 0 && tgr.ClientSecret != cli.GetSecret() {
+	} else if len(cli.GetSecret()) > 0 && tgr.ClientSecret != cli.GetSecret() && !(gt.String() == oauth2.AuthorizationCode.String() && tgr.ClientSecret == "") {
 		return nil, errors.ErrInvalidClient
 	}
 	if tgr.RedirectURI != "" {
