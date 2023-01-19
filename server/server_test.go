@@ -25,9 +25,10 @@ var (
 	clientSecret = "11111111"
 
 	plainChallenge = "ThisIsAFourtyThreeCharactersLongStringThing"
-	s256Challenge  = "s256test"
-	// echo s256test | sha256 | base64 | tr '/+' '_-'
-	s256ChallengeHash = "W6YWc_4yHwYN-cGDgGmOMHF3l7KDy7VcRjf7q2FVF-o="
+	s256Challenge  = "s256tests256tests256tests256tests256tests256test"
+	// sha2562 := sha256.Sum256([]byte(s256Challenge))
+	// fmt.Printf(base64.URLEncoding.EncodeToString(sha2562[:]))
+	s256ChallengeHash = "To2Xqv01cm16bC9Sf7KRRS8CO2SFss_HSMQOr3sdCDE="
 )
 
 func init() {
