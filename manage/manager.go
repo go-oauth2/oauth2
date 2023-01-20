@@ -218,7 +218,7 @@ func (m *Manager) GenerateAuthToken(ctx context.Context, rt oauth2.ResponseType,
 	}
 	return ti, nil
 }
- 
+
 // get authorization code data
 func (m *Manager) getAuthorizationCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
 	ti, err := m.tokenStore.GetByCode(ctx, code)
@@ -288,7 +288,11 @@ func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, 
 			return nil, errors.ErrInvalidClient
 		}
 	} else if len(cli.GetSecret()) > 0 && tgr.ClientSecret != cli.GetSecret() {
-		return nil, errors.ErrInvalidClient
+		// auth code flow doesnt require client_secret if used with PKCE and state parameter
+		// this is especially useful for mobile apps, that cant hold the secret
+		if !(gt == oauth2.AuthorizationCode && tgr.ClientSecret == "" && tgr.CodeVerifier != "") {
+			return nil, errors.ErrInvalidClient
+		}
 	}
 	if tgr.RedirectURI != "" {
 		if err := m.validateURI(cli.GetDomain(), tgr.RedirectURI); err != nil {
