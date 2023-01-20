@@ -24,7 +24,7 @@ func (c *Client) GetDomain() string {
 	return c.Domain
 }
 
-// GetUserID user id
+// IsPublic public
 func (c *Client) IsPublic() bool {
 	return c.Public
 }
