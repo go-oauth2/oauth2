@@ -287,13 +287,17 @@ func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, 
 		if !cliPass.VerifyPassword(tgr.ClientSecret) {
 			return nil, errors.ErrInvalidClient
 		}
-	} else if cli.IsPublic() == false && len(cli.GetSecret()) > 0 && tgr.ClientSecret != cli.GetSecret() {
+	} else if len(cli.GetSecret()) > 0 && tgr.ClientSecret != cli.GetSecret() {
 		return nil, errors.ErrInvalidClient
 	}
 	if tgr.RedirectURI != "" {
 		if err := m.validateURI(cli.GetDomain(), tgr.RedirectURI); err != nil {
 			return nil, err
 		}
+	}
+
+	if gt == oauth2.ClientCredentials && cli.IsPublic() == true {
+		return nil, errors.ErrInvalidClient
 	}
 
 	if gt == oauth2.AuthorizationCode {

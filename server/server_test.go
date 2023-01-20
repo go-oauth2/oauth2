@@ -38,9 +38,15 @@ func init() {
 
 func clientStore(domain string, public bool) oauth2.ClientStore {
 	clientStore := store.NewClientStore()
+	var secret string
+	if public {
+		secret = ""
+	} else {
+		secret = clientSecret
+	}
 	clientStore.Set(clientID, &models.Client{
 		ID:     clientID,
-		Secret: clientSecret,
+		Secret: secret,
 		Domain: domain,
 		Public: public,
 	})
