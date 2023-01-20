@@ -36,12 +36,13 @@ func init() {
 	manager.MustTokenStorage(store.NewMemoryTokenStore())
 }
 
-func clientStore(domain string) oauth2.ClientStore {
+func clientStore(domain string, public bool) oauth2.ClientStore {
 	clientStore := store.NewClientStore()
 	clientStore.Set(clientID, &models.Client{
 		ID:     clientID,
 		Secret: clientSecret,
 		Domain: domain,
+		Public: public,
 	})
 	return clientStore
 }
@@ -95,7 +96,7 @@ func TestAuthorizeCode(t *testing.T) {
 	}))
 	defer csrv.Close()
 
-	manager.MapClientStorage(clientStore(csrv.URL))
+	manager.MapClientStorage(clientStore(csrv.URL, true))
 	srv = server.NewDefaultServer(manager)
 	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 		userID = "000000"
@@ -146,7 +147,7 @@ func TestAuthorizeCodeWithChallengePlain(t *testing.T) {
 	}))
 	defer csrv.Close()
 
-	manager.MapClientStorage(clientStore(csrv.URL))
+	manager.MapClientStorage(clientStore(csrv.URL, true))
 	srv = server.NewDefaultServer(manager)
 	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 		userID = "000000"
@@ -199,7 +200,7 @@ func TestAuthorizeCodeWithChallengeS256(t *testing.T) {
 	}))
 	defer csrv.Close()
 
-	manager.MapClientStorage(clientStore(csrv.URL))
+	manager.MapClientStorage(clientStore(csrv.URL, true))
 	srv = server.NewDefaultServer(manager)
 	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 		userID = "000000"
@@ -228,7 +229,7 @@ func TestImplicit(t *testing.T) {
 	csrv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	defer csrv.Close()
 
-	manager.MapClientStorage(clientStore(csrv.URL))
+	manager.MapClientStorage(clientStore(csrv.URL, false))
 	srv = server.NewDefaultServer(manager)
 	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 		userID = "000000"
@@ -251,7 +252,7 @@ func TestPasswordCredentials(t *testing.T) {
 	defer tsrv.Close()
 	e := httpexpect.New(t, tsrv.URL)
 
-	manager.MapClientStorage(clientStore(""))
+	manager.MapClientStorage(clientStore("", false))
 	srv = server.NewDefaultServer(manager)
 	srv.SetPasswordAuthorizationHandler(func(ctx context.Context, clientID, username, password string) (userID string, err error) {
 		if username == "admin" && password == "123456" {
@@ -284,7 +285,7 @@ func TestClientCredentials(t *testing.T) {
 	defer tsrv.Close()
 	e := httpexpect.New(t, tsrv.URL)
 
-	manager.MapClientStorage(clientStore(""))
+	manager.MapClientStorage(clientStore("", false))
 
 	srv = server.NewDefaultServer(manager)
 	srv.SetClientInfoHandler(server.ClientFormHandler)
@@ -374,7 +375,7 @@ func TestRefreshing(t *testing.T) {
 	}))
 	defer csrv.Close()
 
-	manager.MapClientStorage(clientStore(csrv.URL))
+	manager.MapClientStorage(clientStore(csrv.URL, true))
 	srv = server.NewDefaultServer(manager)
 	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 		userID = "000000"

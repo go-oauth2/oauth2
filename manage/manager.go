@@ -287,12 +287,8 @@ func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, 
 		if !cliPass.VerifyPassword(tgr.ClientSecret) {
 			return nil, errors.ErrInvalidClient
 		}
-	} else if len(cli.GetSecret()) > 0 && tgr.ClientSecret != cli.GetSecret() {
-		// auth code flow doesnt require client_secret if used with PKCE and state parameter
-		// this is especially useful for mobile apps, that cant hold the secret
-		if !(gt == oauth2.AuthorizationCode && tgr.ClientSecret == "" && tgr.CodeVerifier != "") {
-			return nil, errors.ErrInvalidClient
-		}
+	} else if cli.IsPublic() == false && len(cli.GetSecret()) > 0 && tgr.ClientSecret != cli.GetSecret() {
+		return nil, errors.ErrInvalidClient
 	}
 	if tgr.RedirectURI != "" {
 		if err := m.validateURI(cli.GetDomain(), tgr.RedirectURI); err != nil {
