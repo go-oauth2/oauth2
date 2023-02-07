@@ -11,6 +11,8 @@ type (
 		GetSecret() string
 		GetDomain() string
 		GetUserID() string
+		GetEnablePassport() bool
+		DisablePassport()
 	}
 
 	// ClientPasswordVerifier the password handler interface
