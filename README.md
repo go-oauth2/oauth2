@@ -176,6 +176,7 @@ if !ok || !token.Valid {
 - [GORM](https://github.com/techknowlogick/go-oauth2-gorm)
 - [Firestore](https://github.com/tslamic/go-oauth2-firestore)
 - [Hazelcast](https://github.com/clowre/go-oauth2-hazelcast) (token only)
+- [ArangoDB](https://github.com/gabor-boros/go-oauth2-arangodb)
 
 ## Handy Utilities
 
