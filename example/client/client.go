@@ -16,18 +16,18 @@ import (
 )
 
 const (
-	authServerURL = "http://localhost:9096"
+	authServerURL = "http://localhost:3000"
 )
 
 var (
 	config = oauth2.Config{
-		ClientID:     "222222",
-		ClientSecret: "22222222",
+		ClientID:     "test",
+		ClientSecret: "test",
 		Scopes:       []string{"all"},
 		RedirectURL:  "http://localhost:9094/oauth2",
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  authServerURL + "/oauth/authorize",
-			TokenURL: authServerURL + "/oauth/token",
+			AuthURL:  authServerURL + "/api/v1/oauth/authorize",
+			TokenURL: authServerURL + "/api/v1/oauth/token",
 		},
 	}
 	globalToken *oauth2.Token // Non-concurrent security
@@ -35,9 +35,11 @@ var (
 
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
 		u := config.AuthCodeURL("xyz",
 			oauth2.SetAuthURLParam("code_challenge", genCodeChallengeS256("s256example")),
-			oauth2.SetAuthURLParam("code_challenge_method", "S256"))
+			oauth2.SetAuthURLParam("code_challenge_method", "S256"),
+			oauth2.SetAuthURLParam("token", r.Form.Get("token")))
 		http.Redirect(w, r, u, http.StatusFound)
 	})
 
