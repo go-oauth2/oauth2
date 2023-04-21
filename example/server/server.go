@@ -100,6 +100,9 @@ func main() {
 		if v, ok := store.Get("ReturnUri"); ok {
 			form = v.(url.Values)
 		}
+		println("form: ", form.Encode())
+		println(r.URL.RawQuery)
+		println(r.URL.RawPath)
 		r.Form = form
 
 		store.Delete("ReturnUri")
