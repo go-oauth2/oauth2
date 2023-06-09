@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  users-database:
+    image: postgres:14.7-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: users
+    volumes:
+      - ./db-oauth/postgres/:/var/lib/postgresql/data/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+        

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="//code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Create an order</h1>
+	<form id="orderForm" action="http://127.0.0.1:8080/orders?access_token={{.Token}}" method="POST">
+            <div class="form-group">
+                <label for="item1code">Item 1 code</label>
+                <input type="text" class="form-control" name="item1code" required placeholder="Please enter the code">
+		<label for="item1quantity">Item 1 quantity</label>
+                <input type="text" class="form-control" name="item1quantity" required placeholder="Please enter the quantity">
+		<label for="item2code">Item 2 code</label>
+                <input type="text" class="form-control" name="item2code" required placeholder="Please enter the code">
+		<label for="item2quantity">Item 2 quantity</label>
+                <input type="text" class="form-control" name="item2quantity" required placeholder="Please enter the quantity">
+
+            </div>
+            <div class="form-group">
+                <label for="shippingaddress">Shipping address</label>
+                <input type="text" class="form-control" name="shippingaddress" placeholder="Please enter your address">
+            </div>
+	    <input type="hidden" id="tokenField" value="{{.Token}}">
+            <button type="submit" class="btn btn-success">submit</button>
+        </form>
+
+	<div style="color: red;" id="responseContainer"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('orderForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+
+		var token = document.getElementById('tokenField').value;
+		var responseContainer = document.getElementById('responseContainer');
+
+		// const inputs = form.querySelectorAll('input');
+		const inputs = document.getElementById('orderForm').querySelectorAll('input');
+
+  		// Create a FormData object to store the input values
+  		const formData = new FormData();
+
+  		// Iterate over the input elements and add their values to the FormData object
+  		inputs.forEach(input => {
+  		  formData.append(input.name, input.value);
+  		});
+
+                fetch('http://127.0.0.1:8080/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: formData 
+                })
+                .then(function(response) {
+                    if (response.ok) {
+                        return response.text();
+                    } else {
+                        throw new Error('Error: ' + response.status);
+                    }
+                })
+                .then(function(data) {
+                    console.log('Response:', data);
+  		    responseContainer.innerText = "Order created. Id to see it in 'Get an Order': " + data;		    
+                    // Handle the response
+                })
+                .catch(function(error) {
+                    console.error('Error:', error);
+                    // Handle the error
+                });
+            });
+        });
+    </script>
+
+</body>
+
+</html>
+

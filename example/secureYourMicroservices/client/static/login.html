@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="//code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Login In</h1>
+	<form id="orderForm" action="http://localhost:9094/logindata" method="POST">
+	    <div class="form-group">
+                <label for="email">Email</label>
+                <input type="text" class="form-control" name="email" required placeholder="Please enter your email">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" name="password" placeholder="Please enter your password">
+            </div>
+            <button type="submit" class="btn btn-success">Login</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('orderForm').addEventListener('submit', function(event) {
+
+        	var email = document.getElementsByName('email')[0].value;
+		
+		sessionStorage.setItem('email', email);
+	
+	     })
+	})
+     </script>
+</body>
+
+</html>
+

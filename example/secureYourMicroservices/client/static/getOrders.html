@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="//code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Get an order</h1>
+	<form id="orderForm" action="http://127.0.0.1:8081/order?access_token={{.Token}}" method="POST">
+            <div class="form-group">
+                <label for="orderid">Order ID</label>
+                <input type="text" class="form-control" name="orderid" required placeholder="Please enter the order id">
+            </div>
+	    <input type="hidden" id="tokenField" value="{{.Token}}">
+            <button type="submit" class="btn btn-success">Get order</button>
+        </form>
+	 <div style="color: red;" id="responseContainer"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('orderForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+
+		var token = document.getElementById('tokenField').value;
+                var orderID = document.getElementsByName('orderid')[0].value;
+		var responseContainer = document.getElementById('responseContainer');
+
+                fetch('http://127.0.0.1:8081/order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Authorization': 'Bearer '+ token
+                    },
+                    body: 'orderid=' + encodeURIComponent(orderID)
+                })
+                .then(function(response) {
+                    if (response.ok) {
+                        return response.text();
+                    } else {
+                        throw new Error('Error: ' + response.status);
+                    }
+                })
+                .then(function(data) {
+  		    responseContainer.innerText = JSON.stringify(data);		    
+                })
+                .catch(function(error) {
+                    console.error('Error:', error);
+                    // Handle the error
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+

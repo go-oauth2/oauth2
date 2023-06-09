@@ -31,3 +31,6 @@ coverage.txt
 *.swp
 /example/client/client
 /example/server/server
+/example/secureYourMicroservices/db-oauth
+
+

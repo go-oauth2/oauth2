@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="//code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+</head>
+
+   <body>
+	<h1>Navigation Links</h1>
+  	<a id="createOrderLink" href="http://localhost:9094/createorder">Create an order</a>
+  	<br>
+  	<a id="getOrderLink" href="http://localhost:9094/getorder">Get an order</a>
+  	<br>
+	<a id="signoutLink" href="http://localhost:9094/signout">Signout</a>
+    </body>
+    <script>
+	document.addEventListener('DOMContentLoaded', function() {
+    		var createOrderLink = document.getElementById('createOrderLink');
+    		var getOrderLink = document.getElementById('getOrderLink');
+    		var signoutLink = document.getElementById('signoutLink');
+
+		createOrderLink.addEventListener('click', function(event) {
+    		    event.preventDefault();
+
+    		    // Retrieve the session storage data
+    		    var email = sessionStorage.getItem('email');
+
+    		    // Append the stored value to the redirect URL
+    		    var redirectUrl = 'http://localhost:9094/createorder?email=' + encodeURIComponent(email);
+
+    		    window.location.href = redirectUrl;
+    		});
+
+
+    		getOrderLink.addEventListener('click', function(event) {
+    		    event.preventDefault(); 
+
+    		    // Retrieve the session storage data
+    		    var email = sessionStorage.getItem('email');
+
+    		    // Append the stored value to the redirect URL
+    		    var redirectUrl = 'http://localhost:9094/getorder?email=' + encodeURIComponent(email);
+
+    		    window.location.href = redirectUrl;
+    		});
+
+		signoutLink.addEventListener('click', function(event) {
+    		    event.preventDefault(); 
+
+    		    // Retrieve the session storage data
+    		    var email = sessionStorage.getItem('email');
+
+		    // delete the session storage
+		    sessionStorage.removeItem('email');
+
+    		    // Append the stored value to the redirect URL
+    		    var redirectUrl = 'http://localhost:9094/signout?email=' + encodeURIComponent(email);
+
+    		    window.location.href = redirectUrl;
+    		});
+
+	});
+
+    </script>
+</html>
+
