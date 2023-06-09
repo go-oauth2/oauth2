@@ -21,8 +21,9 @@ func NewDefaultServer(manager oauth2.Manager) *Server {
 // NewServer create authorization server
 func NewServer(cfg *Config, manager oauth2.Manager) *Server {
 	srv := &Server{
-		Config:  cfg,
-		Manager: manager,
+		Config:    cfg,
+		Manager:   manager,
+		IsModeAPI: false,
 	}
 
 	// default handler
@@ -56,6 +57,7 @@ type Server struct {
 	AccessTokenExpHandler        AccessTokenExpHandler
 	AuthorizeScopeHandler        AuthorizeScopeHandler
 	ResponseTokenHandler         ResponseTokenHandler
+	IsModeAPI                    bool
 }
 
 func (s *Server) handleError(w http.ResponseWriter, req *AuthorizeRequest, err error) error {
@@ -76,14 +78,24 @@ func (s *Server) redirectError(w http.ResponseWriter, req *AuthorizeRequest, err
 }
 
 func (s *Server) redirect(w http.ResponseWriter, req *AuthorizeRequest, data map[string]interface{}) error {
-	uri, err := s.GetRedirectURI(req, data)
-	if err != nil {
-		return err
-	}
+	if !s.IsModeAPI {
+		uri, err := s.GetRedirectURI(req, data)
+		if err != nil {
+			return err
+		}
 
-	w.Header().Set("Location", uri)
-	w.WriteHeader(302)
-	return nil
+		w.Header().Set("Location", uri)
+		w.WriteHeader(302)
+		return nil
+
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Pragma", "no-cache")
+
+		w.WriteHeader(http.StatusOK)
+		return json.NewEncoder(w).Encode(data)
+	}
 }
 
 func (s *Server) tokenError(w http.ResponseWriter, err error) error {
@@ -110,6 +122,11 @@ func (s *Server) token(w http.ResponseWriter, data map[string]interface{}, heade
 
 	w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(data)
+}
+
+// SetModeAPI allow the token to be return within the ResponseWriter instead of being redirected
+func (s *Server) SetModeAPI() {
+	s.IsModeAPI = true
 }
 
 // GetRedirectURI get redirect uri
@@ -165,6 +182,7 @@ func (s *Server) CheckCodeChallengeMethod(ccm oauth2.CodeChallengeMethod) bool {
 
 // ValidationAuthorizeRequest the authorization request validation
 func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest, error) {
+
 	redirectURI := r.FormValue("redirect_uri")
 	clientID := r.FormValue("client_id")
 	if !(r.Method == "GET" || r.Method == "POST") ||
@@ -263,6 +281,7 @@ func (s *Server) GetAuthorizeData(rt oauth2.ResponseType, ti oauth2.TokenInfo) m
 
 // HandleAuthorizeRequest the authorization request handling
 func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) error {
+
 	ctx := r.Context()
 
 	req, err := s.ValidationAuthorizeRequest(r)
@@ -277,6 +296,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 	} else if userID == "" {
 		return nil
 	}
+
 	req.UserID = userID
 
 	// specify the scope of authorization
