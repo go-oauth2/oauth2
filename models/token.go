@@ -9,7 +9,7 @@ import (
 
 // NewToken create to token model instance
 func NewToken() *Token {
-	return &Token{}
+	return &Token{Extension: make(url.Values)}
 }
 
 // Token token model
