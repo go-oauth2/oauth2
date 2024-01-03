@@ -47,4 +47,5 @@ type AuthorizeRequest struct {
 	CodeChallengeMethod oauth2.CodeChallengeMethod
 	AccessTokenExp      time.Duration
 	Request             *http.Request
+	DeviceID            string
 }

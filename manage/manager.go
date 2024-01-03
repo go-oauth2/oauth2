@@ -207,7 +207,7 @@ func (m *Manager) GenerateAuthToken(ctx context.Context, rt oauth2.ResponseType,
 			ti.SetRefresh(rv)
 		}
 	}
-
+	ti.SetDeviceID(tgr.DeviceID)
 	err = m.tokenStore.Create(ctx, ti)
 	if err != nil {
 		return nil, err

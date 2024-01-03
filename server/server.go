@@ -196,6 +196,8 @@ func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest,
 		return nil, errors.ErrUnsupportedCodeChallengeMethod
 	}
 
+	deviceId := r.Header.Get("device-id")
+
 	req := &AuthorizeRequest{
 		RedirectURI:         redirectURI,
 		ResponseType:        resType,
@@ -205,6 +207,7 @@ func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest,
 		Request:             r,
 		CodeChallenge:       cc,
 		CodeChallengeMethod: ccm,
+		DeviceID:            deviceId,
 	}
 	return req, nil
 }
@@ -247,6 +250,7 @@ func (s *Server) GetAuthorizeToken(ctx context.Context, req *AuthorizeRequest) (
 
 	tgr.CodeChallenge = req.CodeChallenge
 	tgr.CodeChallengeMethod = req.CodeChallengeMethod
+	tgr.DeviceID = req.DeviceID
 
 	return s.Manager.GenerateAuthToken(ctx, req.ResponseType, tgr)
 }
