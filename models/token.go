@@ -28,6 +28,7 @@ type Token struct {
 	Refresh             string        `bson:"Refresh"`
 	RefreshCreateAt     time.Time     `bson:"RefreshCreateAt"`
 	RefreshExpiresIn    time.Duration `bson:"RefreshExpiresIn"`
+	DeviceId            string        `bson:"DeviceId"`
 }
 
 // New create to token model instance
@@ -183,4 +184,14 @@ func (t *Token) GetRefreshExpiresIn() time.Duration {
 // SetRefreshExpiresIn the lifetime in seconds of the refresh token
 func (t *Token) SetRefreshExpiresIn(exp time.Duration) {
 	t.RefreshExpiresIn = exp
+}
+
+// GetDeviceID the device id for different device
+func (t *Token) GetDeviceID() string {
+	return t.DeviceId
+}
+
+// SetDeviceID the device id for different device
+func (t *Token) SetDeviceID(deviceId string) {
+	t.DeviceId = deviceId
 }
