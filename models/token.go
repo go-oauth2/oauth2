@@ -186,6 +186,11 @@ func (t *Token) SetRefreshExpiresIn(exp time.Duration) {
 	t.RefreshExpiresIn = exp
 }
 
+// GetDeviceID the device id for different device
+func (t *Token) GetDeviceID() string {
+	return t.DeviceId
+}
+
 // SetDeviceID the device id for different device
 func (t *Token) SetDeviceID(deviceId string) {
 	t.DeviceId = deviceId
