@@ -198,6 +198,16 @@ func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest,
 
 	deviceId := r.Header.Get("device-id")
 
+	var doamin string
+	u, _ := url.Parse(redirectURI)
+	if u != nil {
+		doamin = u.Hostname()
+	}
+
+	if !StringArrayContains(s.Config.AllowedRedirectDomains, doamin) {
+		return nil, errors.ErrInvalidRedirectURI
+	}
+
 	req := &AuthorizeRequest{
 		RedirectURI:         redirectURI,
 		ResponseType:        resType,
@@ -589,4 +599,13 @@ func (s *Server) ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error
 	}
 
 	return s.Manager.LoadAccessToken(ctx, accessToken)
+}
+
+func StringArrayContains(strings []string, search string) bool {
+	for _, s := range strings {
+		if s == search {
+			return true
+		}
+	}
+	return false
 }

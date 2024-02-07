@@ -15,6 +15,7 @@ type Config struct {
 	AllowedGrantTypes           []oauth2.GrantType    // allow the grant type
 	AllowedCodeChallengeMethods []oauth2.CodeChallengeMethod
 	ForcePKCE                   bool
+	AllowedRedirectDomains      []string // allow the redirect domains
 }
 
 // NewConfig create to configuration instance
