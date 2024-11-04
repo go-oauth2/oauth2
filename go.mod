@@ -1,4 +1,4 @@
-module github.com/go-oauth2/oauth2/v4
+module github.com/yangsijie666/oauth2/v4
 
 go 1.13
 
