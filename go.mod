@@ -7,7 +7,7 @@ require (
 	github.com/fasthttp-contrib/websocket v0.0.0-20160511215533-1f3b11f56072 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/gavv/httpexpect v2.0.0+incompatible
-	github.com/go-session/session v3.1.2+incompatible
+	github.com/go-session/session/v3 v3.2.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/google/uuid v1.1.1
@@ -19,7 +19,6 @@ require (
 	github.com/onsi/ginkgo v1.13.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/smartystreets/goconvey v1.6.4
-	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/tidwall/buntdb v1.1.2
 	github.com/tidwall/gjson v1.12.1 // indirect
 	github.com/valyala/fasthttp v1.34.0 // indirect

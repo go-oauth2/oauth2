@@ -20,7 +20,7 @@ import (
 	"github.com/go-oauth2/oauth2/v4/models"
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/go-oauth2/oauth2/v4/store"
-	"github.com/go-session/session"
+	"github.com/go-session/session/v3"
 )
 
 var (
@@ -67,6 +67,8 @@ func main() {
 	srv.SetPasswordAuthorizationHandler(func(ctx context.Context, clientID, username, password string) (userID string, err error) {
 		if username == "test" && password == "test" {
 			userID = "test"
+		} else {
+			err = errors.New("invalid username or password")
 		}
 		return
 	})
@@ -172,7 +174,6 @@ func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string
 		if r.Form == nil {
 			r.ParseForm()
 		}
-
 		store.Set("ReturnUri", r.Form)
 		store.Save()
 
@@ -204,12 +205,18 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		store.Set("LoggedInUserID", r.Form.Get("username"))
-		store.Save()
 
-		w.Header().Set("Location", "/auth")
-		w.WriteHeader(http.StatusFound)
-		return
+		if r.Form.Get("username") == "test" && r.Form.Get("password") == "test" {
+			store.Set("LoggedInUserID", r.Form.Get("username"))
+			store.Save()
+
+			w.Header().Set("Location", "/auth")
+			w.WriteHeader(http.StatusFound)
+			return
+		} else {
+			http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+			return
+		}
 	}
 	outputHTML(w, r, "static/login.html")
 }
