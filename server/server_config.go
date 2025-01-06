@@ -49,6 +49,11 @@ func (s *Server) SetPasswordAuthorizationHandler(handler PasswordAuthorizationHa
 	s.PasswordAuthorizationHandler = handler
 }
 
+// SetOtpAuthorizationHandler get user id from username and OTP
+func (s *Server) SetOtpAuthorizationHandler(handler OtpAuthorizationHandler) {
+	s.OtpAuthorizationHandler = handler
+}
+
 // SetRefreshingScopeHandler check the scope of the refreshing token
 func (s *Server) SetRefreshingScopeHandler(handler RefreshingScopeHandler) {
 	s.RefreshingScopeHandler = handler

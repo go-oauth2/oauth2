@@ -29,13 +29,15 @@ const (
 	ClientCredentials   GrantType = "client_credentials"
 	Refreshing          GrantType = "refresh_token"
 	Implicit            GrantType = "__implicit"
+	Otp                 GrantType = "otp"
 )
 
 func (gt GrantType) String() string {
 	if gt == AuthorizationCode ||
 		gt == PasswordCredentials ||
 		gt == ClientCredentials ||
-		gt == Refreshing {
+		gt == Refreshing ||
+		gt == Otp {
 		return string(gt)
 	}
 	return ""

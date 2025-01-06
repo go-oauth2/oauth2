@@ -56,6 +56,8 @@ func (m *Manager) grantConfig(gt oauth2.GrantType) *Config {
 		return DefaultPasswordTokenCfg
 	case oauth2.ClientCredentials:
 		return DefaultClientTokenCfg
+	case oauth2.Otp:
+		return DefaultOtpTokenCfg
 	}
 	return &Config{}
 }
@@ -88,6 +90,11 @@ func (m *Manager) SetClientTokenCfg(cfg *Config) {
 // SetRefreshTokenCfg set the refreshing token config
 func (m *Manager) SetRefreshTokenCfg(cfg *RefreshingConfig) {
 	m.rcfg = cfg
+}
+
+// SetOtpTokenCfg set the OTP grant token config
+func (m *Manager) SetOtpTokenCfg(cfg *Config) {
+	m.gtcfg[oauth2.Otp] = cfg
 }
 
 // SetValidateURIHandler set the validates that RedirectURI is contained in baseURI

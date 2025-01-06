@@ -48,6 +48,7 @@ type Server struct {
 	UserAuthorizationHandler     UserAuthorizationHandler
 	PasswordAuthorizationHandler PasswordAuthorizationHandler
 	RefreshingValidationHandler  RefreshingValidationHandler
+	OtpAuthorizationHandler      OtpAuthorizationHandler
 	PreRedirectErrorHandler      PreRedirectErrorHandler
 	RefreshingScopeHandler       RefreshingScopeHandler
 	ResponseErrorHandler         ResponseErrorHandler
@@ -372,6 +373,20 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 		if tgr.Refresh == "" {
 			return "", nil, errors.ErrInvalidRequest
 		}
+	case oauth2.Otp:
+		tgr.Scope = r.FormValue("scope")
+		username, otp := r.FormValue("username"), r.FormValue("otp")
+		if username == "" || otp == "" {
+			return "", nil, errors.ErrInvalidRequest
+		}
+
+		userID, err := s.OtpAuthorizationHandler(r.Context(), clientID, username, otp)
+		if err != nil {
+			return "", nil, err
+		} else if userID == "" {
+			return "", nil, errors.ErrInvalidGrant
+		}
+		tgr.UserID = userID
 	}
 	return gt, tgr, nil
 }
@@ -416,7 +431,7 @@ func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *o
 			}
 		}
 		return ti, nil
-	case oauth2.PasswordCredentials, oauth2.ClientCredentials:
+	case oauth2.PasswordCredentials, oauth2.ClientCredentials, oauth2.Otp:
 		if fn := s.ClientScopeHandler; fn != nil {
 			allowed, err := fn(tgr)
 			if err != nil {
