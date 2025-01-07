@@ -1,6 +1,6 @@
 language: go
 sudo: false
-go_import_path: github.com/go-oauth2/oauth2/v4
+go_import_path: github.com/daripadabengong/oauth2/v4
 go:
   - 1.13
 before_install:

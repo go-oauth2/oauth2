@@ -5,10 +5,10 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/go-oauth2/oauth2/v4"
-	"github.com/go-oauth2/oauth2/v4/errors"
-	"github.com/go-oauth2/oauth2/v4/generates"
-	"github.com/go-oauth2/oauth2/v4/models"
+	"github.com/daripadabengong/oauth2/v4"
+	"github.com/daripadabengong/oauth2/v4/errors"
+	"github.com/daripadabengong/oauth2/v4/generates"
+	"github.com/daripadabengong/oauth2/v4/models"
 )
 
 // NewDefaultManager create to default authorization management instance

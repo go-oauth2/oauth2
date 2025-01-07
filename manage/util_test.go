@@ -3,7 +3,7 @@ package manage_test
 import (
 	"testing"
 
-	"github.com/go-oauth2/oauth2/v4/manage"
+	"github.com/daripadabengong/oauth2/v4/manage"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

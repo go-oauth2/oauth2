@@ -1,11 +1,12 @@
 package manage
 
 import (
-	"github.com/go-oauth2/oauth2/v4"
 	"net/url"
 	"strings"
 
-	"github.com/go-oauth2/oauth2/v4/errors"
+	"github.com/daripadabengong/oauth2/v4"
+
+	"github.com/daripadabengong/oauth2/v4/errors"
 )
 
 type (
