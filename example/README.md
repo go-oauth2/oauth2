@@ -21,6 +21,7 @@ $ ./client
 ### Open the browser
 
 [http://localhost:9094](http://localhost:9094)
+> mock login, username: test password: test
 
 ```
 {
