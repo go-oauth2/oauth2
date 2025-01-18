@@ -35,6 +35,7 @@ func (r *Response) SetHeader(key, value string) {
 // https://tools.ietf.org/html/rfc6749#section-5.2
 var (
 	ErrInvalidRequest                 = errors.New("invalid_request")
+	ErrInvalidRequestMethod           = errors.New("invalid_request_method")
 	ErrUnauthorizedClient             = errors.New("unauthorized_client")
 	ErrAccessDenied                   = errors.New("access_denied")
 	ErrUnsupportedResponseType        = errors.New("unsupported_response_type")

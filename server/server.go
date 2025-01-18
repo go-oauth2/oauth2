@@ -163,13 +163,22 @@ func (s *Server) CheckCodeChallengeMethod(ccm oauth2.CodeChallengeMethod) bool {
 	return false
 }
 
+// CheckAuthorizeRequestMethod checks for allowed code challenge method
+func (s *Server) CheckAuthorizeRequestMethod(requestMethod oauth2.AuthorizeRequestMethod) bool {
+	for _, method := range s.Config.AllowedAuthorizeRequestMethods {
+		if method == requestMethod {
+			return true
+		}
+	}
+	return false
+}
+
 // ValidationAuthorizeRequest the authorization request validation
 func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest, error) {
 	redirectURI := r.FormValue("redirect_uri")
 	clientID := r.FormValue("client_id")
-	if !(r.Method == "GET" || r.Method == "POST") ||
-		clientID == "" {
-		return nil, errors.ErrInvalidRequest
+	if isMethodAllowed := s.CheckAuthorizeRequestMethod(oauth2.AuthorizeRequestMethod(r.Method)); !isMethodAllowed || clientID == "" {
+		return nil, errors.ErrInvalidRequestMethod
 	}
 
 	resType := oauth2.ResponseType(r.FormValue("response_type"))

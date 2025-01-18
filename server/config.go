@@ -9,12 +9,13 @@ import (
 
 // Config configuration parameters
 type Config struct {
-	TokenType                   string                // token type
-	AllowGetAccessRequest       bool                  // to allow GET requests for the token
-	AllowedResponseTypes        []oauth2.ResponseType // allow the authorization type
-	AllowedGrantTypes           []oauth2.GrantType    // allow the grant type
-	AllowedCodeChallengeMethods []oauth2.CodeChallengeMethod
-	ForcePKCE                   bool
+	TokenType                      string                // token type
+	AllowGetAccessRequest          bool                  // to allow GET requests for the token
+	AllowedResponseTypes           []oauth2.ResponseType // allow the authorization type
+	AllowedGrantTypes              []oauth2.GrantType    // allow the grant type
+	AllowedCodeChallengeMethods    []oauth2.CodeChallengeMethod
+	AllowedAuthorizeRequestMethods []oauth2.AuthorizeRequestMethod //allowed `authorize request methods`
+	ForcePKCE                      bool
 }
 
 // NewConfig create to configuration instance
@@ -31,6 +32,10 @@ func NewConfig() *Config {
 		AllowedCodeChallengeMethods: []oauth2.CodeChallengeMethod{
 			oauth2.CodeChallengePlain,
 			oauth2.CodeChallengeS256,
+		},
+		AllowedAuthorizeRequestMethods: []oauth2.AuthorizeRequestMethod{
+			oauth2.AuthorizeRequestGet,
+			oauth2.AuthorizeRequestPost,
 		},
 	}
 }
