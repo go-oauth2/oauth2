@@ -74,3 +74,18 @@ func (ccm CodeChallengeMethod) Validate(cc, ver string) bool {
 		return false
 	}
 }
+
+// AuthorizeRequestMethod the type of authorization request method
+type AuthorizeRequestMethod string
+
+const (
+	AuthorizeRequestGet  AuthorizeRequestMethod = "GET"
+	AuthorizeRequestPost AuthorizeRequestMethod = "POST"
+)
+
+func (ar AuthorizeRequestMethod) String() string {
+	if ar == AuthorizeRequestGet || ar == AuthorizeRequestPost {
+		return string(ar)
+	}
+	return ""
+}
