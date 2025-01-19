@@ -35,6 +35,7 @@ func (r *Response) SetHeader(key, value string) {
 // https://tools.ietf.org/html/rfc6749#section-5.2
 var (
 	ErrInvalidRequest                 = errors.New("invalid_request")
+	ErrMissingClientID                = errors.New("missing_client_id")
 	ErrInvalidRequestMethod           = errors.New("invalid_request_method")
 	ErrUnauthorizedClient             = errors.New("unauthorized_client")
 	ErrAccessDenied                   = errors.New("access_denied")
@@ -54,6 +55,8 @@ var (
 // Descriptions error description
 var Descriptions = map[error]string{
 	ErrInvalidRequest:                 "The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed",
+	ErrMissingClientID:                "The request is missing client_id",
+	ErrInvalidRequestMethod:           "The request method is invalid, unknown, or malformed",
 	ErrUnauthorizedClient:             "The client is not authorized to request an authorization code using this method",
 	ErrAccessDenied:                   "The resource owner or authorization server denied the request",
 	ErrUnsupportedResponseType:        "The authorization server does not support obtaining an authorization code using this method",
@@ -66,12 +69,14 @@ var Descriptions = map[error]string{
 	ErrUnsupportedGrantType:           "The authorization grant type is not supported by the authorization server",
 	ErrCodeChallengeRequired:          "PKCE is required. code_challenge is missing",
 	ErrUnsupportedCodeChallengeMethod: "Selected code_challenge_method not supported",
-	ErrInvalidCodeChallengeLen:        "Code challenge length must be between 43 and 128 charachters long",
+	ErrInvalidCodeChallengeLen:        "Code challenge length must be between 43 and 128 characters long",
 }
 
 // StatusCodes response error HTTP status code
 var StatusCodes = map[error]int{
 	ErrInvalidRequest:                 400,
+	ErrMissingClientID:                400,
+	ErrInvalidRequestMethod:           400,
 	ErrUnauthorizedClient:             401,
 	ErrAccessDenied:                   403,
 	ErrUnsupportedResponseType:        401,
