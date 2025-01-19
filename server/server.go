@@ -143,14 +143,19 @@ func (s *Server) GetRedirectURI(req *AuthorizeRequest, data map[string]interface
 	return u.String(), nil
 }
 
-// CheckResponseType check allows response type
-func (s *Server) CheckResponseType(rt oauth2.ResponseType) bool {
-	for _, art := range s.Config.AllowedResponseTypes {
-		if art == rt {
-			return true
+// CheckResponseType checks for an allowed response type
+func (s *Server) CheckResponseType(responseType oauth2.ResponseType) error {
+	if responseType.String() == "" {
+		return errors.ErrMissingResponseType
+	}
+
+	for _, rType := range s.Config.AllowedResponseTypes {
+		if rType == responseType {
+			return nil
 		}
 	}
-	return false
+
+	return errors.ErrUnsupportedResponseType
 }
 
 // CheckCodeChallengeMethod checks for allowed code challenge method
@@ -177,19 +182,18 @@ func (s *Server) CheckAuthorizeRequestMethod(requestMethod oauth2.AuthorizeReque
 func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest, error) {
 	redirectURI := r.FormValue("redirect_uri")
 	clientID := r.FormValue("client_id")
+
 	if isMethodAllowed := s.CheckAuthorizeRequestMethod(oauth2.AuthorizeRequestMethod(r.Method)); !isMethodAllowed || clientID == "" {
 		return nil, errors.ErrInvalidRequestMethod
 	}
 
-	resType := oauth2.ResponseType(r.FormValue("response_type"))
-	if resType.String() == "" {
-		return nil, errors.ErrUnsupportedResponseType
-	} else if allowed := s.CheckResponseType(resType); !allowed {
-		return nil, errors.ErrUnauthorizedClient
+	responseType := oauth2.ResponseType(r.FormValue("response_type"))
+	if err := s.CheckResponseType(responseType); err != nil {
+		return nil, err
 	}
 
 	cc := r.FormValue("code_challenge")
-	if cc == "" && s.Config.ForcePKCE {
+	if s.Config.ForcePKCE || cc == "" {
 		return nil, errors.ErrCodeChallengeRquired
 	}
 	if cc != "" && (len(cc) < 43 || len(cc) > 128) {
@@ -207,7 +211,7 @@ func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest,
 
 	req := &AuthorizeRequest{
 		RedirectURI:         redirectURI,
-		ResponseType:        resType,
+		ResponseType:        responseType,
 		ClientID:            clientID,
 		State:               r.FormValue("state"),
 		Scope:               r.FormValue("scope"),
