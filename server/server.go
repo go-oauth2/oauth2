@@ -194,9 +194,9 @@ func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest,
 
 	cc := r.FormValue("code_challenge")
 	if s.Config.ForcePKCE || cc == "" {
-		return nil, errors.ErrCodeChallengeRquired
+		return nil, errors.ErrCodeChallengeRequired
 	}
-	if cc != "" && (len(cc) < 43 || len(cc) > 128) {
+	if len(cc) < 43 || len(cc) > 128 {
 		return nil, errors.ErrInvalidCodeChallengeLen
 	}
 
