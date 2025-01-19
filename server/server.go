@@ -183,7 +183,7 @@ func (s *Server) CheckCodeChallenge(codeChallenge string, isForcePKCE bool) erro
 	if isForcePKCE && codeChallenge == "" {
 		return errors.ErrCodeChallengeRequired
 	}
-	if len(codeChallenge) < 43 || len(codeChallenge) > 128 {
+	if len(codeChallenge) > 0 && len(codeChallenge) < 43 || len(codeChallenge) > 128 {
 		return errors.ErrInvalidCodeChallengeLen
 	}
 	return nil
