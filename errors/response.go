@@ -39,6 +39,8 @@ var (
 	ErrUnauthorizedClient             = errors.New("unauthorized_client")
 	ErrAccessDenied                   = errors.New("access_denied")
 	ErrUnsupportedResponseType        = errors.New("unsupported_response_type")
+	ErrUnauthorizedResponseType       = errors.New("unauthorized_response_type")
+	ErrMissingResponseType            = errors.New("missing_response_type")
 	ErrInvalidScope                   = errors.New("invalid_scope")
 	ErrServerError                    = errors.New("server_error")
 	ErrTemporarilyUnavailable         = errors.New("temporarily_unavailable")
