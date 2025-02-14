@@ -137,5 +137,5 @@ func main() {
 
 func genCodeChallengeS256(s string) string {
 	s256 := sha256.Sum256([]byte(s))
-	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(s256[:])
+	return base64.RawURLEncoding.EncodeToString(s256[:])
 }
