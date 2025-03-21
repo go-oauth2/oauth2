@@ -25,8 +25,9 @@ func NewServer(cfg *Config, manager oauth2.Manager) *Server {
 		Manager: manager,
 	}
 
-	// default handler
+	// default handlers
 	srv.ClientInfoHandler = ClientBasicHandler
+	srv.RefreshTokenResolveHandler = RefreshTokenFormResolveHandler
 
 	srv.UserAuthorizationHandler = func(w http.ResponseWriter, r *http.Request) (string, error) {
 		return "", errors.ErrAccessDenied
@@ -56,6 +57,7 @@ type Server struct {
 	AccessTokenExpHandler        AccessTokenExpHandler
 	AuthorizeScopeHandler        AuthorizeScopeHandler
 	ResponseTokenHandler         ResponseTokenHandler
+	RefreshTokenResolveHandler   RefreshTokenResolveHandler
 }
 
 func (s *Server) handleError(w http.ResponseWriter, req *AuthorizeRequest, err error) error {
@@ -367,10 +369,10 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 	case oauth2.ClientCredentials:
 		tgr.Scope = r.FormValue("scope")
 	case oauth2.Refreshing:
-		tgr.Refresh = r.FormValue("refresh_token")
+		tgr.Refresh, err = s.RefreshTokenResolveHandler(r)
 		tgr.Scope = r.FormValue("scope")
-		if tgr.Refresh == "" {
-			return "", nil, errors.ErrInvalidRequest
+		if err != nil {
+			return "", nil, err
 		}
 	}
 	return gt, tgr, nil

@@ -51,6 +51,9 @@ type (
 
 	// ResponseTokenHandler response token handling
 	ResponseTokenHandler func(w http.ResponseWriter, data map[string]interface{}, header http.Header, statusCode ...int) error
+
+	// Handler to fetch the refresh token from the request
+	RefreshTokenResolveHandler func(r *http.Request) (string, error)
 )
 
 // ClientFormHandler get client data from form
@@ -70,4 +73,22 @@ func ClientBasicHandler(r *http.Request) (string, string, error) {
 		return "", "", errors.ErrInvalidClient
 	}
 	return username, password, nil
+}
+
+func RefreshTokenFormResolveHandler(r *http.Request) (string, error) {
+	rt := r.FormValue("refresh_token")
+	if rt == "" {
+		return "", errors.ErrInvalidRequest
+	}
+
+	return rt, nil
+}
+
+func RefreshTokenCookieResolveHandler(r *http.Request) (string, error) {
+	c, err := r.Cookie("refresh_token")
+	if err != nil {
+		return "", errors.ErrInvalidRequest
+	}
+
+	return c.Value, nil
 }
