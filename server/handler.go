@@ -49,7 +49,7 @@ type (
 	// ExtensionFieldsHandler in response to the access token with the extension of the field
 	ExtensionFieldsHandler func(ti oauth2.TokenInfo) (fieldsValue map[string]interface{})
 
-	// ResponseTokenHandler response token handing
+	// ResponseTokenHandler response token handling
 	ResponseTokenHandler func(w http.ResponseWriter, data map[string]interface{}, header http.Header, statusCode ...int) error
 )
 
