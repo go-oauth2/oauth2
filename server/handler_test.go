@@ -62,3 +62,60 @@ func TestRefreshTokenCookieResolveHandler(t *testing.T) {
 		So(token, ShouldBeEmpty)
 	})
 }
+
+func TestAccessTokenDefaultHandler(t *testing.T) {
+	Convey("Request Has Header", t, func() {
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+		r.Header.Add("Authorization", "Bearer test_token")
+
+		token, ok := AccessTokenDefaultResolveHandler(r)
+		So(ok, ShouldBeTrue)
+		So(token, ShouldEqual, "test_token")
+	})
+
+	Convey("Request Has FormValue", t, func() {
+		f := url.Values{}
+		f.Add("access_token", "test_token")
+		r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(f.Encode()))
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		token, ok := AccessTokenDefaultResolveHandler(r)
+		So(ok, ShouldBeTrue)
+		So(token, ShouldEqual, "test_token")
+	})
+
+	Convey("Request Has Nothing", t, func() {
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+
+		token, ok := AccessTokenDefaultResolveHandler(r)
+		So(ok, ShouldBeFalse)
+		So(token, ShouldBeEmpty)
+	})
+}
+
+func TestAccessTokenCookieHandler(t *testing.T) {
+	Convey("Request Has Cookie", t, func() {
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		r.AddCookie(&http.Cookie{
+			Name:     "access_token",
+			Value:    "test_token",
+			HttpOnly: true,
+			Path:     "/",
+			Domain:   ".example.com",
+			Expires:  time.Now().Add(time.Hour),
+		})
+
+		token, ok := AccessTokenCookieResolveHandler(r)
+		So(ok, ShouldBeTrue)
+		So(token, ShouldEqual, "test_token")
+	})
+
+	Convey("Request Has No Cookie", t, func() {
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
+
+		token, ok := AccessTokenCookieResolveHandler(r)
+		So(ok, ShouldBeFalse)
+		So(token, ShouldBeEmpty)
+	})
+}

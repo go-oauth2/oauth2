@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-oauth2/oauth2/v4"
@@ -54,6 +55,9 @@ type (
 
 	// Handler to fetch the refresh token from the request
 	RefreshTokenResolveHandler func(r *http.Request) (string, error)
+
+	// Handler to fetch the access token from the request
+	AccessTokenResolveHandler func(r *http.Request) (string, bool)
 )
 
 // ClientFormHandler get client data from form
@@ -91,4 +95,27 @@ func RefreshTokenCookieResolveHandler(r *http.Request) (string, error) {
 	}
 
 	return c.Value, nil
+}
+
+func AccessTokenDefaultResolveHandler(r *http.Request) (string, bool) {
+	token := ""
+	auth := r.Header.Get("Authorization")
+	prefix := "Bearer "
+
+	if auth != "" && strings.HasPrefix(auth, prefix) {
+		token = auth[len(prefix):]
+	} else {
+		token = r.FormValue("access_token")
+	}
+
+	return token, token != ""
+}
+
+func AccessTokenCookieResolveHandler(r *http.Request) (string, bool) {
+	c, err := r.Cookie("access_token")
+	if err != nil {
+		return "", false
+	}
+
+	return c.Value, true
 }
