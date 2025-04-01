@@ -8,18 +8,18 @@ import (
 
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/errors"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
 // JWTAccessClaims jwt claims
 type JWTAccessClaims struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 // Valid claims verification
 func (a *JWTAccessClaims) Valid() error {
-	if time.Unix(a.ExpiresAt, 0).Before(time.Now()) {
+	if a.ExpiresAt != nil && time.Unix(a.ExpiresAt.Unix(), 0).Before(time.Now()) {
 		return errors.ErrInvalidAccessToken
 	}
 	return nil
@@ -44,10 +44,10 @@ type JWTAccessGenerate struct {
 // Token based on the UUID generated token
 func (a *JWTAccessGenerate) Token(ctx context.Context, data *oauth2.GenerateBasic, isGenRefresh bool) (string, string, error) {
 	claims := &JWTAccessClaims{
-		StandardClaims: jwt.StandardClaims{
-			Audience:  data.Client.GetID(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			Audience:  jwt.ClaimStrings{data.Client.GetID()},
 			Subject:   data.UserID,
-			ExpiresAt: data.TokenInfo.GetAccessCreateAt().Add(data.TokenInfo.GetAccessExpiresIn()).Unix(),
+			ExpiresAt: jwt.NewNumericDate(data.TokenInfo.GetAccessCreateAt().Add(data.TokenInfo.GetAccessExpiresIn())),
 		},
 	}
 
