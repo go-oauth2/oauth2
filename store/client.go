@@ -40,3 +40,8 @@ func (cs *ClientStore) Set(id string, cli oauth2.ClientInfo) (err error) {
 	cs.data[id] = cli
 	return
 }
+
+// Save stores client information, implements the oauth2.SavingClientStore interface
+func (cs *ClientStore) Save(_ context.Context, cli oauth2.ClientInfo) (err error) {
+	return cs.Set(cli.GetID(), cli)
+}
