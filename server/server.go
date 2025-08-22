@@ -146,14 +146,19 @@ func (s *Server) GetRedirectURI(req *AuthorizeRequest, data map[string]interface
 	return u.String(), nil
 }
 
-// CheckResponseType check allows response type
-func (s *Server) CheckResponseType(rt oauth2.ResponseType) bool {
-	for _, art := range s.Config.AllowedResponseTypes {
-		if art == rt {
-			return true
+// CheckResponseType checks for an allowed response type
+func (s *Server) CheckResponseType(responseType oauth2.ResponseType) error {
+	if responseType.String() == "" {
+		return errors.ErrMissingResponseType
+	}
+
+	for _, rType := range s.Config.AllowedResponseTypes {
+		if rType == responseType {
+			return nil
 		}
 	}
-	return false
+
+	return errors.ErrUnsupportedResponseType
 }
 
 // CheckCodeChallengeMethod checks for allowed code challenge method
@@ -166,50 +171,73 @@ func (s *Server) CheckCodeChallengeMethod(ccm oauth2.CodeChallengeMethod) bool {
 	return false
 }
 
+// CheckAuthorizeRequestMethod checks for allowed code challenge method
+func (s *Server) CheckAuthorizeRequestMethod(requestMethod oauth2.AuthorizeRequestMethod) bool {
+	for _, method := range s.Config.AllowedAuthorizeRequestMethods {
+		if method == requestMethod {
+			return true
+		}
+	}
+	return false
+}
+
+// CheckCodeChallenge checks if the Code Challenge is valid
+func (s *Server) CheckCodeChallenge(codeChallenge string, isForcePKCE bool) error {
+	if isForcePKCE && codeChallenge == "" {
+		return errors.ErrCodeChallengeRequired
+	}
+	if len(codeChallenge) > 0 && len(codeChallenge) < 43 || len(codeChallenge) > 128 {
+		return errors.ErrInvalidCodeChallengeLen
+	}
+	return nil
+}
+
 // ValidationAuthorizeRequest the authorization request validation
 func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest, error) {
-	redirectURI := r.FormValue("redirect_uri")
-	clientID := r.FormValue("client_id")
-	if !(r.Method == "GET" || r.Method == "POST") ||
-		clientID == "" {
+	if r == nil {
 		return nil, errors.ErrInvalidRequest
 	}
 
-	resType := oauth2.ResponseType(r.FormValue("response_type"))
-	if resType.String() == "" {
-		return nil, errors.ErrUnsupportedResponseType
-	} else if allowed := s.CheckResponseType(resType); !allowed {
-		return nil, errors.ErrUnauthorizedClient
+	redirectURI := r.FormValue("redirect_uri")
+
+	clientID := r.FormValue("client_id")
+	if clientID == "" {
+		return nil, errors.ErrMissingClientID
 	}
 
-	cc := r.FormValue("code_challenge")
-	if cc == "" && s.Config.ForcePKCE {
-		return nil, errors.ErrCodeChallengeRquired
-	}
-	if cc != "" && (len(cc) < 43 || len(cc) > 128) {
-		return nil, errors.ErrInvalidCodeChallengeLen
+	if isMethodAllowed := s.CheckAuthorizeRequestMethod(oauth2.AuthorizeRequestMethod(r.Method)); !isMethodAllowed {
+		return nil, errors.ErrInvalidRequestMethod
 	}
 
-	ccm := oauth2.CodeChallengeMethod(r.FormValue("code_challenge_method"))
-	// set default
-	if ccm == "" {
-		ccm = oauth2.CodeChallengePlain
+	responseType := oauth2.ResponseType(r.FormValue("response_type"))
+	if err := s.CheckResponseType(responseType); err != nil {
+		return nil, err
 	}
-	if ccm != "" && !s.CheckCodeChallengeMethod(ccm) {
+
+	codeChallenge := r.FormValue("code_challenge")
+	if err := s.CheckCodeChallenge(codeChallenge, s.Config.ForcePKCE); err != nil {
+		return nil, err
+	}
+
+	codeChallengeMethod := oauth2.CodeChallengeMethod(r.FormValue("code_challenge_method"))
+	// Default to plain method if not specified
+	if codeChallengeMethod == "" {
+		codeChallengeMethod = oauth2.CodeChallengePlain
+	}
+	if !s.CheckCodeChallengeMethod(codeChallengeMethod) {
 		return nil, errors.ErrUnsupportedCodeChallengeMethod
 	}
 
-	req := &AuthorizeRequest{
+	return &AuthorizeRequest{
 		RedirectURI:         redirectURI,
-		ResponseType:        resType,
+		ResponseType:        responseType,
 		ClientID:            clientID,
 		State:               r.FormValue("state"),
 		Scope:               r.FormValue("scope"),
 		Request:             r,
-		CodeChallenge:       cc,
-		CodeChallengeMethod: ccm,
-	}
-	return req, nil
+		CodeChallenge:       codeChallenge,
+		CodeChallengeMethod: codeChallengeMethod,
+	}, nil
 }
 
 // GetAuthorizeToken get authorization token(code)
