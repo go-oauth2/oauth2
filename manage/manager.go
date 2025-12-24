@@ -85,6 +85,12 @@ func (m *Manager) SetClientTokenCfg(cfg *Config) {
 	m.gtcfg[oauth2.ClientCredentials] = cfg
 }
 
+// SetGrantTypeTokenCfg set the token config for a specific grant type
+// This method allows configuring custom grant types beyond the standard OAuth2 grant types
+func (m *Manager) SetGrantTypeTokenCfg(gt oauth2.GrantType, cfg *Config) {
+	m.gtcfg[gt] = cfg
+}
+
 // SetRefreshTokenCfg set the refreshing token config
 func (m *Manager) SetRefreshTokenCfg(cfg *RefreshingConfig) {
 	m.rcfg = cfg
