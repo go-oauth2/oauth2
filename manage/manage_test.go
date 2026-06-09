@@ -25,6 +25,9 @@ func TestManager(t *testing.T) {
 			ID:     "1",
 			Secret: "11",
 			Domain: "http://localhost",
+			RedirectURIs: []string{
+				"http://localhost",
+			},
 		})
 		manager.MapClientStorage(clientStore)
 

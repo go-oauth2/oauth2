@@ -153,7 +153,7 @@ func (m *Manager) GenerateAuthToken(ctx context.Context, rt oauth2.ResponseType,
 	if err != nil {
 		return nil, err
 	} else if tgr.RedirectURI != "" {
-		if err := m.validateURI(cli.GetDomain(), tgr.RedirectURI); err != nil {
+		if err := m.validateURI(cli.GetRedirectURIs(), tgr.RedirectURI); err != nil {
 			return nil, err
 		}
 	}
@@ -301,7 +301,7 @@ func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, 
 		return nil, errors.ErrInvalidClient
 	}
 	if tgr.RedirectURI != "" {
-		if err := m.validateURI(cli.GetDomain(), tgr.RedirectURI); err != nil {
+		if err := m.validateURI(cli.GetRedirectURIs(), tgr.RedirectURI); err != nil {
 			return nil, err
 		}
 	}

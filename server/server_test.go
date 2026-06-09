@@ -45,10 +45,11 @@ func clientStore(domain string, public bool) oauth2.ClientStore {
 		secret = clientSecret
 	}
 	clientStore.Set(clientID, &models.Client{
-		ID:     clientID,
-		Secret: secret,
-		Domain: domain,
-		Public: public,
+		ID:           clientID,
+		Secret:       secret,
+		Domain:       domain,
+		Public:       public,
+		RedirectURIs: []string{domain},
 	})
 	return clientStore
 }

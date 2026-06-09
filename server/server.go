@@ -312,7 +312,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 		if err != nil {
 			return err
 		}
-		req.RedirectURI = client.GetDomain()
+		req.RedirectURI = client.GetRedirectURIs()[0]
 	}
 
 	return s.redirect(w, req, s.GetAuthorizeData(req.ResponseType, ti))

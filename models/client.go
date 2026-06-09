@@ -2,11 +2,12 @@ package models
 
 // Client client model
 type Client struct {
-	ID     string
-	Secret string
-	Domain string
-	Public bool
-	UserID string
+	ID           string
+	Secret       string
+	Domain       string
+	Public       bool
+	UserID       string
+	RedirectURIs []string
 }
 
 // GetID client id
@@ -22,6 +23,11 @@ func (c *Client) GetSecret() string {
 // GetDomain client domain
 func (c *Client) GetDomain() string {
 	return c.Domain
+}
+
+// GetRedirectURIs client redirect uris
+func (c *Client) GetRedirectURIs() []string {
+	return c.RedirectURIs
 }
 
 // IsPublic public
