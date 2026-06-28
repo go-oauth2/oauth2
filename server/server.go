@@ -4,13 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/errors"
 )
+
+var warnPublicClientsOnce sync.Once
 
 // NewDefaultServer create a default authorization server
 func NewDefaultServer(manager oauth2.Manager) *Server {
@@ -375,6 +379,11 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 		if err != nil {
 			return "", nil, err
 		}
+	case oauth2.JWTBearer:
+		if r.FormValue("assertion") == "" {
+			return "", nil, errors.ErrInvalidRequest
+		}
+		tgr.Scope = r.FormValue("scope")
 	}
 	return gt, tgr, nil
 }
@@ -393,7 +402,7 @@ func (s *Server) CheckGrantType(gt oauth2.GrantType) bool {
 func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo,
 	error) {
 	if allowed := s.CheckGrantType(gt); !allowed {
-		return nil, errors.ErrUnauthorizedClient
+		return nil, errors.ErrUnsupportedGrantType
 	}
 
 	if fn := s.ClientAuthorizedHandler; fn != nil {
@@ -472,9 +481,66 @@ func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *o
 			return nil, err
 		}
 		return ti, nil
+	case oauth2.JWTBearer:
+		return s.handleIDJAGGrant(ctx, tgr)
 	}
 
 	return nil, errors.ErrUnsupportedGrantType
+}
+
+func (s *Server) handleIDJAGGrant(ctx context.Context, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo, error) {
+	cfg := s.Config
+	if cfg.IDJAGIssuerKeyResolver == nil || len(cfg.TrustedIDJAGIssuers) == 0 || cfg.IDJAGAudience == "" {
+		return nil, errors.ErrServerError
+	}
+
+	cli, err := s.Manager.GetClient(ctx, tgr.ClientID)
+	if err != nil {
+		return nil, errors.ErrInvalidClient
+	}
+	if cli.IsPublic() && !cfg.IDJAGAllowPublicClients {
+		return nil, errors.ErrUnauthorizedClient
+	}
+	if cfg.IDJAGAllowPublicClients {
+		warnPublicClientsOnce.Do(func() {
+			log.Println("[WARNING] IDJAGAllowPublicClients is enabled — public clients may use the JWT Bearer grant; do not use in production")
+		})
+	}
+
+	assertion := tgr.Request.FormValue("assertion")
+	claims, err := validateIDJAGAssertion(ctx, cfg, tgr.ClientID, assertion)
+	if err != nil {
+		return nil, err
+	}
+
+	grant := IDJAGGrant{
+		Scope:                claims.Scope,
+		Resource:             claims.Resource,
+		AuthorizationDetails: claims.AuthorizationDetails,
+	}
+	// Request scope takes priority over assertion scope (RFC 6749 §3.3).
+	if tgr.Scope != "" {
+		grant.Scope = tgr.Scope
+	}
+
+	if cfg.IDJAGAuthorizationHandler != nil {
+		req := IDJAGRequest{
+			Scope:                grant.Scope,
+			Resource:             claims.Resource,
+			AuthorizationDetails: claims.AuthorizationDetails,
+		}
+		grant, err = cfg.IDJAGAuthorizationHandler(ctx, *claims, req)
+		if err != nil {
+			return nil, err
+		}
+		if grant.Scope == "" && len(grant.Resource) == 0 && len(grant.AuthorizationDetails) == 0 {
+			return nil, errors.ErrInvalidScope
+		}
+	}
+
+	tgr.UserID = claims.Subject
+	tgr.Scope = grant.Scope
+	return s.Manager.GenerateAccessToken(ctx, oauth2.JWTBearer, tgr)
 }
 
 // GetTokenData token data
