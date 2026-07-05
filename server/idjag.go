@@ -183,6 +183,10 @@ func NewOIDCIssuerKeyResolver(httpClient *http.Client) IssuerKeyResolver {
 			return nil, err
 		}
 		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			return nil, fmt.Errorf("fetching openid-configuration: unexpected status %d", resp.StatusCode)
+		}
 
 		var oidcConfig struct {
 			JWKSURI string `json:"jwks_uri"`
@@ -203,6 +207,10 @@ func NewOIDCIssuerKeyResolver(httpClient *http.Client) IssuerKeyResolver {
 			return nil, err
 		}
 		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			return nil, fmt.Errorf("fetching jwks: unexpected status %d", resp.StatusCode)
+		}
 
 		var jwks struct {
 			Keys []json.RawMessage `json:"keys"`
@@ -288,9 +296,9 @@ func parseECPublicKey(raw json.RawMessage) (*ecdsa.PublicKey, error) {
 	default:
 		return nil, fmt.Errorf("unsupported EC curve: %s", k.Crv)
 	}
-	return &ecdsa.PublicKey{
-		Curve: curve,
-		X:     new(big.Int).SetBytes(xBytes),
-		Y:     new(big.Int).SetBytes(yBytes),
-	}, nil
+	x, y := new(big.Int).SetBytes(xBytes), new(big.Int).SetBytes(yBytes)
+	if !curve.IsOnCurve(x, y) {
+		return nil, fmt.Errorf("EC point is not on curve %s", k.Crv)
+	}
+	return &ecdsa.PublicKey{Curve: curve, X: x, Y: y}, nil
 }

@@ -36,7 +36,8 @@ func (gt GrantType) String() string {
 	if gt == AuthorizationCode ||
 		gt == PasswordCredentials ||
 		gt == ClientCredentials ||
-		gt == Refreshing || gt == JWTBearer {
+		gt == Refreshing ||
+		gt == JWTBearer {
 		return string(gt)
 	}
 	return ""

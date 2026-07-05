@@ -380,7 +380,8 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 			return "", nil, err
 		}
 	case oauth2.JWTBearer:
-		if r.FormValue("assertion") == "" {
+		tgr.Assertion = r.FormValue("assertion")
+		if tgr.Assertion == "" {
 			return "", nil, errors.ErrInvalidRequest
 		}
 		tgr.Scope = r.FormValue("scope")
@@ -402,7 +403,7 @@ func (s *Server) CheckGrantType(gt oauth2.GrantType) bool {
 func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo,
 	error) {
 	if allowed := s.CheckGrantType(gt); !allowed {
-		return nil, errors.ErrUnsupportedGrantType
+		return nil, errors.ErrUnauthorizedClient
 	}
 
 	if fn := s.ClientAuthorizedHandler; fn != nil {
@@ -507,7 +508,7 @@ func (s *Server) handleIDJAGGrant(ctx context.Context, tgr *oauth2.TokenGenerate
 		})
 	}
 
-	assertion := tgr.Request.FormValue("assertion")
+	assertion := tgr.Assertion
 	claims, err := validateIDJAGAssertion(ctx, cfg, tgr.ClientID, assertion)
 	if err != nil {
 		return nil, err
