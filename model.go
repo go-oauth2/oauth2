@@ -1,6 +1,7 @@
 package oauth2
 
 import (
+	"context"
 	"net/url"
 	"time"
 )
@@ -13,6 +14,11 @@ type (
 		GetDomain() string
 		IsPublic() bool
 		GetUserID() string
+	}
+
+	// ClientPasswordVerifierCtx the password handler interface, with context support
+	ClientPasswordVerifierCtx interface {
+		VerifyPasswordCtx(context.Context, string) bool
 	}
 
 	// ClientPasswordVerifier the password handler interface

@@ -13,6 +13,16 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+type verifierClient struct {
+	models.Client
+}
+
+var contextPassword struct{}
+
+func (c verifierClient) VerifyPasswordCtx(ctx context.Context, password string) bool {
+	return password == ctx.Value(contextPassword)
+}
+
 func TestManager(t *testing.T) {
 	Convey("Manager test", t, func() {
 		manager := manage.NewDefaultManager()
@@ -25,6 +35,13 @@ func TestManager(t *testing.T) {
 			ID:     "1",
 			Secret: "11",
 			Domain: "http://localhost",
+		})
+		_ = clientStore.Set("2", &verifierClient{
+			Client: models.Client{
+				ID:     "2",
+				Secret: "ignored",
+				Domain: "http://localhost",
+			},
 		})
 		manager.MapClientStorage(clientStore)
 
@@ -52,6 +69,74 @@ func TestManager(t *testing.T) {
 
 		Convey("zero expiration refresh token test", func() {
 			testZeroRefreshExpirationManager(tgr, manager)
+		})
+
+		Convey("VerifyPasswordCtx test", func() {
+			tgr2 := &oauth2.TokenGenerateRequest{
+				ClientID:    "2",
+				UserID:      "123456",
+				RedirectURI: "http://localhost/oauth2",
+				Scope:       "all",
+			}
+			ctx := context.Background()
+
+			Convey("Positive test", func() {
+				secret := "22"
+				ctx = context.WithValue(ctx, contextPassword, secret)
+				cti, err := manager.GenerateAuthToken(ctx, oauth2.Code, tgr2)
+				So(err, ShouldBeNil)
+
+				code := cti.GetCode()
+				So(code, ShouldNotBeEmpty)
+
+				atParams := &oauth2.TokenGenerateRequest{
+					ClientID:     tgr2.ClientID,
+					ClientSecret: secret,
+					RedirectURI:  tgr2.RedirectURI,
+					Code:         code,
+				}
+				ati, err := manager.GenerateAccessToken(ctx, oauth2.AuthorizationCode, atParams)
+				So(err, ShouldBeNil)
+
+				accessToken, refreshToken := ati.GetAccess(), ati.GetRefresh()
+				So(accessToken, ShouldNotBeEmpty)
+				So(refreshToken, ShouldNotBeEmpty)
+			})
+
+			Convey("Negative test, wrong password in context", func() {
+				ctx = context.WithValue(ctx, contextPassword, "wrong")
+				cti, err := manager.GenerateAuthToken(ctx, oauth2.Code, tgr2)
+				So(err, ShouldBeNil)
+
+				code := cti.GetCode()
+				So(code, ShouldNotBeEmpty)
+
+				atParams := &oauth2.TokenGenerateRequest{
+					ClientID:     tgr2.ClientID,
+					ClientSecret: "ignored",
+					RedirectURI:  tgr2.RedirectURI,
+					Code:         code,
+				}
+				_, err = manager.GenerateAccessToken(ctx, oauth2.AuthorizationCode, atParams)
+				So(err, ShouldBeError, "invalid_client")
+			})
+
+			Convey("Negative test, password not in context", func() {
+				cti, err := manager.GenerateAuthToken(ctx, oauth2.Code, tgr2)
+				So(err, ShouldBeNil)
+
+				code := cti.GetCode()
+				So(code, ShouldNotBeEmpty)
+
+				atParams := &oauth2.TokenGenerateRequest{
+					ClientID:     tgr2.ClientID,
+					ClientSecret: "ignored",
+					RedirectURI:  tgr2.RedirectURI,
+					Code:         code,
+				}
+				_, err = manager.GenerateAccessToken(ctx, oauth2.AuthorizationCode, atParams)
+				So(err, ShouldBeError, "invalid_client")
+			})
 		})
 	})
 }
