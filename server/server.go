@@ -403,7 +403,7 @@ func (s *Server) CheckGrantType(gt oauth2.GrantType) bool {
 func (s *Server) GetAccessToken(ctx context.Context, gt oauth2.GrantType, tgr *oauth2.TokenGenerateRequest) (oauth2.TokenInfo,
 	error) {
 	if allowed := s.CheckGrantType(gt); !allowed {
-		return nil, errors.ErrUnauthorizedClient
+		return nil, errors.ErrUnsupportedGrantType
 	}
 
 	if fn := s.ClientAuthorizedHandler; fn != nil {
