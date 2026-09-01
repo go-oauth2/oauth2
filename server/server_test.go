@@ -296,12 +296,12 @@ func TestClientCredentials(t *testing.T) {
 	srv = server.NewDefaultServer(manager)
 	srv.SetClientInfoHandler(server.ClientFormHandler)
 
-	srv.SetInternalErrorHandler(func(err error) (re *errors.Response) {
+	srv.SetInternalErrorHandler(func(ctx context.Context, err error) (re *errors.Response) {
 		t.Log("OAuth 2.0 Error:", err.Error())
 		return
 	})
 
-	srv.SetResponseErrorHandler(func(re *errors.Response) {
+	srv.SetResponseErrorHandler(func(ctx context.Context, re *errors.Response) {
 		t.Log("Response Error:", re.Error)
 	})
 
