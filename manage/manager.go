@@ -56,6 +56,8 @@ func (m *Manager) grantConfig(gt oauth2.GrantType) *Config {
 		return DefaultPasswordTokenCfg
 	case oauth2.ClientCredentials:
 		return DefaultClientTokenCfg
+	case oauth2.JWTBearer:
+		return DefaultJWTBearerTokenCfg
 	}
 	return &Config{}
 }
@@ -516,4 +518,8 @@ func (m *Manager) LoadRefreshToken(ctx context.Context, refresh string) (oauth2.
 		return nil, errors.ErrExpiredRefreshToken
 	}
 	return ti, nil
+}
+
+func (m *Manager) SetGrantTypeCfg(gt oauth2.GrantType, cfg *Config) {
+	m.gtcfg[gt] = cfg
 }
