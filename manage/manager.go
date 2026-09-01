@@ -295,7 +295,11 @@ func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, 
 	if err != nil {
 		return nil, err
 	}
-	if cliPass, ok := cli.(oauth2.ClientPasswordVerifier); ok {
+	if cliPass, ok := cli.(oauth2.ClientPasswordVerifierCtx); ok {
+		if !cliPass.VerifyPasswordCtx(ctx, tgr.ClientSecret) {
+			return nil, errors.ErrInvalidClient
+		}
+	} else if cliPass, ok := cli.(oauth2.ClientPasswordVerifier); ok {
 		if !cliPass.VerifyPassword(tgr.ClientSecret) {
 			return nil, errors.ErrInvalidClient
 		}
