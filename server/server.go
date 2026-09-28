@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	stdErrors "errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -68,6 +69,9 @@ type Server struct {
 func (s *Server) handleError(w http.ResponseWriter, req *AuthorizeRequest, err error) error {
 	if fn := s.PreRedirectErrorHandler; fn != nil {
 		return fn(req.Request.Context(), w, req, err)
+	}
+	if stdErrors.Is(err, errors.ErrInvalidRedirectURI) {
+		return err
 	}
 
 	return s.redirectError(w, req, err)
