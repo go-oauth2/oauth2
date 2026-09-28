@@ -16,3 +16,21 @@ func TestUtil(t *testing.T) {
 		})
 	})
 }
+
+func TestDefaultValidateURIRejectsHostSuffixSpoof(t *testing.T) {
+	if err := manage.DefaultValidateURI("https://whitelist.com", "https://evil-whitelist.com/callback"); err == nil {
+		t.Fatal("expected a host suffix spoof to be rejected")
+	}
+}
+
+func TestDefaultValidateURIAllowsExactHostAndSubdomain(t *testing.T) {
+	for _, redirectURI := range []string{
+		"https://whitelist.com/callback",
+		"https://login.whitelist.com/callback",
+		"https://LOGIN.WHITELIST.COM/callback",
+	} {
+		if err := manage.DefaultValidateURI("https://whitelist.com", redirectURI); err != nil {
+			t.Errorf("expected %q to be accepted: %v", redirectURI, err)
+		}
+	}
+}

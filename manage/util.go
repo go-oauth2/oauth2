@@ -25,7 +25,9 @@ func DefaultValidateURI(baseURI string, redirectURI string) error {
 	if err != nil {
 		return err
 	}
-	if !strings.HasSuffix(redirect.Host, base.Host) {
+	redirectHost := strings.ToLower(redirect.Host)
+	baseHost := strings.ToLower(base.Host)
+	if redirectHost != baseHost && !strings.HasSuffix(redirectHost, "."+baseHost) {
 		return errors.ErrInvalidRedirectURI
 	}
 	return nil
