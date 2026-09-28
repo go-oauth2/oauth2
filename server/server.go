@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	stdErrors "errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -69,7 +70,7 @@ func (s *Server) handleError(w http.ResponseWriter, req *AuthorizeRequest, err e
 	if fn := s.PreRedirectErrorHandler; fn != nil {
 		return fn(req.Request.Context(), w, req, err)
 	}
-	if err == errors.ErrInvalidRedirectURI {
+	if stdErrors.Is(err, errors.ErrInvalidRedirectURI) {
 		return err
 	}
 
