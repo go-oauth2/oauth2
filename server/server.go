@@ -69,6 +69,9 @@ func (s *Server) handleError(w http.ResponseWriter, req *AuthorizeRequest, err e
 	if fn := s.PreRedirectErrorHandler; fn != nil {
 		return fn(req.Request.Context(), w, req, err)
 	}
+	if err == errors.ErrInvalidRedirectURI {
+		return err
+	}
 
 	return s.redirectError(w, req, err)
 }
