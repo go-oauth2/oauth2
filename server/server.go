@@ -66,6 +66,16 @@ type Server struct {
 }
 
 func (s *Server) handleError(w http.ResponseWriter, req *AuthorizeRequest, err error) error {
+	if req == nil || req.Request == nil {
+		if fn := s.InternalErrorHandler; fn != nil {
+			fn(err)
+		}
+		return s.ResponseErrorHandler(w, &ResponseError{
+			StatusCode: http.StatusBadRequest,
+			Error:      err,
+		})
+	}
+
 	if fn := s.PreRedirectErrorHandler; fn != nil {
 		return fn(req.Request.Context(), w, req, err)
 	}

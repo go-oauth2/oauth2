@@ -412,3 +412,20 @@ func validationAccessToken(t *testing.T, accessToken string) {
 		t.Error("invalid access token")
 	}
 }
+
+func TestHandleAuthorizeRequestInvalidRequest(t *testing.T) {
+	manager := manage.NewDefaultManager()
+	manager.MustTokenStorage(store.NewMemoryTokenStore())
+	srv := server.NewDefaultServer(manager)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/authorize", nil) // missing client_id and response_type
+
+	err := srv.HandleAuthorizeRequest(w, r)
+	if err == nil {
+		t.Error("expected error for invalid authorize request, got nil")
+	}
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected status BadRequest (400), got %d", w.Code)
+	}
+}
