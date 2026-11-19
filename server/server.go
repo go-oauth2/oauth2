@@ -140,11 +140,10 @@ func (s *Server) GetRedirectURI(req *AuthorizeRequest, data map[string]interface
 		u.RawQuery = q.Encode()
 	case oauth2.Token:
 		u.RawQuery = ""
-		fragment, err := url.QueryUnescape(q.Encode())
-		if err != nil {
-			return "", err
-		}
-		u.Fragment = fragment
+		// u.Fragment holds the decoded form, so the encoded values go in
+		// u.RawFragment to keep them form-encoded on the wire.
+		u.RawFragment = q.Encode()
+		u.Fragment, _ = url.PathUnescape(u.RawFragment)
 	}
 
 	return u.String(), nil

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/gavv/httpexpect"
@@ -249,6 +250,34 @@ func TestImplicit(t *testing.T) {
 		WithQuery("state", "123").
 		WithQuery("redirect_uri", csrv.URL+"/oauth2").
 		Expect().Status(http.StatusOK)
+}
+
+func TestImplicitRedirectURIFragmentEncoding(t *testing.T) {
+	srv = server.NewDefaultServer(manager)
+	req := &server.AuthorizeRequest{
+		ResponseType: oauth2.Token,
+		RedirectURI:  "http://localhost/oauth2",
+		State:        "a+b&c=d",
+	}
+
+	uri, err := srv.GetRedirectURI(req, map[string]interface{}{"access_token": "token"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	u, err := url.Parse(uri)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v, err := url.ParseQuery(u.EscapedFragment())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := v.Get("state"); got != req.State {
+		t.Errorf("state was %q, want %q", got, req.State)
+	}
+	if _, ok := v["c"]; ok {
+		t.Errorf("state split into an extra parameter: %v", v)
+	}
 }
 
 func TestPasswordCredentials(t *testing.T) {
